@@ -29,10 +29,11 @@ app.use('/api/settings', SettingsRouter)
 app.use('/api/upload', UploadRouter)
 app.use('/api/captcha', CaptchaRouter)
 
-// For local development
-if (process.env.NODE_ENV !== 'production') {
+// Start server for Render/Railway/Heroku (or local dev)
+// Don't start server on Vercel (serverless)
+if (!process.env.VERCEL) {
     app.listen(PORT, () => {
-        console.log(`Server is running on http://localhost:${PORT}`)
+        console.log(`Server is running on port ${PORT}`)
     })
 }
 
