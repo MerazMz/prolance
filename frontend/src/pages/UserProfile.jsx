@@ -96,7 +96,7 @@ export default function UserProfile() {
                                 <img
                                     src={user.avatar}
                                     alt={user.name}
-                                    className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
+                                    className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg cursor-pointer"
                                 />
                             ) : (
                                 <div className="w-24 h-24 rounded-full bg-white border-4 border-gray-200 flex items-center justify-center shadow-lg">
@@ -113,10 +113,10 @@ export default function UserProfile() {
                                     <HiOutlineCheckCircle size={24} className="text-green-600" title="Verified" />
                                 )}
                             </div>
-                            <p className="text-sm text-gray-500 font-light mb-3">@{user?.username}</p>
+                            <p className="text-sm text-left text-gray-500 font-light mb-3">@{user?.username}</p>
 
                             {user?.bio && (
-                                <p className="text-sm text-gray-600 font-light mb-4 max-w-2xl">{user.bio}</p>
+                                <p className="text-sm text-left text-gray-600 font-light mb-4 max-w-2xl">{user.bio}</p>
                             )}
 
                             {/* Meta Information */}

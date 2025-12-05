@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { useAuth } from '../context/AuthContext';
 import Particles from '../components/ui/background';
-import loginIllustration from '/Users/merazmz/.gemini/antigravity/brain/7061ae7a-858c-4d50-933d-134f8598748a/login_illustration_1764590330755.png';
+import loginIllustration from '../assets/login_illustration_1764590330755.png';
 
 export default function Login() {
     const [email, setEmail] = useState('');

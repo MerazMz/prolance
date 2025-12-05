@@ -10,6 +10,7 @@ const UserRouter = require('./Routes/UserRouter')
 const ProjectRouter = require('./Routes/ProjectRouter')
 const SettingsRouter = require('./Routes/SettingsRouter')
 const UploadRouter = require('./Routes/UploadRouter')
+const CaptchaRouter = require('./Routes/CaptchaRouter')
 require('./Models/db')
 const PORT = process.env.PORT || 8080;
 
@@ -26,6 +27,7 @@ app.use('/api/users', UserRouter)
 app.use('/api/projects', ProjectRouter)
 app.use('/api/settings', SettingsRouter)
 app.use('/api/upload', UploadRouter)
+app.use('/api/captcha', CaptchaRouter)
 
 app.listen(PORT, () => {
     console.log(`Sever is running on http://localhost:${PORT}`)

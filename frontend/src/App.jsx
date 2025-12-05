@@ -12,8 +12,11 @@ import ProjectDetail from './pages/ProjectDetail'
 import UserProfile from './pages/UserProfile'
 import Support from './pages/Support'
 import ProtectedRoute from './components/ProtectedRoute'
+import ClientRoute from './components/ClientRoute'
+import FreelancerRoute from './components/FreelancerRoute'
 import GuestRoute from './components/GuestRoute'
 import Navbar from './components/ui/navbar'
+import SearchCommand from './components/ui/SearchCommand'
 import './App.css'
 
 function App() {
@@ -22,6 +25,7 @@ function App() {
       <div className='overflow-x-hidden'>
 
         <Navbar />
+        <SearchCommand />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route
@@ -40,23 +44,37 @@ function App() {
               </GuestRoute>
             }
           />
-          <Route path="/projects" element={<BrowseProjects />} />
+          <Route
+            path="/projects"
+            element={
+              <FreelancerRoute>
+                <BrowseProjects />
+              </FreelancerRoute>
+            }
+          />
           <Route path="/projects/:id" element={<ProjectDetail />} />
-          <Route path="/freelancers" element={<FindFreelancers />} />
+          <Route
+            path="/freelancers"
+            element={
+              <ClientRoute>
+                <FindFreelancers />
+              </ClientRoute>
+            }
+          />
           <Route
             path="/post-project"
             element={
-              <ProtectedRoute>
+              <ClientRoute>
                 <PostProject />
-              </ProtectedRoute>
+              </ClientRoute>
             }
           />
           <Route
             path="/my-projects"
             element={
-              <ProtectedRoute>
+              <ClientRoute>
                 <MyProjects />
-              </ProtectedRoute>
+              </ClientRoute>
             }
           />
           <Route

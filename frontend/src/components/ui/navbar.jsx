@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useProjectNotifications } from "../../hooks/useProjectNotifications";
 import axios from "axios";
@@ -25,11 +25,20 @@ export default function Navbar() {
   const { isAuthenticated, user, logout } = useAuth();
   const { notificationCount, recentProjects, newProjectIds, markAsSeen } = useProjectNotifications();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
   const dropdownRef = useRef(null);
   const notificationRef = useRef(null);
+
+  // Helper function to check if a path is active
+  const isActive = (path) => {
+    if (path === '/') {
+      return location.pathname === '/';
+    }
+    return location.pathname.startsWith(path);
+  };
 
   // Fetch user profile data
   useEffect(() => {
@@ -111,7 +120,7 @@ export default function Navbar() {
       <Link to="/" className="flex items-center gap-2 cursor-pointer">
         <h1 className="text-xl font-light tracking-wide flex items-center">
           <span className="text-green-600">Pro</span>
-          <span className="text-gray-700">&lt;lancer&gt;</span>
+          <span className="text-gray-700">&lt;lance&gt;</span>
         </h1>
       </Link>
 
@@ -121,37 +130,55 @@ export default function Navbar() {
         {/* HOME */}
         <Link
           to="/"
-          className="flex items-center gap-1.5 hover:text-green-600 transition cursor-pointer"
+          className={`flex items-center gap-1.5 hover:text-green-600 transition cursor-pointer ${isActive('/') ? 'text-green-600' : ''
+            }`}
         >
           <HiOutlineHome size={16} />
           <span>Home</span>
         </Link>
 
-        {/* EXPLORE */}
-        <Link
-          to="/projects"
-          className="flex items-center gap-1.5 hover:text-green-600 transition cursor-pointer"
-        >
-          <HiOutlineSearch size={16} />
-          <span>Explore</span>
-        </Link>
-
-        {/* POST PROJECT - Only show when authenticated */}
-        {isAuthenticated && (
+        {/* EXPLORE PROJECTS - Only show for freelancers and both roles */}
+        {(!isAuthenticated || user?.role === 'freelancer' || user?.role === 'both') && (
           <Link
-            to="/post-project"
-            className="flex items-center gap-1.5 hover:text-green-600 transition cursor-pointer"
+            to="/projects"
+            className={`flex items-center gap-1.5 hover:text-green-600 transition cursor-pointer ${isActive('/projects') ? 'text-green-600' : ''
+              }`}
           >
-            <HiOutlinePlusCircle size={16} />
-            <span>Post Project</span>
+            <HiOutlineSearch size={16} />
+            <span>Explore</span>
           </Link>
         )}
 
-        {/* MY PROJECTS - Only show when authenticated */}
-        {isAuthenticated && (
+        {/* FIND FREELANCERS - Only show for clients and both roles */}
+        {isAuthenticated && (user?.role === 'client' || user?.role === 'both') && (
+          <Link
+            to="/freelancers"
+            className={`flex items-center gap-1.5 hover:text-green-600 transition cursor-pointer ${isActive('/freelancers') ? 'text-green-600' : ''
+              }`}
+          >
+            <HiOutlineUser size={16} />
+            <span>Freelancers</span>
+          </Link>
+        )}
+
+        {/* POST PROJECT - Only show for clients and both roles */}
+        {isAuthenticated && (user?.role === 'client' || user?.role === 'both') && (
+          <Link
+            to="/post-project"
+            className={`flex items-center gap-1.5 hover:text-green-600 transition cursor-pointer ${isActive('/post-project') ? 'text-green-600' : ''
+              }`}
+          >
+            <HiOutlinePlusCircle size={16} />
+            <span>Project</span>
+          </Link>
+        )}
+
+        {/* MY PROJECTS - Only show for clients and both roles */}
+        {isAuthenticated && (user?.role === 'client' || user?.role === 'both') && (
           <Link
             to="/my-projects"
-            className="flex items-center gap-1.5 hover:text-green-600 transition cursor-pointer"
+            className={`flex items-center gap-1.5 hover:text-green-600 transition cursor-pointer ${isActive('/my-projects') ? 'text-green-600' : ''
+              }`}
           >
             <HiOutlineFolderOpen size={16} />
             <span>My Projects</span>
@@ -162,7 +189,8 @@ export default function Navbar() {
         {isAuthenticated && (
           <Link
             to="/messages"
-            className="flex items-center gap-1.5 hover:text-green-600 transition cursor-pointer"
+            className={`flex items-center gap-1.5 hover:text-green-600 transition cursor-pointer ${isActive('/messages') ? 'text-green-600' : ''
+              }`}
           >
             <HiOutlineChatAlt2 size={16} />
             <span>Messages</span>
@@ -172,7 +200,8 @@ export default function Navbar() {
         {/* SUPPORT */}
         <Link
           to="/support"
-          className="flex items-center gap-1.5 hover:text-green-600 transition cursor-pointer"
+          className={`flex items-center gap-1.5 hover:text-green-600 transition cursor-pointer ${isActive('/support') ? 'text-green-600' : ''
+            }`}
         >
           <HiOutlineQuestionMarkCircle size={16} />
           <span>Support</span>

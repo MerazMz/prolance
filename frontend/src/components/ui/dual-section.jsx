@@ -15,8 +15,8 @@ export default function DualSection() {
             />
 
             {/* Content */}
-            <div className="relative max-w-7xl mx-auto px-8">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+            <div className="relative mx-auto max-w-6xl px-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-center">
                     {/* For Freelancers */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -42,6 +42,11 @@ export default function DualSection() {
                         </Link>
                     </motion.div>
 
+                    {/* Animated Beam in the Center */}
+                    <div className="hidden lg:block relative h-48">
+                        <AnimatedBeam />
+                    </div>
+
                     {/* For Clients */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -66,11 +71,6 @@ export default function DualSection() {
                             Post a Project
                         </Link>
                     </motion.div>
-                </div>
-
-                {/* Animated Beam Below Content */}
-                <div className="hidden lg:block mt-16 relative">
-                    <AnimatedBeam />
                 </div>
             </div>
         </div>

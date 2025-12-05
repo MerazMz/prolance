@@ -25,12 +25,12 @@ export default function AnimatedBeam() {
     const { width, height } = dimensions;
 
     // Move icons 50% closer to center
-    const spacing = (width - 120) * 0.25; // 50% closer means half the original distance from edges
+    const spacing = (width - 80); // 50% closer means half the original distance from edges
     const startX = spacing;
     const endX = width - spacing;
 
     const centerY = height / 2;
-    const curveHeight = 40;
+    const curveHeight = 1;
 
     // Path for top curve
     const topPath = `M ${startX} ${centerY} Q ${width / 2} ${centerY - curveHeight} ${endX} ${centerY}`;

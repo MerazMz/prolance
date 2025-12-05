@@ -7,6 +7,7 @@
     "start": "nodemon index.js"
   },
   "dependencies": {
+    "@fingerprintjs/fingerprintjs-pro": "^3.12.4",
     "bcrypt": "^6.0.0",
     "body-parser": "^2.2.0",
     "cloudinary": "^2.8.0",
@@ -16,6 +17,8 @@
     "joi": "^18.0.1",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.19.4",
-    "multer": "^2.0.2"
+    "multer": "^2.0.2",
+    "svg-captcha": "^1.4.0",
+    "uuid": "^13.0.0"
   }
 }

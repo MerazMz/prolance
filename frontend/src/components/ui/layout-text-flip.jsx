@@ -17,6 +17,7 @@ export const LayoutTextFlip = ({
   duration = 2500,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [showMouseIndicator, setShowMouseIndicator] = useState(true);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -24,6 +25,18 @@ export const LayoutTextFlip = ({
     }, duration);
 
     return () => clearInterval(interval);
+  }, []);
+
+  // Scroll detection to hide/show mouse indicator
+  useEffect(() => {
+    const handleScroll = () => {
+      // Show indicator when at the top (within 100px of top)
+      // Hide when scrolled down
+      setShowMouseIndicator(window.scrollY < 100);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   return (
@@ -114,58 +127,68 @@ export const LayoutTextFlip = ({
         </div>
 
         {/* Scroll Down Indicator */}
-        <motion.div
-          className="absolute bottom-16 left-1/2 transform -translate-x-1/2 "
-          animate={{
-            y: [0, 8, 0],
-          }}
-          transition={{
-            duration: 1.5,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        >
-          <svg
-            width="18"
-            height="32"
-            viewBox="0 0 18 32"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="opacity-50"
-          >
-            {/* Mouse body */}
-            <rect
-              x="1"
-              y="1"
-              width="16"
-              height="30"
-              rx="8"
-              stroke="#4b5563"
-              strokeWidth="1.5"
-              fill="none"
-            />
-            {/* Scroll wheel */}
-            <motion.line
-              x1="9"
-              y1="8"
-              x2="9"
-              y2="14"
-              stroke="#4b5563"
-              strokeWidth="1.5"
-              strokeLinecap="round"
+        <AnimatePresence>
+          {showMouseIndicator && (
+            <motion.div
+              initial={{ opacity: 0 }}
               animate={{
-                y1: [8, 11],
-                y2: [14, 17],
-                opacity: [1, 0],
+                opacity: 1,
+                y: [0, 8, 0],
               }}
+              exit={{ opacity: 0 }}
               transition={{
-                duration: 1.5,
-                repeat: Infinity,
-                ease: "easeInOut",
+                opacity: { duration: 0.3 },
+                y: {
+                  duration: 1.5,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }
               }}
-            />
-          </svg>
-        </motion.div>
+              className="absolute bottom-16 left-1/2 transform -translate-x-1/2"
+            >
+              <svg
+                width="18"
+                height="32"
+                viewBox="0 0 18 32"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="opacity-50"
+              >
+                {/* Mouse body */}
+                <rect
+                  x="1"
+                  y="1"
+                  width="16"
+                  height="30"
+                  rx="8"
+                  stroke="#4b5563"
+                  strokeWidth="1.5"
+                  fill="none"
+                />
+                {/* Scroll wheel */}
+                <motion.line
+                  x1="9"
+                  y1="8"
+                  x2="9"
+                  y2="14"
+                  stroke="#4b5563"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  animate={{
+                    y1: [8, 11],
+                    y2: [14, 17],
+                    opacity: [1, 0],
+                  }}
+                  transition={{
+                    duration: 1.5,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                />
+              </svg>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
       </div>
 

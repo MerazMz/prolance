@@ -198,14 +198,20 @@ const removePortfolioItem = async (req, res) => {
 // Search freelancers
 const searchFreelancers = async (req, res) => {
     try {
-        const { skills, minRate, maxRate, search } = req.query;
+        const { skills, minRate, maxRate, search, excludeUserId } = req.query;
 
         let query = {
             $or: [
                 { role: 'freelancer' },
                 { role: 'both' }
-            ]
+            ],
+            'privacySettings.isPublic': true  // Only show public profiles
         };
+
+        // Exclude current user from results
+        if (excludeUserId) {
+            query._id = { $ne: excludeUserId };
+        }
 
         // Add skills filter
         if (skills) {

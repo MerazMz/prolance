@@ -56,9 +56,9 @@ export const authService = {
     },
 
     // Signup
-    signup: async (name, email, password, role = 'freelancer', username) => {
+    signup: async (name, email, password, role = 'freelancer') => {
         try {
-            const response = await api.post('/auth/signup', { name, email, password, role, username });
+            const response = await api.post('/auth/signup', { name, email, password, role });
             return response.data;
         } catch (error) {
             throw error.response?.data || { message: 'Signup failed', success: false };

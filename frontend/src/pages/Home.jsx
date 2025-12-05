@@ -5,6 +5,8 @@ import { TimelineDemo } from '../components/ui/timelineProps'
 import DualSection from '../components/ui/dual-section'
 import Footer from '../components/ui/footer'
 import ClickSpark from '../components/ClickSpark'
+import { GlobeDemo } from '../components/ui/globeProps'
+import ScrollVelocity from '../components/ui/scroll-velocity'
 
 import '../App.css'
 
@@ -31,9 +33,17 @@ function Home() {
                     <LayoutTextFlip />
                 </div>
 
+                <div>
+                    <ScrollVelocity
+                        texts={['Match Align Sync Blend', 'Discover Explore Hunt Scout', 'Advance Thrive Ascend']}
+                        velocity={50}
+                        className="custom-scroll-text text-gray-300"
+                    />
+                </div>
+
                 {/* How It Works Timeline */}
                 <div className="mt-20">
-                    <TimelineDemo />
+                    <GlobeDemo />
                 </div>
 
                 {/* Dual Section - For Freelancers & Clients */}

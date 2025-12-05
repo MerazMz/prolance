@@ -4,30 +4,21 @@ const jwt = require('jsonwebtoken');
 
 const signup = async (req, res) => {
     try {
-        const { name, email, password, role, username } = req.body;
+        const { name, email, password, role } = req.body;
 
-        // Validate username presence
-        if (!username) {
-            return res.status(400).json({
-                message: 'Username is required',
-                success: false
-            });
+        // Auto-generate username from email (part before @)
+        const emailUsername = email.split('@')[0].toLowerCase();
+        // Remove any characters that aren't allowed in usernames
+        let generatedUsername = emailUsername.replace(/[^a-z0-9_-]/g, '');
+
+        // Ensure username is at least 3 characters
+        if (generatedUsername.length < 3) {
+            generatedUsername = generatedUsername.padEnd(3, '0');
         }
 
-        // Validate username format
-        if (!/^[a-z0-9_-]+$/.test(username)) {
-            return res.status(400).json({
-                message: 'Username can only contain lowercase letters, numbers, hyphens, and underscores',
-                success: false
-            });
-        }
-
-        // Validate username length
-        if (username.length < 3 || username.length > 20) {
-            return res.status(400).json({
-                message: 'Username must be between 3 and 20 characters',
-                success: false
-            });
+        // Ensure username is not more than 20 characters
+        if (generatedUsername.length > 20) {
+            generatedUsername = generatedUsername.substring(0, 20);
         }
 
         // Check if email already exists
@@ -39,20 +30,24 @@ const signup = async (req, res) => {
             });
         }
 
-        // Check if username already exists
-        const userByUsername = await UserModel.findOne({ username: username.toLowerCase() });
-        if (userByUsername) {
-            return res.status(409).json({
-                message: 'Username is already taken',
-                success: false
-            });
+        // Check if username already exists, if so, append a number
+        let username = generatedUsername;
+        let counter = 1;
+        while (await UserModel.findOne({ username })) {
+            username = `${generatedUsername}${counter}`;
+            // Ensure the username with counter doesn't exceed 20 characters
+            if (username.length > 20) {
+                generatedUsername = generatedUsername.substring(0, 20 - counter.toString().length);
+                username = `${generatedUsername}${counter}`;
+            }
+            counter++;
         }
 
         const userModel = new UserModel({
             name,
             email,
             password,
-            username: username.toLowerCase(),
+            username,
             role: role || 'freelancer' // Default to freelancer if not provided
         });
         userModel.password = await bcrypt.hash(password, 10);

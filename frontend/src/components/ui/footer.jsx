@@ -40,7 +40,7 @@ export default function Footer() {
         };
     };
 
-    const text = "Prolancer";
+    const text = "Prolance";
     const letters = text.split('');
 
     return (
@@ -76,14 +76,14 @@ export default function Footer() {
                             <Link to="/" className="flex items-center gap-2">
                                 <h2 className="text-lg font-light tracking-wide flex items-center">
                                     <span className="text-green-600">Pro</span>
-                                    <span className="text-gray-700">&lt;lancer&gt;</span>
+                                    <span className="text-gray-700">&lt;lance&gt;</span>
                                 </h2>
                             </Link>
 
                             {/* Right - Links */}
                             <div className="flex items-center gap-6 text-sm text-gray-600">
                                 <Link to="/about" className="hover:text-green-600 transition font-light">
-                                    About Prolancer
+                                    About Prolance
                                 </Link>
                                 <Link to="/careers" className="hover:text-green-600 transition font-light">
                                     Careers

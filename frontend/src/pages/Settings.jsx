@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import axios from 'axios';
 import Select from 'react-select';
 import countryList from 'react-select-country-list';
+import TimezoneSelect from 'react-timezone-select';
 import {
     HiOutlineUser,
     HiOutlineBriefcase,
@@ -156,17 +157,18 @@ function EditableField({ label, value, onSave, type = 'text', placeholder, isEdi
     return (
         <div className="py-3 border-b border-gray-100 last:border-0">
             <div className="flex items-center justify-between">
-                <div className="flex-1">
-                    <p className="text-xs text-gray-500 mb-1 font-light">{label}</p>
+                <div className="flex items-center flex-1 gap-3">
+                    <p className="text-sm text-left text-gray-600 font-light w-[140px]">{label}</p>
+                    <span className="text-sm text-gray-600 font-light">:</span>
                     {!isEditing ? (
-                        <p className="text-sm text-gray-700 font-light">{value || <span className="text-gray-400">Not set</span>}</p>
+                        <p className="text-sm text-left text-gray-700 font-light">{value || <span className="text-gray-400">Not set</span>}</p>
                     ) : (
                         <input
                             type={type}
                             value={editValue}
                             onChange={(e) => setEditValue(e.target.value)}
                             placeholder={placeholder}
-                            className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 focus:border-green-600 focus:outline-none transition-all font-light"
+                            className="flex-1 px-3 py-2 text-sm rounded-lg border border-gray-200 focus:border-green-600 focus:outline-none transition-all font-light"
                             autoFocus
                         />
                     )}
@@ -208,7 +210,7 @@ function EditableField({ label, value, onSave, type = 'text', placeholder, isEdi
 function ProfileSection({ settings, onUpdate }) {
     const [editingField, setEditingField] = useState(null);
     const [photoPreview, setPhotoPreview] = useState(null);
-    const [uploadingPhoto, setUploadingPhoto] = useState(false);
+    const [photoOperation, setPhotoOperation] = useState(null); // 'uploading', 'removing', or null
     const [message, setMessage] = useState('');
     const [isSuccess, setIsSuccess] = useState(false);
     const countryOptions = useMemo(() => countryList().getData(), []);
@@ -244,7 +246,7 @@ function ProfileSection({ settings, onUpdate }) {
             return;
         }
 
-        setUploadingPhoto(true);
+        setPhotoOperation('uploading');
         try {
             const token = localStorage.getItem('authToken');
             const formData = new FormData();
@@ -261,7 +263,31 @@ function ProfileSection({ settings, onUpdate }) {
             setMessage('Failed to upload photo');
             setIsSuccess(false);
         } finally {
-            setUploadingPhoto(false);
+            setPhotoOperation(null);
+        }
+    };
+
+    const handlePhotoRemove = async () => {
+        if (!window.confirm('Are you sure you want to remove your profile photo?')) {
+            return;
+        }
+
+        setPhotoOperation('removing');
+        try {
+            const token = localStorage.getItem('authToken');
+            await axios.delete(`${API_URL}/api/upload/photo`, {
+                headers: { Authorization: token }
+            });
+
+            setPhotoPreview(null);
+            setMessage('Photo removed successfully!');
+            setIsSuccess(true);
+            onUpdate();
+        } catch (error) {
+            setMessage('Failed to remove photo');
+            setIsSuccess(false);
+        } finally {
+            setPhotoOperation(null);
         }
     };
 
@@ -287,11 +313,20 @@ function ProfileSection({ settings, onUpdate }) {
                         <h3 className="text-sm font-medium text-gray-700">{settings?.profile?.name || 'User'}</h3>
                         <p className="text-xs text-gray-500 mt-0.5">@{settings?.profile?.username || 'username'}</p>
                     </div>
-                    <div>
+                    <div className="flex gap-2">
                         <input type="file" id="photo-upload" onChange={handlePhotoUpload} accept="image/*" className="hidden" />
-                        <label htmlFor="photo-upload" className="px-3 py-1.5 text-xs border border-gray-200 bg-white rounded-lg hover:bg-gray-50 transition font-light cursor-pointer inline-block">
-                            {uploadingPhoto ? 'Uploading...' : 'Change'}
+                        <label htmlFor="photo-upload" className={`px-3 py-1.5 text-xs border border-gray-200 bg-white rounded-lg hover:bg-gray-50 transition font-light cursor-pointer inline-block ${photoOperation ? 'opacity-50 pointer-events-none' : ''}`}>
+                            {photoOperation === 'uploading' ? 'Uploading...' : 'Change'}
                         </label>
+                        {photoPreview && (
+                            <button
+                                onClick={handlePhotoRemove}
+                                disabled={photoOperation !== null}
+                                className="px-3 py-1.5 text-xs border border-red-200 bg-white text-red-600 rounded-lg hover:bg-red-50 transition font-light cursor-pointer disabled:opacity-50"
+                            >
+                                {photoOperation === 'removing' ? 'Removing...' : 'Remove'}
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
@@ -300,9 +335,10 @@ function ProfileSection({ settings, onUpdate }) {
             <div className="grid grid-cols-2 gap-3">
                 {/* Name Card */}
                 <div className="p-3 bg-white border border-gray-100 rounded-lg">
-                    <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                            <p className="text-xs text-gray-500 mb-1 font-light">Full Name</p>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center flex-1 gap-3 min-w-0">
+                            <p className="text-sm text-left text-gray-600 font-light w-[140px]">Full Name</p>
+                            <span className="text-sm text-gray-600 font-light">:</span>
                             {editingField !== 'name' ? (
                                 <p className="text-sm text-gray-700 font-light truncate">{settings?.profile?.name || <span className="text-gray-400">Not set</span>}</p>
                             ) : (
@@ -310,7 +346,7 @@ function ProfileSection({ settings, onUpdate }) {
                                     type="text"
                                     defaultValue={settings?.profile?.name}
                                     id="name-input"
-                                    className="w-full px-2 py-1 text-sm rounded border border-gray-200 focus:border-green-600 focus:outline-none font-light"
+                                    className="flex-1 px-2 py-1 text-sm rounded border border-gray-200 focus:border-green-600 focus:outline-none font-light"
                                     autoFocus
                                 />
                             )}
@@ -347,30 +383,31 @@ function ProfileSection({ settings, onUpdate }) {
                 <div className="p-3 bg-white border border-gray-100 rounded-lg">
                     <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
-                            <p className="text-xs text-gray-500 mb-1 font-light">Username {!settings?.profile?.username && <span className="text-red-500">*Required</span>}</p>
-                            {editingField !== 'username' ? (
-                                <>
+                            <div className="flex items-center gap-3">
+                                <p className="text-sm text-left text-gray-600 font-light w-[140px]">Username {!settings?.profile?.username && <span className="text-red-500">*</span>}</p>
+                                <span className="text-sm text-gray-600 font-light">:</span>
+                                {editingField !== 'username' ? (
                                     <p className="text-sm text-gray-700 font-light truncate">{settings?.profile?.username || <span className="text-red-400">Not set - Required!</span>}</p>
-                                    {!settings?.profile?.username && (
-                                        <p className="text-xs text-red-500 font-light mt-1">Please set a username to complete your profile</p>
-                                    )}
-                                </>
-                            ) : (
-                                <>
+                                ) : (
                                     <input
                                         type="text"
                                         defaultValue={settings?.profile?.username}
                                         id="username-input"
                                         placeholder="username123"
-                                        className="w-full px-2 py-1 text-sm rounded border border-gray-200 focus:border-green-600 focus:outline-none font-light lowercase"
+                                        className="flex-1 px-2 py-1 text-sm rounded border border-gray-200 focus:border-green-600 focus:outline-none font-light lowercase"
                                         autoFocus
                                         onChange={(e) => {
                                             // Convert to lowercase automatically
                                             e.target.value = e.target.value.toLowerCase();
                                         }}
                                     />
-                                    <p className="text-xs text-gray-400 font-light mt-1">3-20 characters, lowercase letters, numbers, - and _ only</p>
-                                </>
+                                )}
+                            </div>
+                            {editingField === 'username' && (
+                                <p className="text-xs text-gray-400 font-light mt-1 ml-[152px]">3-20 characters, lowercase letters, numbers, - and _ only</p>
+                            )}
+                            {!settings?.profile?.username && editingField !== 'username' && (
+                                <p className="text-xs text-red-500 font-light mt-1 ml-[152px]">Please set a username to complete your profile</p>
                             )}
                         </div>
                         <div className="flex items-center gap-1 ml-2">
@@ -420,9 +457,10 @@ function ProfileSection({ settings, onUpdate }) {
 
                 {/* Email Card - Read Only */}
                 <div className="p-3 bg-gray-50 border border-gray-100 rounded-lg">
-                    <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                            <p className="text-xs text-gray-500 mb-1 font-light">Email</p>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center flex-1 gap-3 min-w-0">
+                            <p className="text-sm text-left text-gray-600 font-light w-[140px]">Email</p>
+                            <span className="text-sm text-gray-600 font-light">:</span>
                             <p className="text-sm text-gray-700 font-light truncate">{settings?.profile?.email || <span className="text-gray-400">Not set</span>}</p>
                         </div>
                         <div className="p-1 text-gray-300 ml-2">
@@ -433,16 +471,17 @@ function ProfileSection({ settings, onUpdate }) {
 
                 {/* Role Card */}
                 <div className="p-3 bg-white border border-gray-100 rounded-lg">
-                    <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                            <p className="text-xs text-gray-500 mb-1 font-light">Account Role</p>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center flex-1 gap-3 min-w-0">
+                            <p className="text-sm text-left text-gray-600 font-light w-[140px]">Account Role</p>
+                            <span className="text-sm text-gray-600 font-light">:</span>
                             {editingField !== 'role' ? (
                                 <p className="text-sm text-gray-700 font-light capitalize truncate">{settings?.profile?.role || <span className="text-gray-400">Not set</span>}</p>
                             ) : (
                                 <select
                                     defaultValue={settings?.profile?.role}
                                     id="role-input"
-                                    className="w-full px-2 py-1 text-sm rounded border border-gray-200 focus:border-green-600 focus:outline-none font-light bg-white"
+                                    className="flex-1 px-2 py-1 text-sm rounded border border-gray-200 focus:border-green-600 focus:outline-none font-light bg-white cursor-pointer"
                                     autoFocus
                                 >
                                     <option value="freelancer">Freelancer</option>
@@ -483,24 +522,29 @@ function ProfileSection({ settings, onUpdate }) {
                 <div className="p-3 bg-white border border-gray-100 rounded-lg">
                     <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
-                            <p className="text-xs text-gray-500 mb-1 font-light">Location</p>
-                            {editingField !== 'location' ? (
-                                <p className="text-sm text-gray-700 font-light truncate">{settings?.profile?.location || <span className="text-gray-400">Not set</span>}</p>
-                            ) : (
-                                <Select
-                                    options={countryOptions}
-                                    value={countryOptions.find(c => c.label === settings?.profile?.location)}
-                                    onChange={(selectedOption) => {
-                                        // Store the selected country in a temporary state
-                                        document.getElementById('location-select-value').value = selectedOption?.label || '';
-                                    }}
-                                    styles={customSelectStyles}
-                                    placeholder="Select country..."
-                                    isClearable
-                                    isSearchable
-                                    className="text-sm"
-                                />
-                            )}
+                            <div className="flex items-center gap-3">
+                                <p className="text-sm text-left text-gray-600 font-light w-[140px]">Location</p>
+                                <span className="text-sm text-gray-600 font-light">:</span>
+                                {editingField !== 'location' ? (
+                                    <p className="text-sm text-gray-700 font-light truncate">{settings?.profile?.location || <span className="text-gray-400">Not set</span>}</p>
+                                ) : (
+                                    <div className="flex-1">
+                                        <Select
+                                            options={countryOptions}
+                                            value={countryOptions.find(c => c.label === settings?.profile?.location)}
+                                            onChange={(selectedOption) => {
+                                                // Store the selected country in a temporary state
+                                                document.getElementById('location-select-value').value = selectedOption?.label || '';
+                                            }}
+                                            styles={customSelectStyles}
+                                            placeholder="Select country..."
+                                            isClearable
+                                            isSearchable
+                                            className="text-sm"
+                                        />
+                                    </div>
+                                )}
+                            </div>
                             <input type="hidden" id="location-select-value" defaultValue={settings?.profile?.location} />
                         </div>
                         <div className="flex items-center gap-1 ml-2">
@@ -536,16 +580,17 @@ function ProfileSection({ settings, onUpdate }) {
             {/* Bio - Full Width */}
             <div className="p-3 bg-white border border-gray-100 rounded-lg">
                 <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                        <p className="text-xs text-gray-500 mb-1 font-light">Bio</p>
+                    <div className="flex items-start flex-1 gap-3">
+                        <p className="text-sm text-left text-gray-600 font-light w-[140px]">Bio</p>
+                        <span className="text-sm text-gray-600 font-light">:</span>
                         {editingField !== 'bio' ? (
-                            <p className="text-sm text-gray-700 font-light">{settings?.profile?.bio || <span className="text-gray-400">Not set</span>}</p>
+                            <p className="text-sm text-gray-700 font-light flex-1">{settings?.profile?.bio || <span className="text-gray-400">Not set</span>}</p>
                         ) : (
                             <textarea
                                 defaultValue={settings?.profile?.bio}
                                 id="bio-input"
                                 rows="2"
-                                className="w-full px-2 py-1 text-sm rounded border border-gray-200 focus:border-green-600 focus:outline-none font-light resize-none"
+                                className="flex-1 px-2 py-1 text-sm rounded border border-gray-200 focus:border-green-600 focus:outline-none font-light resize-none"
                                 autoFocus
                             />
                         )}
@@ -581,20 +626,27 @@ function ProfileSection({ settings, onUpdate }) {
             {/* Timezone - Single Card */}
             <div className="p-3 bg-white border border-gray-100 rounded-lg">
                 <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                        <p className="text-xs text-gray-500 mb-1 font-light">Timezone</p>
-                        {editingField !== 'timezone' ? (
-                            <p className="text-sm text-gray-700 font-light">{settings?.profile?.timezone || <span className="text-gray-400">Not set</span>}</p>
-                        ) : (
-                            <input
-                                type="text"
-                                defaultValue={settings?.profile?.timezone}
-                                id="timezone-input"
-                                placeholder="e.g., EST, PST, IST"
-                                className="w-full px-2 py-1 text-sm rounded border border-gray-200 focus:border-green-600 focus:outline-none font-light"
-                                autoFocus
-                            />
-                        )}
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3">
+                            <p className="text-sm text-left text-gray-600 font-light w-[140px]">Timezone</p>
+                            <span className="text-sm text-gray-600 font-light">:</span>
+                            {editingField !== 'timezone' ? (
+                                <p className="text-sm text-gray-700 font-light">{settings?.profile?.timezone || <span className="text-gray-400">Not set</span>}</p>
+                            ) : (
+                                <div className="flex-1">
+                                    <TimezoneSelect
+                                        value={settings?.profile?.timezone || ''}
+                                        onChange={(tz) => {
+                                            // Store the timezone value (e.g., "America/New_York")
+                                            document.getElementById('timezone-select-value').value = typeof tz === 'string' ? tz : tz.value;
+                                        }}
+                                        styles={customSelectStyles}
+                                        placeholder="Select timezone..."
+                                    />
+                                </div>
+                            )}
+                        </div>
+                        <input type="hidden" id="timezone-select-value" defaultValue={settings?.profile?.timezone} />
                     </div>
                     <div className="flex items-center gap-1 ml-2">
                         {editingField !== 'timezone' ? (
@@ -605,7 +657,8 @@ function ProfileSection({ settings, onUpdate }) {
                             <>
                                 <button
                                     onClick={() => {
-                                        updateField('timezone', document.getElementById('timezone-input').value);
+                                        const value = document.getElementById('timezone-select-value').value;
+                                        updateField('timezone', value);
                                         setEditingField(null);
                                     }}
                                     className="p-1 text-green-600 hover:bg-green-50 rounded transition cursor-pointer"

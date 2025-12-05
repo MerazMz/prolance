@@ -3,11 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { useAuth } from '../context/AuthContext';
 import Particles from '../components/ui/background';
-import signupIllustration from '/Users/merazmz/.gemini/antigravity/brain/7061ae7a-858c-4d50-933d-134f8598748a/signup_illustration_1764590349002.png';
+import signupIllustration from '../assets/signup_illustration_1764590349002.png';
 
 export default function Signup() {
     const [name, setName] = useState('');
-    const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [role, setRole] = useState('freelancer');
@@ -22,22 +21,8 @@ export default function Signup() {
         setIsLoading(true);
 
         // Basic validation
-        if (!name || !username || !email || !password) {
+        if (!name || !email || !password) {
             setError('Please fill in all fields');
-            setIsLoading(false);
-            return;
-        }
-
-        // Validate username format
-        if (!/^[a-z0-9_-]+$/.test(username)) {
-            setError('Username can only contain lowercase letters, numbers, hyphens, and underscores');
-            setIsLoading(false);
-            return;
-        }
-
-        // Validate username length
-        if (username.length < 3 || username.length > 20) {
-            setError('Username must be between 3 and 20 characters');
             setIsLoading(false);
             return;
         }
@@ -48,7 +33,7 @@ export default function Signup() {
             return;
         }
 
-        const result = await signup(name, email, password, role, username);
+        const result = await signup(name, email, password, role);
 
         if (result.success) {
             // Redirect to login page after successful signup
@@ -134,22 +119,9 @@ export default function Signup() {
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
                                 className="w-full px-4 py-2.5 text-sm rounded-lg border border-gray-200 focus:border-green-600 focus:outline-none transition-all font-light text-gray-700"
-                                placeholder="User Name"
+                                placeholder="Full Name"
                                 disabled={isLoading}
                             />
-                        </div>
-
-                        {/* Username Input */}
-                        <div>
-                            <input
-                                type="text"
-                                value={username}
-                                onChange={(e) => setUsername(e.target.value.toLowerCase())}
-                                className="w-full px-4 py-2.5 text-sm rounded-lg border border-gray-200 focus:border-green-600 focus:outline-none transition-all font-light text-gray-700"
-                                placeholder="username (lowercase, letters, numbers, _ or -)"
-                                disabled={isLoading}
-                            />
-                            <p className="text-xs text-gray-400 mt-1 font-light">3-20 characters, lowercase only</p>
                         </div>
 
                         {/* Email Input */}
