@@ -155,16 +155,21 @@ export default function MyProjects() {
                         <div>
                             <h1 className="text-3xl font-light text-gray-700 mb-2">My Projects</h1>
                             <p className="text-sm text-gray-500 font-light">
-                                Manage and track your posted projects
+                                {user?.role === 'freelancer'
+                                    ? 'View and manage your assigned projects'
+                                    : 'Manage and track your projects'}
                             </p>
                         </div>
-                        <Link
-                            to="/post-project"
-                            className="flex items-center gap-2 px-4 py-2.5 text-sm text-white bg-green-600 rounded-lg hover:bg-green-700 transition font-light"
-                        >
-                            <HiOutlinePlus size={16} />
-                            New Project
-                        </Link>
+                        {/* Only show New Project button for clients and both roles */}
+                        {(user?.role === 'client' || user?.role === 'both') && (
+                            <Link
+                                to="/post-project"
+                                className="flex items-center gap-2 px-4 py-2.5 text-sm text-white bg-green-600 rounded-lg hover:bg-green-700 transition font-light"
+                            >
+                                <HiOutlinePlus size={16} />
+                                New Project
+                            </Link>
+                        )}
                     </div>
 
                     {/* Stats Grid */}
@@ -190,21 +195,24 @@ export default function MyProjects() {
                     {/* Role Filter Tabs */}
                     <div className="flex gap-2 mb-4 overflow-x-auto">
                         {[
-                            { key: 'all', label: 'All Projects' },
-                            { key: 'client', label: 'My Posted Projects' },
-                            { key: 'freelancer', label: 'Assigned to Me' }
-                        ].map(tab => (
-                            <button
-                                key={tab.key}
-                                onClick={() => setRoleFilter(tab.key)}
-                                className={`px-4 py-2 text-sm rounded-lg transition whitespace-nowrap font-light ${roleFilter === tab.key
-                                    ? 'bg-green-600 text-white'
-                                    : 'text-gray-600 hover:bg-gray-50 border border-gray-200'
-                                    }`}
-                            >
-                                {tab.label}
-                            </button>
-                        ))}
+                            { key: 'all', label: 'All Projects', roles: ['client', 'freelancer', 'both'] },
+                            { key: 'client', label: 'My Posted Projects', roles: ['client', 'both'] },
+                            { key: 'freelancer', label: 'Assigned to Me', roles: ['freelancer', 'both'] }
+                        ]
+                            .filter(tab => tab.roles.includes(user?.role))
+                            .map(tab => (
+                                <button
+                                    key={tab.key}
+                                    onClick={() => setRoleFilter(tab.key)}
+                                    className={`px-4 py-2 text-sm rounded-lg transition whitespace-nowrap font-light ${roleFilter === tab.key
+                                        ? 'bg-green-600 text-white'
+                                        : 'text-gray-600 hover:bg-gray-50 border border-gray-200'
+                                        }`}
+                                >
+                                    {tab.label}
+                                </button>
+                            ))
+                        }
                     </div>
 
                     {/* Filter Tabs */}

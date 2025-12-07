@@ -104,9 +104,9 @@ function App() {
           <Route
             path="/my-projects"
             element={
-              <ClientRoute>
+              <ProtectedRoute>
                 <MyProjects />
-              </ClientRoute>
+              </ProtectedRoute>
             }
           />
           <Route

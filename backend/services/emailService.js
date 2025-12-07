@@ -1,24 +1,42 @@
 const nodemailer = require('nodemailer');
 
-// Create transporter
+// Create transporter with optimized settings for cloud deployment
 const transporter = nodemailer.createTransport({
     host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-    port: process.env.EMAIL_PORT || 587,
+    port: parseInt(process.env.EMAIL_PORT) || 587,
     secure: false, // true for 465, false for other ports
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
-    }
+    },
+    // Add timeout and connection settings for cloud environments
+    connectionTimeout: 10000, // 10 seconds
+    greetingTimeout: 10000,
+    socketTimeout: 15000, // 15 seconds
+    // Connection pool settings
+    pool: true,
+    maxConnections: 5,
+    maxMessages: 10,
+    // TLS options
+    tls: {
+        rejectUnauthorized: true,
+        minVersion: 'TLSv1.2'
+    },
+    // Debug logs (remove in production)
+    logger: process.env.NODE_ENV !== 'production',
+    debug: process.env.NODE_ENV !== 'production'
 });
 
-// Verify transporter configuration
-transporter.verify((error, success) => {
-    if (error) {
-        console.log('Email server connection error:', error);
-    } else {
-        console.log('Email server is ready to send messages');
-    }
-});
+// Verify transporter configuration (skip in production to avoid startup delays)
+if (process.env.NODE_ENV !== 'production') {
+    transporter.verify((error, success) => {
+        if (error) {
+            console.log('Email server connection error:', error);
+        } else {
+            console.log('Email server is ready to send messages');
+        }
+    });
+}
 
 // Send OTP email
 const sendOTPEmail = async (email, name, otp) => {
