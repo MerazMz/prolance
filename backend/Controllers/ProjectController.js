@@ -800,7 +800,11 @@ const submitWork = async (req, res) => {
 
         // Only assigned freelancer can submit
         if (!project.assignedFreelancerId ||
+<<<<<<< HEAD
             project.assignedFreelancerId._id.toString() !== userId.toString()) {
+=======
+            project.assignedFreelancerId.toString() !== userId.toString()) {
+>>>>>>> 14bd1ae (feat: project timeline and other minor changes)
             return res.status(403).json({
                 message: 'Only assigned freelancer can submit work',
                 success: false
@@ -891,7 +895,11 @@ const acceptProject = async (req, res) => {
         }
 
         // Only client can accept
+<<<<<<< HEAD
         if (project.clientId._id.toString() !== userId.toString()) {
+=======
+        if (project.clientId.toString() !== userId.toString()) {
+>>>>>>> 14bd1ae (feat: project timeline and other minor changes)
             return res.status(403).json({
                 message: 'Only the project client can accept and close the project',
                 success: false
@@ -963,6 +971,7 @@ const acceptProject = async (req, res) => {
     }
 };
 
+<<<<<<< HEAD
 // Client requests review/changes on completed work
 const requestReview = async (req, res) => {
     try {
@@ -1050,6 +1059,8 @@ const requestReview = async (req, res) => {
     }
 };
 
+=======
+>>>>>>> 14bd1ae (feat: project timeline and other minor changes)
 module.exports = {
     createProject,
     getAllProjects,
@@ -1061,7 +1072,10 @@ module.exports = {
     updateWorkStatus,
     submitWork,
     acceptProject,
+<<<<<<< HEAD
     requestReview,
+=======
+>>>>>>> 14bd1ae (feat: project timeline and other minor changes)
     addMilestone,
     updateMilestone,
     addDeliverable,
