@@ -215,8 +215,8 @@ export default function Navbar() {
           </Link>
         )}
 
-        {/* MY PROJECTS - Only show for clients and both roles */}
-        {isAuthenticated && (user?.role === 'client' || user?.role === 'both') && (
+        {/* MY PROJECTS - Show for all authenticated users */}
+        {isAuthenticated && (
           <Link
             to="/my-projects"
             className={`flex items-center gap-1.5 hover:text-green-600 transition cursor-pointer ${isActive('/my-projects') ? 'text-green-600' : ''
