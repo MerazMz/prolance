@@ -12,10 +12,6 @@ const {
     updateWorkStatus,
     submitWork,
     acceptProject,
-<<<<<<< HEAD
-    requestReview,
-=======
->>>>>>> 14bd1ae (feat: project timeline and other minor changes)
     addMilestone,
     updateMilestone,
     addDeliverable,
@@ -39,10 +35,6 @@ router.get('/:id/workspace', ensureAuthenticated, getProjectWorkspace);
 router.patch('/:id/work-status', ensureAuthenticated, updateWorkStatus);
 router.post('/:id/submit-work', ensureAuthenticated, submitWork);
 router.post('/:id/accept-project', ensureAuthenticated, acceptProject);
-<<<<<<< HEAD
-router.post('/:id/request-review', ensureAuthenticated, requestReview);
-=======
->>>>>>> 14bd1ae (feat: project timeline and other minor changes)
 router.post('/:id/milestones', ensureAuthenticated, addMilestone);
 router.patch('/:id/milestones/:milestoneId', ensureAuthenticated, updateMilestone);
 router.post('/:id/deliverables', ensureAuthenticated, addDeliverable);

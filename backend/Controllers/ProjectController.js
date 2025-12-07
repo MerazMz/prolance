@@ -731,6 +731,68 @@ const deleteDeliverable = async (req, res) => {
     }
 };
 
+// Delete a deliverable
+const deleteDeliverable = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { id, deliverableId } = req.params;
+
+        const project = await ProjectModel.findById(id);
+
+        if (!project) {
+            return res.status(404).json({
+                message: 'Project not found',
+                success: false
+            });
+        }
+
+        // Only assigned freelancer can delete deliverables
+        if (!project.assignedFreelancerId ||
+            project.assignedFreelancerId.toString() !== userId.toString()) {
+            return res.status(403).json({
+                message: 'Only assigned freelancer can delete deliverables',
+                success: false
+            });
+        }
+
+        // Find and remove the deliverable
+        const deliverableIndex = project.deliverables.findIndex(
+            d => d._id.toString() === deliverableId
+        );
+
+        if (deliverableIndex === -1) {
+            return res.status(404).json({
+                message: 'Deliverable not found',
+                success: false
+            });
+        }
+
+        project.deliverables.splice(deliverableIndex, 1);
+        await project.save();
+
+        // Emit Socket.io event
+        const io = req.app.get('io');
+        if (io) {
+            io.to(`project:${id}`).emit('deliverable-deleted', {
+                projectId: id,
+                deliverableId
+            });
+        }
+
+        res.status(200).json({
+            message: 'Deliverable deleted successfully',
+            success: true,
+            project
+        });
+    } catch (err) {
+        res.status(500).json({
+            message: 'Internal server error',
+            success: false,
+            error: err.message
+        });
+    }
+};
+
 // Update progress percentage
 const updateProgress = async (req, res) => {
     try {
@@ -800,11 +862,7 @@ const submitWork = async (req, res) => {
 
         // Only assigned freelancer can submit
         if (!project.assignedFreelancerId ||
-<<<<<<< HEAD
             project.assignedFreelancerId._id.toString() !== userId.toString()) {
-=======
-            project.assignedFreelancerId.toString() !== userId.toString()) {
->>>>>>> 14bd1ae (feat: project timeline and other minor changes)
             return res.status(403).json({
                 message: 'Only assigned freelancer can submit work',
                 success: false
@@ -895,11 +953,7 @@ const acceptProject = async (req, res) => {
         }
 
         // Only client can accept
-<<<<<<< HEAD
         if (project.clientId._id.toString() !== userId.toString()) {
-=======
-        if (project.clientId.toString() !== userId.toString()) {
->>>>>>> 14bd1ae (feat: project timeline and other minor changes)
             return res.status(403).json({
                 message: 'Only the project client can accept and close the project',
                 success: false
@@ -971,7 +1025,6 @@ const acceptProject = async (req, res) => {
     }
 };
 
-<<<<<<< HEAD
 // Client requests review/changes on completed work
 const requestReview = async (req, res) => {
     try {
@@ -1059,8 +1112,6 @@ const requestReview = async (req, res) => {
     }
 };
 
-=======
->>>>>>> 14bd1ae (feat: project timeline and other minor changes)
 module.exports = {
     createProject,
     getAllProjects,
@@ -1072,13 +1123,11 @@ module.exports = {
     updateWorkStatus,
     submitWork,
     acceptProject,
-<<<<<<< HEAD
     requestReview,
-=======
->>>>>>> 14bd1ae (feat: project timeline and other minor changes)
     addMilestone,
     updateMilestone,
     addDeliverable,
+    deleteDeliverable,
     deleteDeliverable,
     addWorkNote,
     updateProgress
