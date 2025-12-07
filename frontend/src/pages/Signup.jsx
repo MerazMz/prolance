@@ -271,7 +271,7 @@ export default function Signup() {
                             onClick={handleGithubLogin}
                             disabled={isLoading}
                             type="button"
-                            className="w-full flex items-center justify-center gap-3 px-4 py-2.5 text-sm font-light rounded-lg border border-gray-200 hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="hidden w-full flex items-center justify-center gap-3 px-4 py-2.5 text-sm font-light rounded-lg border border-gray-200 hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                 <path

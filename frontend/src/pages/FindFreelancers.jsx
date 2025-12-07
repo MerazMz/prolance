@@ -313,7 +313,7 @@ export default function FindFreelancers() {
                                                 >
                                                     <div className="flex items-center justify-center gap-1 mb-1">
                                                         <span className="text-xs font-light text-gray-700 group-hover:text-green-700 group-hover:font-normal transition-all duration-300">
-                                                            ₹{freelancer.hourlyRate || 0}/hr
+                                                            ₹{freelancer.hourlyCharges || 0}/hr
                                                         </span>
                                                     </div>
                                                 </motion.div>

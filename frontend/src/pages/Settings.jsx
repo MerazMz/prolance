@@ -331,7 +331,12 @@ function ProfileSection({ settings, onUpdate }) {
             <div className="p-4 bg-gray-50 border border-gray-100 rounded-lg">
                 <div className="flex items-center gap-4">
                     {photoPreview ? (
-                        <img src={photoPreview} alt="Profile" className="w-16 h-16 rounded-full object-cover border-2 border-white shadow-sm" />
+                        <img
+                            src={photoPreview}
+                            alt="Profile"
+                            referrerPolicy="no-referrer"
+                            className="w-16 h-16 rounded-full object-cover border-2 border-white shadow-sm"
+                        />
                     ) : (
                         <div className="w-16 h-16 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center">
                             <HiOutlineUser size={24} className="text-gray-400" />
@@ -754,7 +759,7 @@ function SkillsSection({ settings, onUpdate }) {
             const token = localStorage.getItem('authToken');
             const payload = field === 'primarySkills' || field === 'secondarySkills'
                 ? { [field]: value.split(',').map(s => s.trim()).filter(Boolean) }
-                : { [field]: field === 'hourlyRate' ? Number(value) : value };
+                : { [field]: field === 'hourlyCharges' ? Number(value) : value };
 
             await axios.put(`${API_URL}/api/settings/skills`, payload, {
                 headers: { Authorization: token }
@@ -797,12 +802,12 @@ function SkillsSection({ settings, onUpdate }) {
                     placeholder="beginner, intermediate, expert"
                 />
                 <EditableField
-                    label="Hourly Rate (₹)"
-                    value={settings?.skills?.hourlyRate}
+                    label="Hourly Charges (₹)"
+                    value={settings?.skills?.hourlyCharges}
                     type="number"
-                    onSave={(value) => updateField('hourlyRate', value)}
-                    isEditing={editingField === 'hourlyRate'}
-                    onEditToggle={(editing) => setEditingField(editing ? 'hourlyRate' : null)}
+                    onSave={(value) => updateField('hourlyCharges', value)}
+                    isEditing={editingField === 'hourlyCharges'}
+                    onEditToggle={(editing) => setEditingField(editing ? 'hourlyCharges' : null)}
                     placeholder="1500"
                 />
             </div>

@@ -308,6 +308,7 @@ export default function Navbar() {
                                 <img
                                   src={app.freelancerId.avatar}
                                   alt={app.freelancerId.name}
+                                  referrerPolicy="no-referrer"
                                   className="w-10 h-10 rounded-full object-cover border border-gray-200 flex-shrink-0"
                                 />
                               ) : (
@@ -405,6 +406,7 @@ export default function Navbar() {
                   <img
                     src={userProfile.profile.avatar}
                     alt="Profile"
+                    referrerPolicy="no-referrer"
                     className="w-7 h-7 rounded-full object-cover border border-gray-200"
                   />
                 ) : (

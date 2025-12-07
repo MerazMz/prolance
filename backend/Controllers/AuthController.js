@@ -133,8 +133,14 @@ const firebaseAuth = async (req, res) => {
             // Update firebaseUid if not already set
             if (!user.firebaseUid) {
                 user.firebaseUid = firebaseUid;
-                await user.save();
             }
+
+            // Set avatar from Google photoURL if user doesn't have one
+            if (!user.avatar && photoURL) {
+                user.avatar = photoURL;
+            }
+
+            await user.save();
 
             // Generate JWT token for existing user
             const jwtToken = jwt.sign(
@@ -186,6 +192,7 @@ const firebaseAuth = async (req, res) => {
                 username,
                 firebaseUid,
                 photoURL,
+                avatar: photoURL || '', // Set avatar from Google photoURL
                 role: 'freelancer', // Default role
                 password: await bcrypt.hash(Math.random().toString(36), 10) // Random password for Firebase users
             });
@@ -219,8 +226,63 @@ const firebaseAuth = async (req, res) => {
     }
 }
 
+// Update user role (for new Google users)
+const updateRole = async (req, res) => {
+    try {
+        console.log('Update role request received');
+        console.log('User from token:', req.user);
+        console.log('Request body:', req.body);
+
+        const userId = req.user._id;
+        const { role } = req.body;
+
+        if (!role || !['freelancer', 'client', 'both'].includes(role)) {
+            console.log('Invalid role:', role);
+            return res.status(400).json({
+                message: 'Valid role is required',
+                success: false
+            });
+        }
+
+        const user = await UserModel.findById(userId);
+        if (!user) {
+            console.log('User not found:', userId);
+            return res.status(404).json({
+                message: 'User not found',
+                success: false
+            });
+        }
+
+        console.log('Updating user role from', user.role, 'to', role);
+        user.role = role;
+        await user.save();
+
+        console.log('Role updated successfully');
+        res.status(200).json({
+            message: 'Role updated successfully',
+            success: true,
+            user: {
+                userId: user._id,
+                name: user.name,
+                email: user.email,
+                username: user.username,
+                role: user.role
+            }
+        });
+    } catch (err) {
+        console.error('Update role error:', err);
+        console.error('Error stack:', err.stack);
+        res.status(500).json({
+            message: "Internal server error",
+            success: false,
+            error: err.message
+        });
+    }
+}
+
 module.exports = {
     signup,
     login,
-    firebaseAuth
+    firebaseAuth,
+    updateRole
 }

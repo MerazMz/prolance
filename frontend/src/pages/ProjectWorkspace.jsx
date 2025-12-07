@@ -11,7 +11,8 @@ import {
     HiOutlineDocumentText,
     HiOutlineDownload,
     HiOutlineChevronRight,
-    HiOutlineCheck
+    HiOutlineCheck,
+    HiOutlineReply
 } from 'react-icons/hi';
 import Timeline from '@mui/lab/Timeline';
 import TimelineItem from '@mui/lab/TimelineItem';
@@ -41,9 +42,15 @@ export default function ProjectWorkspace() {
     const [userRole, setUserRole] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [submitting, setSubmitting] = useState(false);
 
     // Modals
     const [showDeliverableModal, setShowDeliverableModal] = useState(false);
+    const [showRollbackConfirm, setShowRollbackConfirm] = useState(false);
+    const [pendingRollbackPhase, setPendingRollbackPhase] = useState(null);
+    const [showSubmitModal, setShowSubmitModal] = useState(false);
+    const [showAcceptModal, setShowAcceptModal] = useState(false);
+    const [acceptingProject, setAcceptingProject] = useState(false);
 
     // Form states
     const [deliverableForm, setDeliverableForm] = useState({ title: '', description: '', fileUrl: '' });
@@ -97,29 +104,113 @@ export default function ProjectWorkspace() {
         }
     };
 
-    const updateWorkStatus = async (newStatus) => {
-        // Update local state immediately for instant feedback
-        const newPhaseEntry = {
-            phase: newStatus,
-            completedAt: new Date().toISOString()
-        };
-        setProject(prev => ({
-            ...prev,
-            workStatus: newStatus,
-            phaseHistory: [...(prev.phaseHistory || []), newPhaseEntry]
-        }));
+    const updateWorkStatus = async (newStatus, isRollback = false) => {
+        if (isRollback) {
+            // For rollback, update the phase history to only include phases up to the selected one
+            const newPhaseIndex = WORK_PHASES.findIndex(p => p.key === newStatus);
+            const updatedHistory = (project.phaseHistory || []).filter((entry, index) => {
+                const entryPhaseIndex = WORK_PHASES.findIndex(p => p.key === entry.phase);
+                return entryPhaseIndex <= newPhaseIndex;
+            });
+
+            setProject(prev => ({
+                ...prev,
+                workStatus: newStatus,
+                phaseHistory: updatedHistory
+            }));
+        } else {
+            // Forward progress - add new phase entry
+            const newPhaseEntry = {
+                phase: newStatus,
+                completedAt: new Date().toISOString()
+            };
+            setProject(prev => ({
+                ...prev,
+                workStatus: newStatus,
+                phaseHistory: [...(prev.phaseHistory || []), newPhaseEntry]
+            }));
+        }
 
         try {
             const token = localStorage.getItem('authToken');
             await axios.patch(
                 `${API_BASE_URL}/api/projects/${id}/work-status`,
-                { workStatus: newStatus },
+                { workStatus: newStatus, isRollback },
                 { headers: { Authorization: token } }
             );
         } catch (err) {
             console.error('Error updating status:', err);
             // Revert on error
             fetchWorkspace();
+        }
+    };
+
+    const handlePhaseClick = (phase, index) => {
+        const isRollback = index < currentPhaseIndex;
+
+        if (isRollback) {
+            // Show confirmation dialog for rolling back
+            setPendingRollbackPhase({ phase, index });
+            setShowRollbackConfirm(true);
+        } else {
+            // Allow forward progression
+            updateWorkStatus(phase.key, false);
+        }
+    };
+
+    const confirmRollback = () => {
+        if (pendingRollbackPhase) {
+            updateWorkStatus(pendingRollbackPhase.phase.key, true);
+        }
+        setShowRollbackConfirm(false);
+        setPendingRollbackPhase(null);
+    };
+
+    const handlePhaseClickWithValidation = (phase, index) => {
+        // Check if trying to mark as completed without deliverables
+        if (phase.key === 'completed' && (!project.deliverables || project.deliverables.length === 0)) {
+            setError('Please add at least one deliverable before marking the project as completed');
+            setTimeout(() => setError(''), 5000);
+            return;
+        }
+        handlePhaseClick(phase, index);
+    };
+
+    const handleSubmitWork = async () => {
+        setSubmitting(true);
+        try {
+            const token = localStorage.getItem('authToken');
+            await axios.post(
+                `${API_BASE_URL}/api/projects/${id}/submit-work`,
+                {},
+                { headers: { Authorization: token } }
+            );
+            setShowSubmitModal(false);
+            fetchWorkspace(); // Refresh to show updated status
+        } catch (err) {
+            console.error('Error submitting work:', err);
+            setError(err.response?.data?.message || 'Failed to submit work');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleAcceptProject = async () => {
+        setAcceptingProject(true);
+        try {
+            const token = localStorage.getItem('authToken');
+            await axios.post(
+                `${API_BASE_URL}/api/projects/${id}/accept-project`,
+                {},
+                { headers: { Authorization: token } }
+            );
+            setShowAcceptModal(false);
+            fetchWorkspace(); // Refresh to show updated status
+        } catch (err) {
+            console.error('Error accepting project:', err);
+            setError(err.response?.data?.message || 'Failed to accept project');
+        } finally {
+            setAcceptingProject(false);
         }
     };
 
@@ -134,6 +225,10 @@ export default function ProjectWorkspace() {
             );
             setShowDeliverableModal(false);
             setDeliverableForm({ title: '', description: '', fileUrl: '' });
+            // Clear error if it was about missing deliverables
+            if (error.includes('deliverable')) {
+                setError('');
+            }
         } catch (err) {
             console.error('Error adding deliverable:', err);
         }
@@ -216,6 +311,17 @@ export default function ProjectWorkspace() {
                     </button>
                 </div>
 
+                {/* Error Banner */}
+                {error && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm font-light"
+                    >
+                        {error}
+                    </motion.div>
+                )}
+
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                     {/* MUI Timeline - Progress Tracker */}
                     <motion.div
@@ -243,7 +349,7 @@ export default function ProjectWorkspace() {
                                                 color: isCompleted ? '#10B981' : '#9CA3AF'
                                             }}
                                         >
-                                            {phaseEntry ? formatDateTime(phaseEntry.completedAt) : ''}
+                                            {/* {phaseEntry ? formatDateTime(phaseEntry.completedAt) : ''} */}
                                         </TimelineOppositeContent>
                                         <TimelineSeparator>
                                             <TimelineDot
@@ -310,9 +416,9 @@ export default function ProjectWorkspace() {
                                             className="p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition"
                                         >
                                             <div className="flex items-start justify-between">
-                                                <div className="flex items-start gap-3">
+                                                <div className="flex items-start gap-3 flex-1">
                                                     <HiOutlineDocumentText className="text-gray-400 flex-shrink-0 mt-1" size={20} />
-                                                    <div>
+                                                    <div className="flex-1">
                                                         <h3 className="text-sm font-medium text-gray-800">{deliverable.title}</h3>
                                                         {deliverable.description && (
                                                             <p className="text-sm text-gray-600 font-light mt-1">{deliverable.description}</p>
@@ -342,6 +448,22 @@ export default function ProjectWorkspace() {
                                     No deliverables yet. {isFreelancer && 'Upload files for client review.'}
                                 </p>
                             )}
+
+                            {/* Client: Accept & Close Project Button */}
+                            {!isFreelancer && project.status === 'completed' && project.deliverables?.length > 0 && (
+                                <div className="mt-6 pt-6 border-t border-gray-100">
+                                    <button
+                                        onClick={() => setShowAcceptModal(true)}
+                                        className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-light py-3 px-4 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-sm flex items-center justify-center gap-2"
+                                    >
+                                        <HiOutlineCheck size={20} />
+                                        Accept Deliverables & Close Project
+                                    </button>
+                                    <p className="text-xs text-gray-500 font-light mt-2 text-center">
+                                        This will finalize the project and mark it as successfully completed
+                                    </p>
+                                </div>
+                            )}
                         </motion.div>
 
                         {/* Status Selector - Vertical Checkboxes (Freelancer Only) */}
@@ -350,51 +472,82 @@ export default function ProjectWorkspace() {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.1 }}
-                                className="bg-white rounded-lg border border-gray-200 p-6"
+                                className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm"
                             >
-                                <h2 className="text-lg font-light text-gray-800 mb-4">Update Project Status</h2>
+                                <div className="mb-5">
+                                    <h2 className="text-lg font-light text-gray-800">Update Project Status</h2>
+                                    <p className="text-xs text-gray-500 font-light mt-1">Track your progress through each phase</p>
+                                </div>
 
-                                <div className="space-y-3">
+                                <div className="space-y-2">
                                     {WORK_PHASES.map((phase, index) => {
                                         const isCompleted = index <= currentPhaseIndex;
-                                        const isLocked = index < currentPhaseIndex; // Can't go backwards
-                                        const canSelect = !isLocked;
+                                        const isCurrent = index === currentPhaseIndex;
+                                        const canRollback = index < currentPhaseIndex;
 
                                         return (
                                             <button
                                                 key={phase.key}
-                                                onClick={() => canSelect && updateWorkStatus(phase.key)}
-                                                disabled={isLocked}
-                                                className={`w-full flex items-center gap-3 p-3 rounded-lg border transition ${isCompleted
-                                                    ? 'bg-green-50 border-green-200'
-                                                    : 'bg-white border-gray-200 hover:bg-gray-50'
-                                                    } ${isLocked ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
+                                                onClick={() => handlePhaseClickWithValidation(phase, index)}
+                                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border transition-all duration-200 ${isCurrent
+                                                    ? 'bg-gradient-to-r from-green-50 to-green-50/50 border-green-200 shadow-sm'
+                                                    : isCompleted
+                                                        ? 'bg-green-50/40 border-green-100 hover:bg-green-50/60'
+                                                        : 'bg-white border-gray-100 hover:bg-gray-50 hover:border-gray-200'
+                                                    } cursor-pointer group`}
                                             >
                                                 {/* Radix UI Checkbox */}
                                                 <Checkbox
                                                     checked={isCompleted}
-                                                    disabled={isLocked}
                                                     className="pointer-events-none"
                                                 />
 
                                                 {/* Label */}
                                                 <div className="flex-1 text-left">
-                                                    <p className={`text-sm font-medium ${isCompleted ? 'text-green-700' : 'text-gray-700'
+                                                    <p className={`text-sm font-medium ${isCurrent ? 'text-green-800' : isCompleted ? 'text-green-700' : 'text-gray-700'
                                                         }`}>
                                                         {phase.label}
                                                     </p>
-                                                    {isLocked && (
-                                                        <p className="text-xs text-gray-500 font-light">Locked</p>
+                                                    {isCurrent && (
+                                                        <p className="text-xs text-green-600 font-light">Current phase</p>
                                                     )}
                                                 </div>
+
+                                                {/* Undo Icon for Rollback */}
+                                                {canRollback && (
+                                                    <HiOutlineReply
+                                                        size={20}
+                                                        className="text-red-500 flex-shrink-0"
+                                                        title="Step back"
+                                                    />
+                                                )}
                                             </button>
                                         );
                                     })}
                                 </div>
 
-                                <p className="text-xs text-gray-500 font-light mt-4">
-                                    ℹ️ Once you mark a phase as complete, you cannot go back to previous phases.
-                                </p>
+                                <div className="mt-5 pt-4 border-t border-gray-100">
+                                    <p className="text-xs text-gray-500 font-light flex items-start gap-2">
+                                        <span className="text-gray-400">💡</span>
+                                        <span>Click on any previous phase to roll back the project status</span>
+                                    </p>
+                                </div>
+
+                                {/* Submit Work Button - Only show when completed with deliverables */}
+                                {project.workStatus === 'completed' && project.deliverables?.length > 0 && project.status !== 'completed' && (
+                                    <div className="mt-5">
+                                        <button
+                                            onClick={() => setShowSubmitModal(true)}
+                                            className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white font-light py-3 px-4 rounded-lg hover:from-green-700 hover:to-green-800 transition-all shadow-sm flex items-center justify-center gap-2"
+                                        >
+                                            <HiOutlineCheck size={20} />
+                                            Submit Work to Client
+                                        </button>
+                                        <p className="text-xs text-gray-500 font-light mt-2 text-center">
+                                            Finalize and submit your work for client review
+                                        </p>
+                                    </div>
+                                )}
                             </motion.div>
                         )}
                     </div>
@@ -489,6 +642,126 @@ export default function ProjectWorkspace() {
                                 </button>
                             </div>
                         </form>
+                    </motion.div>
+                </div>
+            )}
+
+            {/* Rollback Confirmation Modal */}
+            {showRollbackConfirm && pendingRollbackPhase && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-white rounded-lg max-w-md w-full p-6"
+                    >
+                        <h3 className="text-lg font-light text-gray-800 mb-3">Confirm Status Rollback</h3>
+                        <p className="text-sm text-gray-600 font-light mb-6">
+                            Are you sure you want to step back to <strong>{pendingRollbackPhase.phase.label}</strong>?
+                            This will remove all progress after this phase.
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => {
+                                    setShowRollbackConfirm(false);
+                                    setPendingRollbackPhase(null);
+                                }}
+                                className="flex-1 px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition font-light"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmRollback}
+                                className="flex-1 px-4 py-2 text-sm text-white bg-orange-600 rounded-lg hover:bg-orange-700 transition font-light"
+                            >
+                                Yes, Roll Back
+                            </button>
+                        </div>
+                    </motion.div>
+                </div>
+            )}
+
+            {/* Submit Work Confirmation Modal */}
+            {showSubmitModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-white rounded-lg max-w-md w-full p-6"
+                    >
+                        <h3 className="text-lg font-light text-gray-800 mb-3">Submit Work to Client</h3>
+                        <p className="text-sm text-gray-600 font-light mb-6">
+                            Are you sure you want to submit this work to the client?
+                            This will mark the project as completed and notify the client for final review.
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowSubmitModal(false)}
+                                disabled={submitting}
+                                className="flex-1 px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition font-light disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSubmitWork}
+                                disabled={submitting}
+                                className="flex-1 px-4 py-2 text-sm text-white bg-green-600 rounded-lg hover:bg-green-700 transition font-light disabled:opacity-50 flex items-center justify-center gap-2"
+                            >
+                                {submitting ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        Submitting...
+                                    </>
+                                ) : (
+                                    <>
+                                        <HiOutlineCheck size={18} />
+                                        Yes, Submit
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </motion.div>
+                </div>
+            )}
+
+            {/* Client: Accept Project Confirmation Modal */}
+            {showAcceptModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-white rounded-lg max-w-md w-full p-6"
+                    >
+                        <h3 className="text-lg font-light text-gray-800 mb-3">Accept & Close Project</h3>
+                        <p className="text-sm text-gray-600 font-light mb-6">
+                            Are you sure you want to accept the deliverables and close this project?
+                            This action will finalize the project and mark it as successfully completed.
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowAcceptModal(false)}
+                                disabled={acceptingProject}
+                                className="flex-1 px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition font-light disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleAcceptProject}
+                                disabled={acceptingProject}
+                                className="flex-1 px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition font-light disabled:opacity-50 flex items-center justify-center gap-2"
+                            >
+                                {acceptingProject ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        Accepting...
+                                    </>
+                                ) : (
+                                    <>
+                                        <HiOutlineCheck size={18} />
+                                        Yes, Accept & Close
+                                    </>
+                                )}
+                            </button>
+                        </div>
                     </motion.div>
                 </div>
             )}

@@ -113,7 +113,7 @@ const getAllProjects = async (req, res) => {
         const skip = (Number(page) - 1) * Number(limit);
 
         const projects = await ProjectModel.find(query)
-            .populate('clientId', 'name avatar rating totalReviews location')
+            .populate('clientId', 'name avatar rating totalReviews location username')
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(Number(limit));
@@ -145,7 +145,7 @@ const getProjectById = async (req, res) => {
         const userId = req.user?._id; // May be undefined for non-authenticated users
 
         const project = await ProjectModel.findById(id)
-            .populate('clientId', 'name avatar rating totalReviews location email');
+            .populate('clientId', 'name avatar rating totalReviews location email username');
 
         if (!project) {
             return res.status(404).json({
@@ -363,7 +363,7 @@ const updateWorkStatus = async (req, res) => {
     try {
         const userId = req.user._id;
         const { id } = req.params;
-        const { workStatus } = req.body;
+        const { workStatus, isRollback } = req.body;
 
         const project = await ProjectModel.findById(id);
 
@@ -383,12 +383,27 @@ const updateWorkStatus = async (req, res) => {
             });
         }
 
-        // Update status and add to phase history
+        // Update status
         project.workStatus = workStatus;
-        project.phaseHistory.push({
-            phase: workStatus,
-            completedAt: new Date()
-        });
+
+        if (isRollback) {
+            // For rollback, remove phases after the selected one
+            const WORK_PHASES = ['planning', 'designing', 'development', 'testing', 'review', 'completed'];
+            const targetPhaseIndex = WORK_PHASES.indexOf(workStatus);
+
+            // Keep only phases up to and including the target phase
+            project.phaseHistory = project.phaseHistory.filter(entry => {
+                const entryPhaseIndex = WORK_PHASES.indexOf(entry.phase);
+                return entryPhaseIndex <= targetPhaseIndex;
+            });
+        } else {
+            // Forward progress - add new phase entry
+            project.phaseHistory.push({
+                phase: workStatus,
+                completedAt: new Date()
+            });
+        }
+
         await project.save();
 
         // Emit Socket.io event with phase history
@@ -402,7 +417,7 @@ const updateWorkStatus = async (req, res) => {
         }
 
         res.status(200).json({
-            message: 'Work status updated successfully',
+            message: isRollback ? 'Status rolled back successfully' : 'Work status updated successfully',
             success: true,
             workStatus: project.workStatus
         });
@@ -704,6 +719,188 @@ const updateProgress = async (req, res) => {
     }
 };
 
+// Submit completed work to client
+const submitWork = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { id } = req.params;
+
+        const project = await ProjectModel.findById(id)
+            .populate('assignedFreelancerId', 'name')
+            .populate('clientId', 'name');
+
+        if (!project) {
+            return res.status(404).json({
+                message: 'Project not found',
+                success: false
+            });
+        }
+
+        // Only assigned freelancer can submit
+        if (!project.assignedFreelancerId ||
+            project.assignedFreelancerId.toString() !== userId.toString()) {
+            return res.status(403).json({
+                message: 'Only assigned freelancer can submit work',
+                success: false
+            });
+        }
+
+        // Validate that work status is completed
+        if (project.workStatus !== 'completed') {
+            return res.status(400).json({
+                message: 'Project work status must be completed before submitting',
+                success: false
+            });
+        }
+
+        // Validate that there's at least one deliverable
+        if (!project.deliverables || project.deliverables.length === 0) {
+            return res.status(400).json({
+                message: 'Please add at least one deliverable before submitting work',
+                success: false
+            });
+        }
+
+        // Mark project as completed
+        project.status = 'completed';
+        await project.save();
+
+        // Create notification for client
+        const clientNotification = {
+            type: 'project_completed',
+            title: 'Work Submitted',
+            message: `${project.assignedFreelancerId.name || 'Freelancer'} has completed and submitted work for "${project.title}"`,
+            projectId: project._id,
+            read: false,
+            createdAt: new Date()
+        };
+
+        // Add notification to client's notifications array in User model
+        await UserModel.findByIdAndUpdate(
+            project.clientId,
+            { $push: { notifications: clientNotification } },
+            { new: true }
+        );
+
+        // Emit Socket.io event
+        const io = req.app.get('io');
+        if (io) {
+            io.to(`project:${id}`).emit('work-submitted', {
+                projectId: id,
+                status: 'completed'
+            });
+            // Send notification to client
+            io.to(`user:${project.clientId}`).emit('new-notification', clientNotification);
+        }
+
+        res.status(200).json({
+            message: 'Work submitted successfully',
+            success: true,
+            project: {
+                id: project._id,
+                status: project.status,
+                workStatus: project.workStatus
+            }
+        });
+    } catch (err) {
+        res.status(500).json({
+            message: 'Internal server error',
+            success: false,
+            error: err.message
+        });
+    }
+};
+
+// Client accepts project and closes it
+const acceptProject = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { id } = req.params;
+
+        const project = await ProjectModel.findById(id)
+            .populate('clientId', 'name')
+            .populate('assignedFreelancerId', 'name');
+
+        if (!project) {
+            return res.status(404).json({
+                message: 'Project not found',
+                success: false
+            });
+        }
+
+        // Only client can accept
+        if (project.clientId.toString() !== userId.toString()) {
+            return res.status(403).json({
+                message: 'Only the project client can accept and close the project',
+                success: false
+            });
+        }
+
+        // Validate project is ready to be accepted
+        if (project.status !== 'completed') {
+            return res.status(400).json({
+                message: 'Project must be completed before accepting',
+                success: false
+            });
+        }
+
+        // Validate deliverables exist
+        if (!project.deliverables || project.deliverables.length === 0) {
+            return res.status(400).json({
+                message: 'No deliverables to accept',
+                success: false
+            });
+        }
+
+        // Mark as closed
+        project.status = 'closed';
+        await project.save();
+
+        // Create notification for freelancer
+        const freelancerNotification = {
+            type: 'project_accepted',
+            title: 'Project Accepted',
+            message: `${project.clientId.name || 'Client'} has accepted your work for "${project.title}" and closed the project`,
+            projectId: project._id,
+            read: false,
+            createdAt: new Date()
+        };
+
+        // Add notification to freelancer's notifications array
+        await UserModel.findByIdAndUpdate(
+            project.assignedFreelancerId,
+            { $push: { notifications: freelancerNotification } },
+            { new: true }
+        );
+
+        // Emit Socket.io event
+        const io = req.app.get('io');
+        if (io) {
+            io.to(`project:${id}`).emit('project-accepted', {
+                projectId: id,
+                status: 'closed'
+            });
+            // Send notification to freelancer
+            io.to(`user:${project.assignedFreelancerId}`).emit('new-notification', freelancerNotification);
+        }
+
+        res.status(200).json({
+            message: 'Project accepted and closed successfully',
+            success: true,
+            project: {
+                id: project._id,
+                status: project.status
+            }
+        });
+    } catch (err) {
+        res.status(500).json({
+            message: 'Internal server error',
+            success: false,
+            error: err.message
+        });
+    }
+};
+
 module.exports = {
     createProject,
     getAllProjects,
@@ -713,6 +910,8 @@ module.exports = {
     deleteProject,
     getProjectWorkspace,
     updateWorkStatus,
+    submitWork,
+    acceptProject,
     addMilestone,
     updateMilestone,
     addDeliverable,

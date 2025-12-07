@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import Particles from '../components/ui/background';
@@ -8,7 +8,56 @@ export default function ForgotPassword() {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [cooldownSeconds, setCooldownSeconds] = useState(0);
+    const [isInCooldown, setIsInCooldown] = useState(false);
     const navigate = useNavigate();
+
+    // Format seconds to display time
+    const formatTime = (seconds) => {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+
+        if (hours > 0) {
+            return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+        return `${minutes}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    // Check for existing cooldown on mount
+    useEffect(() => {
+        if (identifier.trim()) {
+            const cooldownKey = `otp_cooldown_${identifier.trim()}`;
+            const cooldownData = localStorage.getItem(cooldownKey);
+
+            if (cooldownData) {
+                const data = JSON.parse(cooldownData);
+                const now = Date.now();
+                const remaining = Math.ceil((data.nextAllowedTime - now) / 1000);
+
+                if (remaining > 0) {
+                    setCooldownSeconds(remaining);
+                    setIsInCooldown(true);
+                } else {
+                    localStorage.removeItem(cooldownKey);
+                    setIsInCooldown(false);
+                    setCooldownSeconds(0);
+                }
+            }
+        }
+    }, [identifier]);
+
+    // Countdown timer
+    useEffect(() => {
+        if (cooldownSeconds > 0) {
+            const timer = setTimeout(() => {
+                setCooldownSeconds(prev => prev - 1);
+            }, 1000);
+            return () => clearTimeout(timer);
+        } else if (isInCooldown && cooldownSeconds === 0) {
+            setIsInCooldown(false);
+        }
+    }, [cooldownSeconds, isInCooldown]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -20,6 +69,30 @@ export default function ForgotPassword() {
             setError('Please enter your email or username');
             setIsLoading(false);
             return;
+        }
+
+        // Check localStorage for existing cooldown
+        const cooldownKey = `otp_cooldown_${identifier.trim()}`;
+        const cooldownData = localStorage.getItem(cooldownKey);
+
+        if (cooldownData) {
+            const data = JSON.parse(cooldownData);
+            const now = Date.now();
+            const remaining = Math.ceil((data.nextAllowedTime - now) / 1000);
+
+            if (remaining > 0) {
+                // User is still in cooldown
+                setError(`Please wait ${formatTime(remaining)} before requesting another OTP`);
+                setCooldownSeconds(remaining);
+                setIsInCooldown(true);
+                setIsLoading(false);
+                return;
+            } else {
+                // Cooldown expired, clear it
+                localStorage.removeItem(cooldownKey);
+                setIsInCooldown(false);
+                setCooldownSeconds(0);
+            }
         }
 
         try {
@@ -35,18 +108,25 @@ export default function ForgotPassword() {
 
             if (data.success) {
                 setSuccess(data.message);
+
+                // Initialize localStorage cooldown for first request
+                localStorage.setItem(cooldownKey, JSON.stringify({
+                    requestCount: 1,
+                    lastRequestTime: Date.now(),
+                    nextAllowedTime: Date.now() + (60 * 1000) // 60 seconds for first resend
+                }));
+
                 // Navigate to OTP verification page after 2 seconds
                 setTimeout(() => {
                     navigate('/verify-otp', {
                         state: {
                             identifier: identifier.trim(),
-                            email: data.email,
-                            cooldownSeconds: data.cooldownSeconds || 0
+                            email: data.email
                         }
                     });
                 }, 2000);
             } else {
-                // Show rate limit or other error messages
+                // Show error messages
                 setError(data.message || 'Failed to send OTP');
             }
         } catch (err) {
@@ -142,10 +222,10 @@ export default function ForgotPassword() {
 
                         <button
                             type="submit"
-                            disabled={isLoading || success}
+                            disabled={isLoading || success || isInCooldown}
                             className="w-full bg-green-600 text-white font-light py-2.5 text-sm rounded-lg hover:bg-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {isLoading ? 'Sending...' : success ? 'Redirecting...' : 'Send Verification Code'}
+                            {isLoading ? 'Sending...' : success ? 'Redirecting...' : isInCooldown ? `Wait ${formatTime(cooldownSeconds)}` : 'Send Verification Code'}
                         </button>
                     </form>
 

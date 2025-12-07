@@ -96,6 +96,7 @@ export default function UserProfile() {
                                 <img
                                     src={user.avatar}
                                     alt={user.name}
+                                    referrerPolicy="no-referrer"
                                     className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg cursor-pointer"
                                 />
                             ) : (
@@ -298,12 +299,12 @@ export default function UserProfile() {
                         >
                             <h2 className="text-lg font-light text-gray-700 mb-4">Professional Info</h2>
                             <div className="space-y-4">
-                                {user?.hourlyRate > 0 && (
+                                {user?.hourlyCharges > 0 && (
                                     <div className="flex items-center justify-between pb-4 border-b border-gray-100">
-                                        <span className="text-sm text-gray-600 font-light">Hourly Rate</span>
+                                        <span className="text-sm text-gray-600 font-light">Hourly Charges</span>
                                         <div className="flex items-center gap-1 text-green-600">
                                             <HiOutlineCurrencyRupee size={18} />
-                                            <span className="text-lg font-light">{user.hourlyRate}</span>
+                                            <span className="text-lg font-light">{user.hourlyCharges}</span>
                                         </div>
                                     </div>
                                 )}

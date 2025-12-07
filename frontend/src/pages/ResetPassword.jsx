@@ -61,6 +61,11 @@ export default function ResetPassword() {
 
             if (data.success) {
                 setSuccess('Password reset successfully!');
+
+                // Clear localStorage cooldown data on successful password reset
+                const cooldownKey = `otp_cooldown_${identifier}`;
+                localStorage.removeItem(cooldownKey);
+
                 setTimeout(() => {
                     navigate('/login', { state: { message: 'Password reset successful. Please login with your new password.' } });
                 }, 2000);

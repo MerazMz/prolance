@@ -7,6 +7,7 @@ export default function VerifyOTP() {
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [resendSuccess, setResendSuccess] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isResending, setIsResending] = useState(false);
     const [cooldownSeconds, setCooldownSeconds] = useState(0);
@@ -93,6 +94,7 @@ export default function VerifyOTP() {
         e.preventDefault();
         setError('');
         setSuccess('');
+        setResendSuccess('');
 
         const otpValue = otp.join('');
         if (otpValue.length !== 6) {
@@ -115,6 +117,11 @@ export default function VerifyOTP() {
 
             if (data.success) {
                 setSuccess('OTP verified successfully!');
+
+                // Clear localStorage cooldown on successful verification
+                const cooldownKey = `${COOLDOWN_KEY_PREFIX}${identifier}`;
+                localStorage.removeItem(cooldownKey);
+
                 setTimeout(() => {
                     navigate('/reset-password', { state: { identifier, otp: otpValue } });
                 }, 1500);
@@ -128,12 +135,77 @@ export default function VerifyOTP() {
         setIsLoading(false);
     };
 
+    // localStorage cooldown management
+    const COOLDOWN_KEY_PREFIX = 'otp_cooldown_';
+    const COOLDOWN_DELAYS = [
+        60,      // 1st attempt: 1 minute
+        300,     // 2nd attempt: 5 minutes
+        600,     // 3rd attempt: 10 minutes
+        1800,    // 4th attempt: 30 minutes
+        3600,    // 5th attempt: 1 hour
+        7200,    // 6th attempt: 2 hours
+        14400,   // 7th attempt: 4 hours
+        86400    // 8th+ attempt: 24 hours
+    ];
+
+    // Get cooldown data from localStorage
+    const getCooldownData = () => {
+        if (!identifier) return null;
+        const key = `${COOLDOWN_KEY_PREFIX}${identifier}`;
+        const data = localStorage.getItem(key);
+        return data ? JSON.parse(data) : null;
+    };
+
+    // Set cooldown data in localStorage
+    const setCooldownData = (data) => {
+        if (!identifier) return;
+        const key = `${COOLDOWN_KEY_PREFIX}${identifier}`;
+        localStorage.setItem(key, JSON.stringify(data));
+    };
+
+    // Clear cooldown data from localStorage
+    const clearCooldownData = () => {
+        if (!identifier) return;
+        const key = `${COOLDOWN_KEY_PREFIX}${identifier}`;
+        localStorage.removeItem(key);
+    };
+
+    // Check and restore cooldown on mount
+    useEffect(() => {
+        const cooldownData = getCooldownData();
+        if (cooldownData && cooldownData.nextAllowedTime) {
+            const now = Date.now();
+            const remaining = Math.ceil((cooldownData.nextAllowedTime - now) / 1000);
+
+            if (remaining > 0) {
+                setCooldownSeconds(remaining);
+                setIsInCooldown(true);
+            } else {
+                // Cooldown expired, clear it
+                clearCooldownData();
+            }
+        }
+    }, [identifier]);
+
     const handleResendOTP = async () => {
-        if (isInCooldown) return; // Prevent resend during cooldown
+        // Check localStorage cooldown first (before making any server call)
+        const cooldownData = getCooldownData();
+        if (cooldownData && cooldownData.nextAllowedTime) {
+            const now = Date.now();
+            const remaining = Math.ceil((cooldownData.nextAllowedTime - now) / 1000);
+
+            if (remaining > 0) {
+                // Still in cooldown, don't make server request
+                setError(`Please wait before requesting another OTP`);
+                setCooldownSeconds(remaining);
+                setIsInCooldown(true);
+                return;
+            }
+        }
 
         setIsResending(true);
         setError('');
-        setSuccess('');
+        setResendSuccess('');
 
         try {
             const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/forgot-password`, {
@@ -147,23 +219,37 @@ export default function VerifyOTP() {
             const data = await response.json();
 
             if (data.success) {
-                setSuccess('New OTP sent to your email!');
+                setResendSuccess('New OTP sent to your email!');
                 setOtp(['', '', '', '', '', '']);
                 inputRefs.current[0]?.focus();
 
-                // Set cooldown from server response
-                if (data.cooldownSeconds && data.cooldownSeconds > 0) {
-                    setCooldownSeconds(data.cooldownSeconds);
-                    setIsInCooldown(true);
-                }
+                // Update localStorage cooldown
+                const now = Date.now();
+                const currentData = getCooldownData() || { requestCount: 0, lastRequestTime: 0 };
+                const newRequestCount = currentData.requestCount + 1;
+
+                // Calculate next cooldown delay
+                const delayIndex = Math.min(newRequestCount - 1, COOLDOWN_DELAYS.length - 1);
+                const cooldownDelay = COOLDOWN_DELAYS[delayIndex];
+                const nextAllowedTime = now + (cooldownDelay * 1000);
+
+                // Save to localStorage
+                setCooldownData({
+                    requestCount: newRequestCount,
+                    lastRequestTime: now,
+                    nextAllowedTime: nextAllowedTime
+                });
+
+                // Set cooldown UI state
+                setCooldownSeconds(cooldownDelay);
+                setIsInCooldown(true);
+
+                // Clear resend success message after 3 seconds
+                setTimeout(() => {
+                    setResendSuccess('');
+                }, 3000);
             } else {
                 setError(data.message || 'Failed to resend OTP');
-
-                // If rate limited, set cooldown from server
-                if (data.remainingTime) {
-                    setCooldownSeconds(data.remainingTime);
-                    setIsInCooldown(true);
-                }
             }
         } catch (err) {
             setError('Network error. Please try again.');
@@ -241,6 +327,17 @@ export default function VerifyOTP() {
                             className="mb-6 p-3 bg-green-50 border border-green-100 rounded-lg text-green-600 text-sm font-light"
                         >
                             {success}
+                        </motion.div>
+                    )}
+
+                    {/* Resend Success Message */}
+                    {resendSuccess && (
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="mb-6 p-3 bg-blue-50 border border-blue-100 rounded-lg text-blue-600 text-sm font-light"
+                        >
+                            {resendSuccess}
                         </motion.div>
                     )}
 

@@ -83,7 +83,7 @@ const updateProfile = async (req, res) => {
             name,
             bio,
             skills,
-            hourlyRate,
+            hourlyCharges,
             location,
             phone,
             avatar,
@@ -94,7 +94,7 @@ const updateProfile = async (req, res) => {
         if (name) updateData.name = name;
         if (bio !== undefined) updateData.bio = bio;
         if (skills) updateData.skills = skills;
-        if (hourlyRate !== undefined) updateData.hourlyRate = hourlyRate;
+        if (hourlyCharges !== undefined) updateData.hourlyCharges = hourlyCharges;
         if (location !== undefined) updateData.location = location;
         if (phone !== undefined) updateData.phone = phone;
         if (avatar !== undefined) updateData.avatar = avatar;
@@ -221,9 +221,9 @@ const searchFreelancers = async (req, res) => {
 
         // Add rate range filter
         if (minRate || maxRate) {
-            query.hourlyRate = {};
-            if (minRate) query.hourlyRate.$gte = Number(minRate);
-            if (maxRate) query.hourlyRate.$lte = Number(maxRate);
+            query.hourlyCharges = {};
+            if (minRate) query.hourlyCharges.$gte = Number(minRate);
+            if (maxRate) query.hourlyCharges.$lte = Number(maxRate);
         }
 
         // Add text search

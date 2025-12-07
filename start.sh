@@ -71,7 +71,7 @@ trap cleanup SIGINT SIGTERM
 
 # Start backend
 cd "$SCRIPT_DIR/backend"
-npm start &
+npm run dev &
 BACKEND_PID=$!
 
 # Wait a bit for backend to start

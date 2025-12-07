@@ -34,64 +34,13 @@ const forgotPassword = async (req, res) => {
             });
         }
 
-        // Rate limiting (can be disabled in development)
-        const rateLimitEnabled = process.env.ENABLE_OTP_RATE_LIMIT !== 'false';
-
-        if (rateLimitEnabled && user.lastOTPRequestTime) {
-            const now = Date.now();
-            const timeSinceLastRequest = now - new Date(user.lastOTPRequestTime).getTime();
-
-            // Simplified progressive delays: 1min, 10min, 24hr
-            const delays = [
-                1 * 60 * 1000,      // 1 minute
-                10 * 60 * 1000,     // 10 minutes
-                24 * 60 * 60 * 1000 // 24 hours
-            ];
-
-            const requestCount = user.resetOTPRequestCount || 0;
-            const requiredDelay = delays[Math.min(requestCount, delays.length - 1)];
-
-            if (timeSinceLastRequest < requiredDelay) {
-                const remainingTime = requiredDelay - timeSinceLastRequest;
-                const remainingMinutes = Math.ceil(remainingTime / (60 * 1000));
-                const remainingHours = Math.floor(remainingMinutes / 60);
-
-                let timeMessage;
-                if (remainingHours > 0) {
-                    timeMessage = `${remainingHours} hour${remainingHours > 1 ? 's' : ''}`;
-                } else {
-                    timeMessage = `${remainingMinutes} minute${remainingMinutes > 1 ? 's' : ''}`;
-                }
-
-                return res.status(429).json({
-                    message: `Please wait ${timeMessage} before requesting another OTP`,
-                    success: false,
-                    remainingTime: Math.ceil(remainingTime / 1000), // in seconds
-                    nextRequestAllowed: new Date(now + remainingTime).toISOString()
-                });
-            }
-        }
-
         // Generate OTP
         const otp = generateOTP();
         const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-        // Update user with OTP and rate limiting info
+        // Update user with OTP
         user.resetOTP = otp;
         user.resetOTPExpires = otpExpires;
-
-        // Calculate next cooldown period
-        let nextCooldown = 0;
-        if (rateLimitEnabled) {
-            user.lastOTPRequestTime = new Date();
-            const currentCount = user.resetOTPRequestCount || 0;
-            user.resetOTPRequestCount = currentCount + 1;
-
-            // Calculate what the next delay will be
-            const delays = [60, 600, 86400]; // in seconds: 1min, 10min, 24hr
-            nextCooldown = delays[Math.min(currentCount + 1, delays.length - 1)];
-        }
-
         await user.save();
 
         // Send OTP email
@@ -101,8 +50,7 @@ const forgotPassword = async (req, res) => {
             res.status(200).json({
                 message: 'OTP sent to your email successfully',
                 success: true,
-                email: user.email.replace(/(.{2})(.*)(@.*)/, '$1***$3'), // Mask email for privacy
-                cooldownSeconds: nextCooldown // Time until next resend is allowed
+                email: user.email.replace(/(.{2})(.*)(@.*)/, '$1***$3') // Mask email for privacy
             });
         } catch (emailError) {
             console.error('Email sending failed:', emailError);
@@ -238,12 +186,10 @@ const resetPassword = async (req, res) => {
         // Hash new password
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-        // Update password and clear OTP + rate limiting
+        // Update password and clear OTP
         user.password = hashedPassword;
         user.resetOTP = '';
         user.resetOTPExpires = null;
-        user.resetOTPRequestCount = 0;
-        user.lastOTPRequestTime = null;
         await user.save();
 
         res.status(200).json({

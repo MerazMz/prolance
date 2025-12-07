@@ -115,7 +115,7 @@ const getApplicationsByProject = async (req, res) => {
         }
 
         const applications = await ApplicationModel.find({ projectId })
-            .populate('freelancerId', 'name avatar rating totalReviews experienceLevel hourlyRate location')
+            .populate('freelancerId', 'name avatar rating totalReviews experienceLevel hourlyCharges location')
             .sort({ createdAt: -1 });
 
         res.status(200).json({

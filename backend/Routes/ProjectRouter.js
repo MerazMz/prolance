@@ -10,6 +10,8 @@ const {
     deleteProject,
     getProjectWorkspace,
     updateWorkStatus,
+    submitWork,
+    acceptProject,
     addMilestone,
     updateMilestone,
     addDeliverable,
@@ -30,6 +32,8 @@ router.delete('/:id', ensureAuthenticated, deleteProject);
 // Workspace routes (protected)
 router.get('/:id/workspace', ensureAuthenticated, getProjectWorkspace);
 router.patch('/:id/work-status', ensureAuthenticated, updateWorkStatus);
+router.post('/:id/submit-work', ensureAuthenticated, submitWork);
+router.post('/:id/accept-project', ensureAuthenticated, acceptProject);
 router.post('/:id/milestones', ensureAuthenticated, addMilestone);
 router.patch('/:id/milestones/:milestoneId', ensureAuthenticated, updateMilestone);
 router.post('/:id/deliverables', ensureAuthenticated, addDeliverable);

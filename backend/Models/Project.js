@@ -56,7 +56,7 @@ const ProjectSchema = new Schema({
     },
     status: {
         type: String,
-        enum: ['open', 'in-progress', 'completed', 'cancelled'],
+        enum: ['open', 'in-progress', 'completed', 'closed', 'cancelled'],
         default: 'open'
     },
     proposalCount: {

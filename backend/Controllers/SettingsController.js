@@ -31,7 +31,7 @@ const getSettings = async (req, res) => {
                     primarySkills: user.primarySkills,
                     secondarySkills: user.secondarySkills,
                     experienceLevel: user.experienceLevel,
-                    hourlyRate: user.hourlyRate,
+                    hourlyCharges: user.hourlyCharges,
                     portfolioLinks: user.portfolioLinks
                 },
                 notifications: user.notificationSettings,
@@ -134,13 +134,13 @@ const updateProfileInfo = async (req, res) => {
 const updateSkills = async (req, res) => {
     try {
         const userId = req.user._id;
-        const { primarySkills, secondarySkills, experienceLevel, hourlyRate, portfolioLinks } = req.body;
+        const { primarySkills, secondarySkills, experienceLevel, hourlyCharges, portfolioLinks } = req.body;
 
         const updateData = {};
         if (primarySkills !== undefined) updateData.primarySkills = primarySkills;
         if (secondarySkills !== undefined) updateData.secondarySkills = secondarySkills;
         if (experienceLevel !== undefined) updateData.experienceLevel = experienceLevel;
-        if (hourlyRate !== undefined) updateData.hourlyRate = hourlyRate;
+        if (hourlyCharges !== undefined) updateData.hourlyCharges = hourlyCharges;
         if (portfolioLinks !== undefined) updateData.portfolioLinks = portfolioLinks;
 
         const user = await UserModel.findByIdAndUpdate(

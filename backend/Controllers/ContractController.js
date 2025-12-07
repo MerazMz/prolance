@@ -167,7 +167,7 @@ const updateContractStatus = async (req, res) => {
         }
 
         // Verify user is the client
-        if (contract.clientId.toString() !== userId.toString()) {
+        if (contract.clientId._id.toString() !== userId.toString()) {
             return res.status(403).json({
                 message: 'Only the client can accept or reject contracts',
                 success: false

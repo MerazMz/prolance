@@ -92,7 +92,7 @@ const UserSchema = new Schema({
         enum: ['beginner', 'intermediate', 'expert', ''],
         default: ''
     },
-    hourlyRate: {
+    hourlyCharges: {
         type: Number,
         default: 0
     },
@@ -186,14 +186,34 @@ const UserSchema = new Schema({
         type: Date,
         default: null
     },
-    resetOTPRequestCount: {
-        type: Number,
-        default: 0
-    },
-    lastOTPRequestTime: {
-        type: Date,
-        default: null
-    }
+    // In-app notifications
+    notifications: [{
+        type: {
+            type: String,
+            enum: ['project_completed', 'project_accepted', 'application_received', 'application_accepted', 'message_received'],
+            required: true
+        },
+        title: {
+            type: String,
+            required: true
+        },
+        message: {
+            type: String,
+            required: true
+        },
+        projectId: {
+            type: Schema.Types.ObjectId,
+            ref: 'projects'
+        },
+        read: {
+            type: Boolean,
+            default: false
+        },
+        createdAt: {
+            type: Date,
+            default: Date.now
+        }
+    }]
 }, {
     timestamps: true
 });

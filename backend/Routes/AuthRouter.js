@@ -1,13 +1,16 @@
 const router = require('express').Router();
 const { signupValidation, loginValidation } = require('../Middlewares/AuthValidation');
-const { signup, login, firebaseAuth } = require('../Controllers/AuthController');
+const { signup, login, firebaseAuth, updateRole } = require('../Controllers/AuthController');
 const { forgotPassword, verifyOTP, resetPassword } = require('../Controllers/PasswordResetController');
+const ensureAuthenticated = require('../Middlewares/Auth');
 
 router.post('/login', loginValidation, login);
 
 router.post('/signup', signupValidation, signup);
 
 router.post('/firebase-auth', firebaseAuth);
+
+router.post('/update-role', ensureAuthenticated, updateRole);
 
 // Password reset routes
 router.post('/forgot-password', forgotPassword);

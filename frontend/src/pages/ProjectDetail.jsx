@@ -342,37 +342,46 @@ export default function ProjectDetail() {
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: 0.1 }}
-                                className="border border-gray-100 rounded-lg p-6"
+                                className="border border-gray-100 rounded-lg overflow-hidden hover:shadow-md transition-shadow"
                             >
-                                <p className="text-xs text-gray-500 font-light mb-3">CLIENT</p>
-                                <div className="flex items-center gap-3 mb-4">
-                                    {project.clientId.avatar ? (
-                                        <img
-                                            src={project.clientId.avatar}
-                                            alt={project.clientId.name}
-                                            className="w-12 h-12 rounded-full object-cover border border-gray-200"
-                                        />
-                                    ) : (
-                                        <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-light border border-gray-200">
-                                            {project.clientId.name.charAt(0).toUpperCase()}
-                                        </div>
-                                    )}
-                                    <div>
-                                        <p className="text-sm font-light text-gray-700">{project.clientId.name}</p>
-                                        {project.clientId.rating > 0 && (
-                                            <div className="flex items-center gap-1 text-xs text-gray-500">
-                                                <HiOutlineStar className="text-yellow-500" size={12} />
-                                                {project.clientId.rating.toFixed(1)} ({project.clientId.totalReviews} reviews)
+                                <Link
+                                    to={`/user/${project.clientId.username}`}
+                                    className="block p-6 hover:bg-gray-50 transition cursor-pointer"
+                                >
+                                    <p className="text-xs text-gray-500 font-light mb-3">CLIENT</p>
+                                    <div className="flex items-center gap-3 mb-4">
+                                        {project.clientId.avatar ? (
+                                            <img
+                                                src={project.clientId.avatar}
+                                                alt={project.clientId.name}
+                                                referrerPolicy="no-referrer"
+                                                className="w-12 h-12 rounded-full object-cover border border-gray-200"
+                                            />
+                                        ) : (
+                                            <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-light border border-gray-200">
+                                                {project.clientId.name.charAt(0).toUpperCase()}
                                             </div>
                                         )}
+                                        <div>
+                                            <p className="text-sm font-light text-gray-700 hover:text-green-600 transition">
+                                                {project.clientId.name}
+                                            </p>
+                                            {project.clientId.rating > 0 && (
+                                                <div className="flex items-center gap-1 text-xs text-gray-500">
+                                                    <HiOutlineStar className="text-yellow-500" size={12} />
+                                                    {project.clientId.rating.toFixed(1)} ({project.clientId.totalReviews} reviews)
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                                {project.clientId.location && (
-                                    <div className="flex items-center gap-1.5 text-sm text-gray-500 font-light">
-                                        <HiOutlineLocationMarker size={14} />
-                                        {project.clientId.location}
-                                    </div>
-                                )}
+                                    {project.clientId.location && (
+                                        <div className="flex items-center gap-1.5 text-sm text-gray-500 font-light">
+                                            <HiOutlineLocationMarker size={14} />
+                                            {project.clientId.location}
+                                        </div>
+                                    )}
+                                    <p className="text-xs text-green-600 font-light mt-3">Click to view profile →</p>
+                                </Link>
                             </motion.div>
                         )}
                     </div>

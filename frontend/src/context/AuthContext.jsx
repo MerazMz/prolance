@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import authService from '../services/authService';
 import firebaseAuthService from '../services/firebaseAuthService';
+import RoleSelectionModal from '../components/RoleSelectionModal';
 
 const AuthContext = createContext(null);
 
@@ -17,6 +18,7 @@ export const AuthProvider = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [authProvider, setAuthProvider] = useState(null); // 'backend' or 'firebase'
+    const [showRoleModal, setShowRoleModal] = useState(false);
 
     // Check authentication status on mount
     useEffect(() => {
@@ -48,6 +50,11 @@ export const AuthProvider = ({ children }) => {
                             setUser(syncedUser);
                             setIsAuthenticated(true);
                             setAuthProvider('firebase');
+
+                            // Show role selection modal if role is still 'freelancer' (default for new users)
+                            if (syncedUser.role === 'freelancer' && !localStorage.getItem('roleSelected')) {
+                                setShowRoleModal(true);
+                            }
                         } catch (error) {
                             console.error('Firebase sync error:', error);
                             // If sync fails, sign out from Firebase
@@ -174,6 +181,12 @@ export const AuthProvider = ({ children }) => {
                 setUser(syncedUser);
                 setIsAuthenticated(true);
                 setAuthProvider('firebase');
+
+                // Show role selection modal if role is still 'freelancer' (default for new users)
+                if (syncedUser.role === 'freelancer' && !localStorage.getItem('roleSelected')) {
+                    setShowRoleModal(true);
+                }
+
                 console.log('Google login successful!');
                 return { success: true, data: response };
             }
@@ -203,6 +216,15 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const handleRoleComplete = (updatedUser) => {
+        setUser(updatedUser);
+        setShowRoleModal(false);
+        localStorage.setItem('roleSelected', 'true');
+        // Update user in localStorage
+        const currentUserData = JSON.parse(localStorage.getItem('user') || '{}');
+        localStorage.setItem('user', JSON.stringify({ ...currentUserData, role: updatedUser.role }));
+    };
+
     const value = {
         user,
         isAuthenticated,
@@ -220,7 +242,12 @@ export const AuthProvider = ({ children }) => {
         logout,
     };
 
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+    return (
+        <AuthContext.Provider value={value}>
+            {children}
+            {showRoleModal && <RoleSelectionModal onComplete={handleRoleComplete} />}
+        </AuthContext.Provider>
+    );
 };
 
 export default AuthContext;

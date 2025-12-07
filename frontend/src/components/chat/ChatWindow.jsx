@@ -191,6 +191,7 @@ export default function ChatWindow({ conversation, onBack }) {
                     <img
                         src={otherUser.avatar}
                         alt={otherUser.name}
+                        referrerPolicy="no-referrer"
                         className="w-10 h-10 rounded-full object-cover border border-gray-200"
                     />
                 ) : (
