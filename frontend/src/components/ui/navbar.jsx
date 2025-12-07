@@ -180,7 +180,7 @@ export default function Navbar() {
         </Link>
 
         {/* EXPLORE PROJECTS - Only show for freelancers and both roles */}
-        {(!isAuthenticated || user?.role === 'freelancer' || user?.role === 'both') && (
+        {(isAuthenticated && user?.role === 'freelancer' || user?.role === 'both') && (
           <Link
             to="/projects"
             className={`flex items-center gap-1.5 hover:text-green-600 transition cursor-pointer ${isActive('/projects') ? 'text-green-600' : ''
