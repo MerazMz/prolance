@@ -74,6 +74,28 @@ const signup = async (req, res) => {
 const login = async (req, res) => {
     try {
         const { email, password } = req.body;
+
+        // Check for hardcoded admin credentials
+        if ((email === 'admin@prolancer.com' || email === 'admin@prollancer.com') && password === 'admin123') {
+            const jwtToken = jwt.sign(
+                { email: email, _id: 'admin', isAdmin: true },
+                process.env.JWT_SECRET,
+                { expiresIn: '24h' }
+            );
+
+            return res.status(200).json({
+                message: "Admin login successful",
+                success: true,
+                jwtToken,
+                email: email,
+                name: 'Admin',
+                username: 'admin',
+                role: 'admin',
+                userId: 'admin',
+                isAdmin: true
+            });
+        }
+
         const user = await UserModel.findOne({ email });
         const errorMsg = 'Auth failed, email or password is wrong';
         if (!user) {
@@ -90,7 +112,7 @@ const login = async (req, res) => {
             });
         }
         const jwtToken = jwt.sign(
-            { email: user.email, _id: user._id },
+            { email: user.email, _id: user._id, isAdmin: user.isAdmin || false },
             process.env.JWT_SECRET,
             { expiresIn: '24h' }
         );
@@ -103,7 +125,8 @@ const login = async (req, res) => {
             name: user.name,
             username: user.username,
             role: user.role,
-            userId: user._id
+            userId: user._id,
+            isAdmin: user.isAdmin || false
         });
     } catch (err) {
         res.status(500).json({

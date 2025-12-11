@@ -18,6 +18,7 @@ const CaptchaRouter = require('./Routes/CaptchaRouter')
 const ApplicationRouter = require('./Routes/ApplicationRouter')
 const ChatRouter = require('./Routes/ChatRouter')
 const ContractRouter = require('./Routes/ContractRouter')
+const AdminRouter = require('./Routes/AdminRouter')
 const MessageModel = require('./Models/Message')
 const ConversationModel = require('./Models/Conversation')
 
@@ -31,6 +32,7 @@ app.get('/ping', (req, res) => {
 // CORS configuration
 const allowedOrigins = [
     'http://localhost:5173',
+    'http://localhost:5174',
     'http://localhost:3000',
     'https://prolance-five.vercel.app',
     process.env.FRONTEND_URL
@@ -64,6 +66,7 @@ app.use('/api/captcha', CaptchaRouter)
 app.use('/api/applications', ApplicationRouter)
 app.use('/api/chat', ChatRouter)
 app.use('/api/contracts', ContractRouter)
+app.use('/api/admin', AdminRouter)
 
 
 // Create HTTP server and Socket.IO

@@ -26,10 +26,28 @@ export default function Login() {
             return;
         }
 
+        console.log('=== LOGIN ATTEMPT ===');
+        console.log('Email:', email);
+        console.log('Password:', password.substring(0, 3) + '***');
+
         const result = await login(email, password);
 
+        console.log('=== LOGIN RESULT ===');
+        console.log('Success:', result.success);
+        console.log('Full result:', result);
+        console.log('result.data:', result.data);
+        console.log('result.data.isAdmin:', result.data?.isAdmin);
+
         if (result.success) {
-            navigate('/dashboard');
+            // Check isAdmin from the response data
+            if (result.data?.isAdmin === true) {
+                console.log('✅ Admin login detected, redirecting to /admin');
+                // Use window.location for immediate redirect
+                window.location.href = '/admin';
+            } else {
+                console.log('👤 Regular user login, redirecting to /dashboard');
+                navigate('/dashboard');
+            }
         } else {
             setError(result.error?.message || 'Login failed. Please try again.');
         }

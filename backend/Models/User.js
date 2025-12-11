@@ -174,6 +174,14 @@ const UserSchema = new Schema({
         type: Boolean,
         default: false
     },
+    isAdmin: {
+        type: Boolean,
+        default: false
+    },
+    isBanned: {
+        type: Boolean,
+        default: false
+    },
     completedProjects: {
         type: Number,
         default: 0

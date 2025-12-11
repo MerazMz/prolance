@@ -43,11 +43,16 @@ export const authService = {
     login: async (email, password) => {
         try {
             const response = await api.post('/auth/login', { email, password });
-            const { jwtToken, name, email: userEmail, role, userId, username } = response.data;
+            const { jwtToken, name, email: userEmail, role, userId, username, isAdmin } = response.data;
 
             // Save token and user data
             tokenManager.setToken(jwtToken);
-            userManager.setUser({ name, email: userEmail, role, userId, username });
+            const userData = { name, email: userEmail, role, userId, username, isAdmin: isAdmin || false };
+            userManager.setUser(userData);
+
+            // Also set loggedInUser for compatibility
+            localStorage.setItem('loggedInUser', JSON.stringify(userData));
+            localStorage.setItem('token', jwtToken);
 
             return response.data;
         } catch (error) {

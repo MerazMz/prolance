@@ -13,7 +13,7 @@ Before you begin, ensure you have the following installed:
 
 ### 1. Clone or Navigate to Project
 ```bash
-cd /Users/merazmz/Projects/prolance
+cd your_project_location/prolance
 ```
 
 ### 2. Backend Setup
@@ -34,7 +34,7 @@ The `.env` file is already configured with:
 
 #### Start Backend Server
 ```bash
-npm start
+npm run dev
 ```
 
 The backend will run on `http://localhost:8080` using **nodemon** (auto-restarts on file changes).
@@ -107,11 +107,6 @@ prolance/
 - **Lucide React** - Icons
 
 ## 🔑 Available Scripts
-
-### Backend
-```bash
-npm start          # Start server with nodemon (auto-reload)
-```
 
 ### Frontend
 ```bash
@@ -194,5 +189,3 @@ This project is private and proprietary.
 **Meraz Haque**
 
 ---
-
-**Happy Coding! 🎉**
