@@ -23,8 +23,8 @@ const transporter = nodemailer.createTransport({
         minVersion: 'TLSv1.2'
     },
     // Debug logs (remove in production)
-    logger: process.env.NODE_ENV !== 'production',
-    debug: process.env.NODE_ENV !== 'production'
+    // logger: process.env.NODE_ENV !== 'production',
+    // debug: process.env.NODE_ENV !== 'production'
 });
 
 // Verify transporter configuration (skip in production to avoid startup delays)
