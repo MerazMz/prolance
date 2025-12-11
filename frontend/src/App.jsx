@@ -16,6 +16,7 @@ import UserProfile from './pages/UserProfile'
 import Support from './pages/Support'
 import Chat from './pages/Chat'
 import ProjectWorkspace from './pages/ProjectWorkspace'
+import AdminDashboard from './components/ui/adminDashboard'
 import ProtectedRoute from './components/ProtectedRoute'
 import ClientRoute from './components/ClientRoute'
 import FreelancerRoute from './components/FreelancerRoute'
@@ -27,13 +28,14 @@ import './App.css'
 function App() {
   const location = useLocation();
   const isChatPage = location.pathname === '/messages';
+  const isAdminPage = location.pathname === '/admin';
 
   return (
     <>
       <div className='overflow-x-hidden'>
 
-        <Navbar />
-        {!isChatPage && <SearchCommand />}
+        {!isAdminPage && <Navbar />}
+        {!isChatPage && !isAdminPage && <SearchCommand />}
         <Routes>
           <Route path="/" element={<Home />} />
           <Route
@@ -138,6 +140,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <ProjectWorkspace />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminDashboard />
               </ProtectedRoute>
             }
           />
