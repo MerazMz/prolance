@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { HiOutlineChat, HiOutlineChevronLeft, HiOutlineSearch, HiOutlineX } from 'react-icons/hi';
+import { HiOutlineChat, HiOutlineSearch, HiOutlineX } from 'react-icons/hi';
 import axios from 'axios';
 import socketService from '../services/socketService';
 import ConversationsList from '../components/chat/ConversationsList';
@@ -17,6 +17,8 @@ export default function Chat() {
     const [searchResults, setSearchResults] = useState([]);
     const [searching, setSearching] = useState(false);
     const [showSearch, setShowSearch] = useState(false);
+    const [sidebarWidth, setSidebarWidth] = useState(320); // Default 320px (md:w-80)
+    const [isResizing, setIsResizing] = useState(false);
 
     useEffect(() => {
         // Connect socket
@@ -69,7 +71,6 @@ export default function Chat() {
                 `${API_BASE_URL}/api/users/search?search=${encodeURIComponent(searchQuery)}`,
                 { headers: { Authorization: token } }
             );
-            // The API returns freelancers, not users
             setSearchResults(response.data.freelancers || []);
         } catch (err) {
             console.error('Error searching freelancers:', err);
@@ -138,124 +139,172 @@ export default function Chat() {
         setSelectedConversation(null);
     };
 
+    // Sidebar resize handlers
+    const handleMouseDown = (e) => {
+        setIsResizing(true);
+        e.preventDefault();
+    };
+
+    const handleMouseMove = (e) => {
+        if (!isResizing) return;
+
+        const newWidth = e.clientX;
+        // Constrain width between 240px and 600px
+        if (newWidth >= 240 && newWidth <= 600) {
+            setSidebarWidth(newWidth);
+        }
+    };
+
+    const handleMouseUp = () => {
+        setIsResizing(false);
+    };
+
+    // Add global mouse listeners for resize
+    useEffect(() => {
+        if (isResizing) {
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+        } else {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+            document.body.style.cursor = 'default';
+            document.body.style.userSelect = 'auto';
+        }
+
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+            document.body.style.cursor = 'default';
+            document.body.style.userSelect = 'auto';
+        };
+    }, [isResizing]);
+
     if (loading) {
         return (
-            <div className="min-h-screen bg-white flex items-center justify-center">
+            <div className="h-screen flex items-center justify-center bg-gray-50">
                 <div className="text-center">
                     <div className="inline-block w-8 h-8 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-sm text-gray-500 mt-3 font-light">Loading messages...</p>
+                    <p className="text-sm text-gray-500 mt-3">Loading...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-white">
-            <div className="h-[85vh] w-full bg-white flex flex-col overflow-hidden border-b border-gray-200">
-                {/* Main Content */}
-                <div className="flex-1 flex overflow-hidden">
-                    {/* Conversations List - Desktop always visible, Mobile conditionally */}
-                    <div
-                        className={`w-full md:w-80 lg:w-96 border-r border-gray-100 flex flex-col ${showMobileChat ? 'hidden md:flex' : 'flex'
-                            }`}
-                    >
-                        {/* Search Bar */}
-                        <div className="p-4 border-b border-gray-100">
-                            <div className="relative">
-                                <HiOutlineSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                                <input
-                                    type="text"
-                                    placeholder="Search freelancers by username..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    onFocus={() => setShowSearch(true)}
-                                    className="w-full pl-10 pr-10 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-green-500 transition"
-                                />
-                                {searchQuery && (
-                                    <button
-                                        onClick={() => {
-                                            setSearchQuery('');
-                                            setShowSearch(false);
-                                        }}
-                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                                    >
-                                        <HiOutlineX className="w-4 h-4" />
-                                    </button>
-                                )}
-                            </div>
+        <div className="h-screen flex flex-col bg-gray-50">
+            {/* Fixed height container - no scrolling */}
+            <div className="flex-1 flex overflow-hidden max-w-[1600px] mx-auto w-full">
+                {/* Conversations List Sidebar */}
+                <div
+                    className={`${showMobileChat ? 'hidden md:flex' : 'flex'} border-r border-gray-200 bg-white flex-col relative`}
+                    style={{ width: `${sidebarWidth}px` }}
+                >
+                    {/* Sidebar Header */}
+                    <div className="px-4 py-4 border-b border-gray-100">
+                        <h2 className="text-lg font-medium text-gray-900 mb-3">Messages</h2>
 
-                            {/* Search Results */}
-                            {showSearch && searchQuery && (
-                                <div className="absolute z-10 w-full md:w-80 lg:w-96 max-h-96 overflow-y-auto bg-white border border-gray-200 rounded-lg mt-2 shadow-lg">
-                                    {searching ? (
-                                        <div className="p-4 text-center">
-                                            <div className="inline-block w-5 h-5 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
-                                            <p className="text-xs text-gray-500 mt-2">Searching...</p>
-                                        </div>
-                                    ) : searchResults.length > 0 ? (
-                                        <div className="py-2">
-                                            {searchResults.map((user) => (
-                                                <button
-                                                    key={user._id}
-                                                    onClick={() => handleStartChat(user)}
-                                                    className="w-full px-4 py-3 hover:bg-gray-50 transition flex items-center gap-3 text-left"
-                                                >
-                                                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                                        {user.avatar ? (
-                                                            <img src={user.avatar} alt={user.name} className="w-full h-full rounded-full object-cover" />
-                                                        ) : (
-                                                            <span className="text-green-700 font-medium text-sm">
-                                                                {user.name.charAt(0).toUpperCase()}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="text-sm font-medium text-gray-800 truncate">{user.name}</p>
-                                                        <p className="text-xs text-gray-500 truncate">@{user.username}</p>
-                                                    </div>
-                                                    <span className="px-2 py-1 bg-green-50 text-green-700 text-xs rounded">
-                                                        {user.role}
-                                                    </span>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className="p-4 text-center">
-                                            <p className="text-sm text-gray-500">No users found</p>
-                                        </div>
-                                    )}
-                                </div>
+                        {/* Search */}
+                        <div className="relative">
+                            <HiOutlineSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                            <input
+                                type="text"
+                                placeholder="Search..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onFocus={() => setShowSearch(true)}
+                                className="w-full pl-9 pr-9 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-green-500 transition bg-gray-50"
+                            />
+                            {searchQuery && (
+                                <button
+                                    onClick={() => {
+                                        setSearchQuery('');
+                                        setShowSearch(false);
+                                    }}
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                >
+                                    <HiOutlineX className="w-4 h-4" />
+                                </button>
                             )}
                         </div>
 
-                        {/* Conversations List */}
-                        <div className="flex-1 overflow-hidden">
-                            <ConversationsList
-                                conversations={conversations}
-                                selectedConversation={selectedConversation}
-                                onSelectConversation={handleSelectConversation}
-                            />
-                        </div>
-                    </div>
-
-                    {/* Chat Window - Desktop always visible, Mobile conditionally */}
-                    <div className={`flex-1 ${showMobileChat ? 'block' : 'hidden md:block'}`}>
-                        {selectedConversation ? (
-                            <ChatWindow
-                                conversation={selectedConversation}
-                                onBack={handleBackToList}
-                            />
-                        ) : (
-                            <div className="h-full flex items-center justify-center bg-gray-50">
-                                <div className="text-center">
-                                    <HiOutlineChat className="w-16 h-16 text-gray-300 mx-auto mb-3" />
-                                    <p className="text-sm text-gray-500 font-light">
-                                        Select a conversation to start messaging
-                                    </p>
-                                </div>
+                        {/* Search Results Dropdown */}
+                        {showSearch && searchQuery && (
+                            <div className="absolute left-4 right-4 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
+                                {searching ? (
+                                    <div className="p-4 text-center">
+                                        <div className="inline-block w-5 h-5 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
+                                    </div>
+                                ) : searchResults.length > 0 ? (
+                                    <div>
+                                        {searchResults.map((user) => (
+                                            <button
+                                                key={user._id}
+                                                onClick={() => handleStartChat(user)}
+                                                className="w-full px-4 py-3 hover:bg-gray-50 transition flex items-center gap-3 text-left"
+                                            >
+                                                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                                    {user.avatar ? (
+                                                        <img src={user.avatar} alt={user.name} className="w-full h-full rounded-full object-cover" />
+                                                    ) : (
+                                                        <span className="text-green-700 font-medium text-sm">
+                                                            {user.name.charAt(0).toUpperCase()}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-medium text-gray-800 truncate">{user.name}</p>
+                                                    <p className="text-xs text-gray-500 truncate">@{user.username}</p>
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="p-4 text-center">
+                                        <p className="text-sm text-gray-500">No users found</p>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
+
+                    {/* Conversations List */}
+                    <div className="flex-1 overflow-y-auto">
+                        <ConversationsList
+                            conversations={conversations}
+                            selectedConversation={selectedConversation}
+                            onSelectConversation={handleSelectConversation}
+                        />
+                    </div>
+
+                    {/* Resize Handle */}
+                    <div
+                        onMouseDown={handleMouseDown}
+                        className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-green-500 transition-colors group"
+                        title="Drag to resize"
+                    >
+                        <div className="absolute top-1/2 right-0 transform -translate-y-1/2 w-1 h-12 bg-gray-300 group-hover:bg-green-500 rounded-l transition-colors"></div>
+                    </div>
+                </div>
+
+                {/* Chat Window */}
+                <div className={`flex-1 ${showMobileChat ? 'block' : 'hidden md:block'} bg-white`}>
+                    {selectedConversation ? (
+                        <ChatWindow
+                            conversation={selectedConversation}
+                            onBack={handleBackToList}
+                        />
+                    ) : (
+                        <div className="h-full flex items-center justify-center bg-gray-50">
+                            <div className="text-center">
+                                <HiOutlineChat className="w-16 h-16 text-gray-300 mx-auto mb-3" />
+                                <p className="text-sm text-gray-500">
+                                    Select a conversation to start messaging
+                                </p>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

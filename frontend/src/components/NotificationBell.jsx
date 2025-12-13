@@ -1,45 +1,86 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { HiOutlineBell, HiOutlineX } from 'react-icons/hi';
+import { HiOutlineBell, HiOutlineX, HiOutlineCheck } from 'react-icons/hi';
 import axios from 'axios';
+import socketService from '../services/socketService';
 import { useAuth } from '../context/AuthContext';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 export default function NotificationBell() {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const [showNotifications, setShowNotifications] = useState(false);
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [loading, setLoading] = useState(false);
 
-    // Only fetch for clients
-    const isClient = user?.role === 'client' || user?.role === 'both';
-
     useEffect(() => {
-        if (isClient) {
-            fetchNotifications();
-            // Poll every 30 seconds for new notifications
-            const interval = setInterval(fetchNotifications, 30000);
-            return () => clearInterval(interval);
-        }
-    }, [isClient]);
+        // Fetch notifications on mount
+        fetchNotifications();
+
+        // Listen for new notifications via socket
+        const handleNewNotification = (notification) => {
+            setNotifications(prev => [notification, ...prev]);
+            setUnreadCount(prev => prev + 1);
+        };
+
+        socketService.on('new-notification', handleNewNotification);
+
+        // Poll every 60 seconds for new notifications (backup)
+        const interval = setInterval(fetchNotifications, 60000);
+
+        return () => {
+            socketService.off('new-notification', handleNewNotification);
+            clearInterval(interval);
+        };
+    }, []);
 
     const fetchNotifications = async () => {
-        if (!isClient) return;
-
         try {
             const token = localStorage.getItem('authToken');
             const response = await axios.get(
-                `${API_BASE_URL}/api/applications/pending/count`,
+                `${API_BASE_URL}/api/notifications?limit=10`,
                 { headers: { Authorization: token } }
             );
 
-            setUnreadCount(response.data.pendingCount || 0);
-            setNotifications(response.data.recentApplications || []);
+            setNotifications(response.data.notifications || []);
+            setUnreadCount(response.data.unreadCount || 0);
         } catch (error) {
             console.error('Error fetching notifications:', error);
+        }
+    };
+
+    const markAsRead = async (notificationId) => {
+        try {
+            const token = localStorage.getItem('authToken');
+            await axios.patch(
+                `${API_BASE_URL}/api/notifications/${notificationId}/read`,
+                {},
+                { headers: { Authorization: token } }
+            );
+
+            // Update local state
+            setNotifications(prev =>
+                prev.map(n => n._id === notificationId ? { ...n, read: true } : n)
+            );
+            setUnreadCount(prev => Math.max(0, prev - 1));
+        } catch (error) {
+            console.error('Error marking notification as read:', error);
+        }
+    };
+
+    const handleNotificationClick = (notification) => {
+        if (!notification.read) {
+            markAsRead(notification._id);
+        }
+
+        setShowNotifications(false);
+
+        // Navigate based on notification type
+        if (notification.projectId) {
+            navigate(`/project/${notification.projectId}/workspace`);
         }
     };
 
@@ -51,7 +92,27 @@ export default function NotificationBell() {
         return `${Math.floor(seconds / 86400)}d ago`;
     };
 
-    if (!isClient) return null;
+    const getNotificationIcon = (type) => {
+        switch (type) {
+            case 'contract_accepted':
+            case 'application_accepted':
+            case 'payment_received':
+            case 'project_accepted':
+                return '🎉';
+            case 'contract_rejected':
+                return '📄';
+            case 'project_completed':
+                return '✅';
+            case 'review_requested':
+                return '🔄';
+            case 'application_received':
+                return '📨';
+            case 'message_received':
+                return '💬';
+            default:
+                return '🔔';
+        }
+    };
 
     return (
         <div className="relative">
@@ -76,12 +137,12 @@ export default function NotificationBell() {
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50 overflow-hidden"
+                        className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-200 z-50 overflow-hidden"
                     >
                         {/* Header */}
                         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                             <h3 className="text-sm font-normal text-gray-800">
-                                Project Applications
+                                Notifications
                             </h3>
                             <button
                                 onClick={() => setShowNotifications(false)}
@@ -97,56 +158,43 @@ export default function NotificationBell() {
                                 <div className="p-8 text-center">
                                     <HiOutlineBell className="w-12 h-12 text-gray-300 mx-auto mb-2" />
                                     <p className="text-sm text-gray-500 font-light">
-                                        No pending applications
+                                        No notifications yet
                                     </p>
                                 </div>
                             ) : (
                                 <div>
-                                    {notifications.map((app) => (
-                                        <Link
-                                            key={app._id}
-                                            to="/my-projects"
-                                            onClick={() => setShowNotifications(false)}
-                                            className="block px-4 py-3 hover:bg-gray-50 transition border-b border-gray-50 cursor-pointer"
+                                    {notifications.map((notif) => (
+                                        <button
+                                            key={notif._id}
+                                            onClick={() => handleNotificationClick(notif)}
+                                            className={`w-full px-4 py-3 hover:bg-gray-50 transition border-b border-gray-50 text-left ${!notif.read ? 'bg-blue-50' : ''
+                                                }`}
                                         >
                                             <div className="flex items-start gap-3">
-                                                {/* Avatar */}
-                                                {app.freelancerId?.avatar ? (
-                                                    <img
-                                                        src={app.freelancerId.avatar}
-                                                        alt={app.freelancerId.name}
-                                                        className="w-10 h-10 rounded-full object-cover border border-gray-200 flex-shrink-0"
-                                                    />
-                                                ) : (
-                                                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-light border border-gray-200 flex-shrink-0">
-                                                        {app.freelancerId?.name?.charAt(0).toUpperCase()}
-                                                    </div>
-                                                )}
+                                                {/* Icon */}
+                                                <span className="text-2xl flex-shrink-0">
+                                                    {getNotificationIcon(notif.type)}
+                                                </span>
 
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="text-sm font-light text-gray-800 mb-0.5">
-                                                        <span className="font-normal">{app.freelancerId?.name}</span> applied to
+                                                    <div className="flex items-start justify-between gap-2">
+                                                        <p className="text-sm font-medium text-gray-800">
+                                                            {notif.title}
+                                                        </p>
+                                                        {!notif.read && (
+                                                            <span className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1.5"></span>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-xs text-gray-600 font-light mt-1 line-clamp-2">
+                                                        {notif.message}
                                                     </p>
-                                                    <p className="text-xs text-gray-600 font-light truncate mb-1">
-                                                        {app.projectId?.title}
-                                                    </p>
-                                                    <p className="text-xs text-gray-400 font-light">
-                                                        {getTimeSince(app.createdAt)}
+                                                    <p className="text-xs text-gray-400 font-light mt-1">
+                                                        {getTimeSince(notif.createdAt)}
                                                     </p>
                                                 </div>
                                             </div>
-                                        </Link>
+                                        </button>
                                     ))}
-
-                                    {unreadCount > notifications.length && (
-                                        <Link
-                                            to="/my-projects"
-                                            onClick={() => setShowNotifications(false)}
-                                            className="block px-4 py-3 text-center text-sm text-green-600 hover:bg-green-50 transition font-light cursor-pointer"
-                                        >
-                                            View all {unreadCount} applications
-                                        </Link>
-                                    )}
                                 </div>
                             )}
                         </div>

@@ -20,6 +20,7 @@ const ChatRouter = require('./Routes/ChatRouter')
 const ContractRouter = require('./Routes/ContractRouter')
 const AdminRouter = require('./Routes/AdminRouter')
 const PaymentRouter = require('./Routes/PaymentRouter')
+const NotificationRouter = require('./Routes/NotificationRouter')
 const MessageModel = require('./Models/Message')
 const ConversationModel = require('./Models/Conversation')
 
@@ -72,6 +73,7 @@ app.use('/api/chat', ChatRouter)
 app.use('/api/contracts', ContractRouter)
 app.use('/api/admin', AdminRouter)
 app.use('/api/payments', PaymentRouter)
+app.use('/api/notifications', NotificationRouter)
 
 
 // Create HTTP server and Socket.IO
@@ -83,6 +85,9 @@ const io = new Server(server, {
         credentials: true
     }
 });
+
+// Make io accessible to route handlers
+app.set('io', io);
 
 // Socket.IO authentication middleware
 io.use((socket, next) => {

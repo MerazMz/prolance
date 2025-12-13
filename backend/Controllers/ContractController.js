@@ -190,11 +190,58 @@ const updateContractStatus = async (req, res) => {
             await contract.projectId.save();
         }
 
-        // Emit Socket.IO event
+        // Create notification for freelancer
+        const UserModel = require('../Models/User');
+        const MessageModel = require('../Models/Message');
+
+        const notificationType = status === 'accepted' ? 'contract_accepted' : 'contract_rejected';
+        const notificationTitle = status === 'accepted' ? 'Contract Accepted! 🎉' : 'Contract Updated';
+        const notificationMessage = status === 'accepted'
+            ? `Great news! ${contract.clientId.name} has accepted your proposal for "${contract.projectId.title}". You can now start working on the project.`
+            : `${contract.clientId.name} has ${status} your contract proposal for "${contract.projectId.title}".${clientNotes ? ` Note: ${clientNotes}` : ''}`;
+
+        const freelancerNotification = {
+            type: notificationType,
+            title: notificationTitle,
+            message: notificationMessage,
+            projectId: contract.projectId._id,
+            read: false,
+            createdAt: new Date()
+        };
+
+        await UserModel.findByIdAndUpdate(
+            contract.freelancerId._id,
+            { $push: { notifications: freelancerNotification } }
+        );
+
+        // Create system message in chat to show status banner
+        const systemMessageContent = status === 'accepted'
+            ? `Contract Accepted! The project "${contract.projectId.title}" is now in progress. The freelancer can begin work.`
+            : `Contract ${status}${clientNotes ? `: ${clientNotes}` : '.'}`;
+
+        const systemMessage = new MessageModel({
+            conversationId: contract.conversationId,
+            content: systemMessageContent,
+            messageType: 'system'
+        });
+
+        await systemMessage.save();
+
+        // Emit Socket.IO events
         const io = req.app.get('io');
         if (io) {
+            // Update contract in conversation
             io.to(`conversation:${contract.conversationId}`).emit('contract-updated', {
                 contract,
+                conversationId: contract.conversationId
+            });
+
+            // Send notification to freelancer
+            io.to(`user:${contract.freelancerId._id}`).emit('new-notification', freelancerNotification);
+
+            // Broadcast system message to chat
+            io.to(`conversation:${contract.conversationId}`).emit('new-message', {
+                message: systemMessage,
                 conversationId: contract.conversationId
             });
         }

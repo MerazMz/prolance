@@ -1,14 +1,21 @@
 import { useState, useRef } from 'react';
-import { HiOutlinePaperAirplane } from 'react-icons/hi';
+import { HiOutlinePaperAirplane, HiOutlinePaperClip } from 'react-icons/hi';
 import socketService from '../../services/socketService';
 
 export default function MessageInput({ conversationId }) {
     const [message, setMessage] = useState('');
     const [sending, setSending] = useState(false);
     const typingTimeoutRef = useRef(null);
+    const textareaRef = useRef(null);
 
     const handleTyping = (value) => {
         setMessage(value);
+
+        // Auto-resize textarea
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 120) + 'px';
+        }
 
         // Emit typing indicator
         socketService.emitTyping(conversationId, true);
@@ -35,6 +42,11 @@ export default function MessageInput({ conversationId }) {
         try {
             socketService.sendMessage(conversationId, message.trim());
             setMessage('');
+
+            // Reset textarea height
+            if (textareaRef.current) {
+                textareaRef.current.style.height = 'auto';
+            }
         } catch (err) {
             console.error('Error sending message:', err);
         } finally {
@@ -50,32 +62,28 @@ export default function MessageInput({ conversationId }) {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="border-t border-gray-100 px-6 py-4 flex-shrink-0">
+        <form onSubmit={handleSubmit} className="px-6 py-4">
             <div className="flex items-end gap-3">
-                <div className="flex-1">
+                <div className="flex-1 relative">
                     <textarea
+                        ref={textareaRef}
                         value={message}
                         onChange={(e) => handleTyping(e.target.value)}
                         onKeyDown={handleKeyDown}
                         placeholder="Type a message..."
-                        className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:border-green-600 focus:outline-none font-light resize-none"
+                        className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:border-green-500 focus:outline-none resize-none bg-gray-50"
                         rows={1}
                         style={{
-                            minHeight: '42px',
                             maxHeight: '120px',
-                            height: 'auto',
-                            overflow: message.split('\n').length > 2 ? 'auto' : 'hidden'
-                        }}
-                        onInput={(e) => {
-                            e.target.style.height = 'auto';
-                            e.target.style.height = e.target.scrollHeight + 'px';
+                            overflow: 'auto'
                         }}
                     />
                 </div>
+
                 <button
                     type="submit"
                     disabled={!message.trim() || sending}
-                    className="p-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:bg-gray-300 disabled:cursor-not-allowed cursor-pointer"
+                    className="p-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition disabled:bg-gray-300 disabled:cursor-not-allowed shadow-sm"
                     title="Send message"
                 >
                     <HiOutlinePaperAirplane size={18} />

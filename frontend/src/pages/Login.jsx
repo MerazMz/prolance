@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { useAuth } from '../context/AuthContext';
@@ -13,6 +13,15 @@ export default function Login() {
     const [isLoading, setIsLoading] = useState(false);
     const { login, loginWithGoogle, loginWithGithub } = useAuth();
     const navigate = useNavigate();
+
+    // Check for session expired message
+    useEffect(() => {
+        const sessionExpiredMsg = sessionStorage.getItem('sessionExpiredMessage');
+        if (sessionExpiredMsg) {
+            setError(sessionExpiredMsg);
+            sessionStorage.removeItem('sessionExpiredMessage');
+        }
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();

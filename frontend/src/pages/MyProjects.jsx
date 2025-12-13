@@ -352,6 +352,16 @@ export default function MyProjects() {
                                                         <HiOutlineEye size={16} />
                                                     )}
                                                 </Link>
+                                                {/* Show edit button only for client's own projects */}
+                                                {project.clientId?._id === user?.userId && (
+                                                    <Link
+                                                        to={`/post-project/${project._id}`}
+                                                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition cursor-pointer"
+                                                        title="Edit Project"
+                                                    >
+                                                        <HiOutlinePencil size={16} />
+                                                    </Link>
+                                                )}
                                                 {/* Show delete button only for client's own projects */}
                                                 {project.clientId?._id === user?.userId && (
                                                     <button

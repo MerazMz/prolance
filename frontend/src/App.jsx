@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { useEffect } from 'react'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
@@ -25,12 +26,18 @@ import FreelancerRoute from './components/FreelancerRoute'
 import GuestRoute from './components/GuestRoute'
 import Navbar from './components/ui/navbar'
 import SearchCommand from './components/ui/SearchCommand'
+import { setupAxiosInterceptor } from './services/axiosInstance'
 import './App.css'
 
 function App() {
   const location = useLocation();
   const isChatPage = location.pathname === '/messages';
   const isAdminPage = location.pathname === '/admin';
+
+  // Setup axios interceptor on app mount
+  useEffect(() => {
+    setupAxiosInterceptor();
+  }, []);
 
   return (
     <>
