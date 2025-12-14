@@ -21,6 +21,7 @@ const ContractRouter = require('./Routes/ContractRouter')
 const AdminRouter = require('./Routes/AdminRouter')
 const PaymentRouter = require('./Routes/PaymentRouter')
 const NotificationRouter = require('./Routes/NotificationRouter')
+const AIRouter = require('./Routes/AIRouter')
 const MessageModel = require('./Models/Message')
 const ConversationModel = require('./Models/Conversation')
 
@@ -74,6 +75,7 @@ app.use('/api/contracts', ContractRouter)
 app.use('/api/admin', AdminRouter)
 app.use('/api/payments', PaymentRouter)
 app.use('/api/notifications', NotificationRouter)
+app.use('/api/ai', AIRouter)
 
 
 // Create HTTP server and Socket.IO

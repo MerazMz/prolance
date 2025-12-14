@@ -62,7 +62,7 @@ export default function MessageInput({ conversationId }) {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="px-6 py-4">
+        <form onSubmit={handleSubmit} className="px-6 mt-4 p-2 ">
             <div className="flex items-end gap-3">
                 <div className="flex-1 relative">
                     <textarea

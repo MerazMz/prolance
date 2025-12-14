@@ -1,6 +1,9 @@
 import { HiOutlineChat } from 'react-icons/hi';
+import { useAuth } from '../../context/AuthContext';
 
 export default function ConversationsList({ conversations, selectedConversation, onSelectConversation }) {
+    const { user } = useAuth();
+
     const formatTime = (date) => {
         if (!date) return '';
 
@@ -40,7 +43,8 @@ export default function ConversationsList({ conversations, selectedConversation,
     return (
         <div className="divide-y divide-gray-100">
             {conversations.map((conversation) => {
-                const otherParticipant = conversation.participants.find(p => p._id !== conversation.participants[0]._id) || conversation.participants[0];
+                // Get the other participant (not the current user)
+                const otherParticipant = conversation.participants.find(p => p._id !== user?.userId) || conversation.participants[0];
                 const isSelected = selectedConversation?._id === conversation._id;
                 const hasUnread = conversation.unreadCount > 0;
 

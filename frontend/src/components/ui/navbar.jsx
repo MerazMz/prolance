@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useProjectNotifications } from "../../hooks/useProjectNotifications";
+import socketService from "../../services/socketService";
 import axios from "axios";
 import {
   HiOutlineHome,
@@ -16,7 +17,9 @@ import {
   HiOutlineBell,
   HiOutlineCog,
   HiOutlineClock,
-  HiOutlineBriefcase
+  HiOutlineBriefcase,
+  HiOutlineMenu,
+  HiOutlineX as HiX
 } from "react-icons/hi";
 
 const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
@@ -31,6 +34,8 @@ export default function Navbar() {
   const [userProfile, setUserProfile] = useState(null);
   const [applicationNotifications, setApplicationNotifications] = useState([]);
   const [appNotifCount, setAppNotifCount] = useState(0);
+  const [unreadMessageCount, setUnreadMessageCount] = useState(0);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
   const notificationRef = useRef(null);
 
@@ -88,6 +93,52 @@ export default function Navbar() {
       return () => clearInterval(interval);
     }
   }, [isAuthenticated, isClient]);
+
+  // Fetch and listen for unread message count
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      if (isAuthenticated) {
+        try {
+          const token = localStorage.getItem('authToken');
+          const response = await axios.get(`${API_URL}/api/chat/conversations`, {
+            headers: { Authorization: token }
+          });
+          const conversations = response.data.conversations || [];
+          const totalUnread = conversations.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
+          setUnreadMessageCount(totalUnread);
+        } catch (error) {
+          console.error('Error fetching unread message count:', error);
+        }
+      }
+    };
+
+    fetchUnreadCount();
+
+    // Listen for real-time updates
+    if (isAuthenticated) {
+      const token = localStorage.getItem('authToken');
+      socketService.connect(token);
+
+      // Listen for conversation updates (new messages)
+      const handleConversationUpdate = ({ conversationId }) => {
+        // Refetch unread count when a conversation is updated
+        fetchUnreadCount();
+      };
+
+      socketService.onConversationUpdated(handleConversationUpdate);
+
+      return () => {
+        socketService.offConversationUpdated(handleConversationUpdate);
+      };
+    }
+  }, [isAuthenticated]);
+
+  // Clear unread count when on Messages page
+  useEffect(() => {
+    if (isActive('/messages') && unreadMessageCount > 0) {
+      setUnreadMessageCount(0);
+    }
+  }, [location.pathname, unreadMessageCount]);
 
   const handleLogout = () => {
     logout();
@@ -156,7 +207,7 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 w-full px-8 py-3 flex items-center justify-between bg-white border-b border-gray-100 z-50 rounded-full outline-1 outline-gray-100 ">
+    <nav className="sticky top-0 w-full px-4 md:px-8 py-3 flex items-center justify-between bg-white border-b border-gray-100 z-50 rounded-full outline-1 outline-gray-100">
 
       {/* LEFT: LOGO */}
       <Link to="/" className="flex items-center gap-2 cursor-pointer">
@@ -166,8 +217,16 @@ export default function Navbar() {
         </h1>
       </Link>
 
-      {/* CENTER MENU */}
-      <div className="flex items-center gap-8 text-gray-600 text-sm font-light">
+      {/* MOBILE MENU BUTTON */}
+      <button
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        className="md:hidden text-gray-600 hover:text-green-600 transition"
+      >
+        {isMobileMenuOpen ? <HiX size={24} /> : <HiOutlineMenu size={24} />}
+      </button>
+
+      {/* CENTER MENU - Desktop */}
+      <div className="hidden md:flex items-center gap-8 text-gray-600 text-sm font-light">
 
         {/* HOME */}
         <Link
@@ -231,11 +290,22 @@ export default function Navbar() {
         {isAuthenticated && (
           <Link
             to="/messages"
-            className={`flex items-center gap-1.5 hover:text-green-600 transition cursor-pointer ${isActive('/messages') ? 'text-green-600' : ''
+            className={`relative flex items-center gap-1.5 hover:text-green-600 transition cursor-pointer ${isActive('/messages') ? 'text-green-600' : ''
               }`}
+            onClick={() => {
+              // Clear unread count when clicking Messages
+              if (unreadMessageCount > 0) {
+                setUnreadMessageCount(0);
+              }
+            }}
           >
             <HiOutlineChatAlt2 size={16} />
             <span>Messages</span>
+            {unreadMessageCount > 0 && !isActive('/messages') && (
+              <span className="absolute -top-1 -right-2 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-medium rounded-full flex items-center justify-center px-1">
+                {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
+              </span>
+            )}
           </Link>
         )}
 
@@ -251,8 +321,8 @@ export default function Navbar() {
 
       </div>
 
-      {/* RIGHT SIDE */}
-      <div className="flex items-center gap-4">
+      {/* RIGHT SIDE - Hidden on mobile */}
+      <div className="hidden md:flex items-center gap-4">
         {isAuthenticated ? (
           <div className="flex items-center gap-4">
             {/* Notification Bell */}
@@ -469,6 +539,163 @@ export default function Navbar() {
           </Link>
         )}
       </div>
+
+      {/* MOBILE MENU PANEL */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-gray-100 shadow-lg z-40">
+          <div className="px-4 py-4 space-y-3">
+            {/* Navigation Links */}
+            <Link
+              to="/"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg transition ${isActive('/') ? 'bg-green-50 text-green-600' : 'text-gray-600 hover:bg-gray-50'
+                }`}
+            >
+              <HiOutlineHome size={18} />
+              <span className="text-sm font-light">Home</span>
+            </Link>
+
+            {(isAuthenticated && user?.role === 'freelancer' || user?.role === 'both') && (
+              <Link
+                to="/projects"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg transition ${isActive('/projects') ? 'bg-green-50 text-green-600' : 'text-gray-600 hover:bg-gray-50'
+                  }`}
+              >
+                <HiOutlineSearch size={18} />
+                <span className="text-sm font-light">Explore</span>
+              </Link>
+            )}
+
+            {isAuthenticated && (user?.role === 'client' || user?.role === 'both') && (
+              <Link
+                to="/freelancers"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg transition ${isActive('/freelancers') ? 'bg-green-50 text-green-600' : 'text-gray-600 hover:bg-gray-50'
+                  }`}
+              >
+                <HiOutlineUser size={18} />
+                <span className="text-sm font-light">Freelancers</span>
+              </Link>
+            )}
+
+            {isAuthenticated && (user?.role === 'client' || user?.role === 'both') && (
+              <Link
+                to="/post-project"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg transition ${isActive('/post-project') ? 'bg-green-50 text-green-600' : 'text-gray-600 hover:bg-gray-50'
+                  }`}
+              >
+                <HiOutlinePlusCircle size={18} />
+                <span className="text-sm font-light">Project</span>
+              </Link>
+            )}
+
+            {isAuthenticated && (
+              <Link
+                to="/my-projects"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg transition ${isActive('/my-projects') ? 'bg-green-50 text-green-600' : 'text-gray-600 hover:bg-gray-50'
+                  }`}
+              >
+                <HiOutlineFolderOpen size={18} />
+                <span className="text-sm font-light">My Projects</span>
+              </Link>
+            )}
+
+            {isAuthenticated && (
+              <Link
+                to="/messages"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg transition relative ${isActive('/messages') ? 'bg-green-50 text-green-600' : 'text-gray-600 hover:bg-gray-50'
+                  }`}
+              >
+                <HiOutlineChatAlt2 size={18} />
+                <span className="text-sm font-light">Messages</span>
+                {unreadMessageCount > 0 && !isActive('/messages') && (
+                  <span className="ml-auto min-w-[20px] h-[20px] bg-red-500 text-white text-[10px] font-medium rounded-full flex items-center justify-center px-1.5">
+                    {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
+                  </span>
+                )}
+              </Link>
+            )}
+
+            <Link
+              to="/support"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg transition ${isActive('/support') ? 'bg-green-50 text-green-600' : 'text-gray-600 hover:bg-gray-50'
+                }`}
+            >
+              <HiOutlineQuestionMarkCircle size={18} />
+              <span className="text-sm font-light">Support</span>
+            </Link>
+
+            {/* User Section */}
+            {isAuthenticated ? (
+              <>
+                <div className="border-t border-gray-100 my-3"></div>
+                <Link
+                  to={user?.username ? `/user/${user.username}` : '/settings'}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-2.5 text-gray-600 hover:bg-gray-50 rounded-lg transition"
+                >
+                  {userProfile?.profile?.avatar ? (
+                    <img
+                      src={userProfile.profile.avatar}
+                      alt="Profile"
+                      referrerPolicy="no-referrer"
+                      className="w-8 h-8 rounded-full object-cover border border-gray-200"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-medium text-gray-600 border border-gray-200">
+                      {user?.name?.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-900">{user?.name}</p>
+                    <p className="text-xs text-gray-500">View Profile</p>
+                  </div>
+                </Link>
+                <Link
+                  to="/dashboard"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg transition text-gray-600 hover:bg-gray-50"
+                >
+                  <HiOutlineBriefcase size={18} />
+                  <span className="text-sm font-light">Dashboard</span>
+                </Link>
+                <Link
+                  to="/settings"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg transition text-gray-600 hover:bg-gray-50"
+                >
+                  <HiOutlineCog size={18} />
+                  <span className="text-sm font-light">Settings</span>
+                </Link>
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg transition text-gray-600 hover:bg-gray-50"
+                >
+                  <HiOutlineLogout size={18} />
+                  <span className="text-sm font-light">Logout</span>
+                </button>
+              </>
+            ) : (
+              <Link
+                to="/login"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-lg transition text-gray-600 hover:bg-gray-50"
+              >
+                <HiOutlineLogin size={18} />
+                <span className="text-sm font-light">Login</span>
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
 
     </nav>
   );

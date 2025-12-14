@@ -16,7 +16,8 @@ import {
     HiOutlineClock,
     HiOutlinePhotograph,
     HiOutlineX,
-    HiCheck
+    HiCheck,
+    HiSparkles
 } from 'react-icons/hi';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
@@ -30,7 +31,7 @@ const STEPS = [
 
 export default function PostProject() {
     const navigate = useNavigate();
-    const { projectId } = useParams();
+    const { id: projectId } = useParams();
     const isEditMode = Boolean(projectId);
     const [currentStep, setCurrentStep] = useState(1);
     const [loading, setLoading] = useState(false);
@@ -59,6 +60,10 @@ export default function PostProject() {
     const [captchaLoading, setCaptchaLoading] = useState(false);
     const [captchaError, setCaptchaError] = useState('');
 
+    // AI state
+    const [aiLoading, setAiLoading] = useState(false);
+    const [isGenerating, setIsGenerating] = useState(false);
+
     const categories = [
         'Programming & Tech',
         'Graphics & Design',
@@ -75,6 +80,64 @@ export default function PostProject() {
     const handleChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
         setError('');
+    };
+
+    const handleImproveDescription = async () => {
+        if (!formData.description.trim()) {
+            setError('Please enter a description first before using AI help');
+            return;
+        }
+
+        try {
+            setAiLoading(true);
+            setError('');
+            const token = localStorage.getItem('authToken');
+
+            const response = await axios.post(
+                `${API_BASE_URL}/api/ai/improve-description`,
+                {
+                    description: formData.description,
+                    title: formData.title
+                },
+                {
+                    headers: {
+                        Authorization: token,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            if (response.data.success) {
+                const improvedText = response.data.improvedDescription;
+                setAiLoading(false);
+                setIsGenerating(true);
+
+                // Clear description first
+                handleChange('description', '');
+
+                // Smooth character-by-character generation
+                let currentIndex = 0;
+                const typingSpeed = 15; // milliseconds per character (faster for smoother effect)
+
+                const typeCharacter = () => {
+                    if (currentIndex < improvedText.length) {
+                        handleChange('description', improvedText.substring(0, currentIndex + 1));
+                        currentIndex++;
+                        setTimeout(typeCharacter, typingSpeed);
+                    } else {
+                        // Animation complete
+                        setIsGenerating(false);
+                    }
+                };
+
+                // Start generation after brief delay
+                setTimeout(typeCharacter, 150);
+            }
+        } catch (err) {
+            console.error('Error improving description:', err);
+            setError(err.response?.data?.message || 'Failed to improve description. Please try again.');
+            setAiLoading(false);
+        }
     };
 
     // Load existing project data if in edit mode
@@ -373,7 +436,7 @@ export default function PostProject() {
                             {isEditMode ? 'Update your project details' : 'Follow the steps to create your project listing'}
                         </p>
                     </div>
-                    {currentStep > 1 && !isEditMode && (
+                    {!isEditMode && (formData.title || formData.description || formData.category || formData.budgetMin || formData.budgetMax || formData.duration || formData.skillsRequired || formData.thumbnail || formData.images.length > 0) && (
                         <button
                             type="button"
                             onClick={() => {
@@ -413,7 +476,7 @@ export default function PostProject() {
                                                 {step.id}
                                             </div>
                                             <span
-                                                className={`text-xs font-medium mt-2 whitespace-nowrap ${isActive ? 'text-green-600' : isCompleted ? 'text-gray-900' : 'text-gray-400'
+                                                className={`text-xs font-light mt-2 whitespace-nowrap ${isActive ? 'text-green-600' : isCompleted ? 'text-gray-900' : 'text-gray-400'
                                                     }`}
                                             >
                                                 {step.name}
@@ -456,16 +519,42 @@ export default function PostProject() {
 
                                 {/* Description */}
                                 <div className="group">
-                                    <label className="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wide">
-                                        Description
-                                    </label>
-                                    <textarea
-                                        value={formData.description}
-                                        onChange={(e) => handleChange('description', e.target.value)}
-                                        placeholder="Describe your project in detail. What are you trying to achieve? What skills are needed?"
-                                        rows={6}
-                                        className="w-full px-4 py-3.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 focus:outline-none resize-none transition-all"
-                                    />
+                                    <div className="flex items-center justify-between mb-1.5">
+                                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide">
+                                            Description
+                                        </label>
+                                    </div>
+                                    <div className='flex justify-end'>
+                                        <textarea
+                                            value={formData.description}
+                                            onChange={(e) => handleChange('description', e.target.value)}
+                                            placeholder="Describe your project in detail. What are you trying to achieve? What skills are needed?"
+                                            rows={6}
+                                            className={`w-full px-4 py-3.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-green-500 focus:ring-2 focus:ring-green-100 focus:outline-none resize-none transition-all ${isGenerating ? 'ai-generating' : ''}`}
+                                            style={isGenerating ? {
+                                                background: 'linear-gradient(90deg, #f9fafb 0%, #f3e8ff 25%, #e9d5ff 50%, #f3e8ff 75%, #f9fafb 100%)',
+                                                backgroundSize: '200% 100%',
+                                                animation: 'shimmer 2s linear infinite'
+                                            } : {}}
+
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={handleImproveDescription}
+                                            disabled={aiLoading || !formData.description.trim()}
+                                            className={`m-2 absolute flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-purple-600 bg-purple-50 hover:bg-purple-100 rounded-full transition-all hover:shadow-sm group/ai disabled:opacity-50 disabled:cursor-not-allowed ${aiLoading ? 'opacity-100' : 'opacity-60'}`}
+                                            title={aiLoading ? "AI is improving your description..." : "Perform Magic"}
+                                        >
+                                            {aiLoading ? (
+                                                <>
+                                                    <div className="w-3.5 h-3.5 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+                                                </>
+                                            ) : (
+                                                <HiSparkles className="w-3.5 h-3.5 group-hover/ai:animate-pulse" />
+                                            )}
+                                        </button>
+
+                                    </div>
                                     <div className="flex items-center justify-between mt-1.5">
                                         <p className="text-xs text-gray-400">
                                             Minimum 50 characters required

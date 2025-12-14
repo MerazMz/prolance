@@ -9,7 +9,8 @@ import {
     HiOutlineStar,
     HiOutlineBriefcase,
     HiOutlineCurrencyRupee,
-    HiOutlineCheckCircle
+    HiOutlineCheckCircle,
+    HiArrowLeft
 } from 'react-icons/hi';
 
 const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
@@ -90,7 +91,16 @@ export default function UserProfile() {
 
     return (
         <div className="min-h-screen bg-white">
+            {/* Back Button */}
+            <button
+                onClick={() => navigate(-1)}
+                className="absolute mt-4 ml-25 mb-4 flex items-center gap-1.5 text-sm text-gray-600 hover:text-green-600 transition-colors font-light group"
+            >
+                <HiArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
+                <span>Back</span>
+            </button>
             <div className="max-w-5xl mx-auto px-8 py-10">
+
                 {/* Header Section */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}

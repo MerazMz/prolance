@@ -55,7 +55,17 @@ export default function Chat() {
                 headers: { Authorization: token }
             });
 
-            setConversations(response.data.conversations || []);
+            const fetchedConversations = response.data.conversations || [];
+            setConversations(fetchedConversations);
+
+            // Restore last selected conversation from localStorage
+            const savedConversationId = localStorage.getItem('lastSelectedConversation');
+            if (savedConversationId && fetchedConversations.length > 0) {
+                const savedConv = fetchedConversations.find(conv => conv._id === savedConversationId);
+                if (savedConv) {
+                    setSelectedConversation(savedConv);
+                }
+            }
         } catch (err) {
             console.error('Error fetching conversations:', err);
         } finally {
@@ -94,6 +104,16 @@ export default function Chat() {
                 setShowMobileChat(true);
                 setShowSearch(false);
                 setSearchQuery('');
+
+                // Save to localStorage
+                localStorage.setItem('lastSelectedConversation', existingConv._id);
+
+                // Clear unread count for this conversation
+                setConversations(prev => prev.map(conv =>
+                    conv._id === existingConv._id
+                        ? { ...conv, unreadCount: 0 }
+                        : conv
+                ));
                 return;
             }
 
@@ -110,6 +130,9 @@ export default function Chat() {
             setShowMobileChat(true);
             setShowSearch(false);
             setSearchQuery('');
+
+            // Save to localStorage
+            localStorage.setItem('lastSelectedConversation', newConversation._id);
         } catch (err) {
             console.error('Error starting chat:', err);
         }
@@ -132,6 +155,16 @@ export default function Chat() {
     const handleSelectConversation = (conversation) => {
         setSelectedConversation(conversation);
         setShowMobileChat(true);
+
+        // Save selected conversation to localStorage
+        localStorage.setItem('lastSelectedConversation', conversation._id);
+
+        // Immediately clear unread count for this conversation in the list
+        setConversations(prev => prev.map(conv =>
+            conv._id === conversation._id
+                ? { ...conv, unreadCount: 0 }
+                : conv
+        ));
     };
 
     const handleBackToList = () => {
@@ -193,7 +226,7 @@ export default function Chat() {
     }
 
     return (
-        <div className="h-screen flex flex-col bg-gray-50">
+        <div className="flex flex-col bg-gray-50" style={{ height: 'calc(100vh - 90px)' }}>
             {/* Fixed height container - no scrolling */}
             <div className="flex-1 flex overflow-hidden max-w-[1600px] mx-auto w-full">
                 {/* Conversations List Sidebar */}

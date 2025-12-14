@@ -113,6 +113,14 @@ function App() {
             }
           />
           <Route
+            path="/post-project/:id"
+            element={
+              <ClientRoute>
+                <PostProject />
+              </ClientRoute>
+            }
+          />
+          <Route
             path="/my-projects"
             element={
               <ProtectedRoute>

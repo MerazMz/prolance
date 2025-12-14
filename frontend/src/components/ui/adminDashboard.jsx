@@ -254,7 +254,7 @@ const AdminDashboard = () => {
     const fetchStats = async () => {
         try {
             setLoading(true);
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('authToken');
 
             const response = await fetch(`${API_BASE_URL}/api/admin/stats`, {
                 headers: {
@@ -278,7 +278,7 @@ const AdminDashboard = () => {
 
     const fetchChartData = async () => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('authToken');
 
             const response = await fetch(`${API_BASE_URL}/api/admin/user-growth?days=${timePeriod}`, {
                 headers: {
@@ -301,7 +301,7 @@ const AdminDashboard = () => {
     const fetchUsers = async () => {
         try {
             setLoading(true);
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('authToken');
 
             const response = await fetch(`${API_BASE_URL}/api/admin/users`, {
                 headers: {
@@ -332,7 +332,7 @@ const AdminDashboard = () => {
         if (!confirm('Are you sure you want to delete this user?')) return;
 
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('authToken');
             const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}`, {
                 method: 'DELETE',
                 headers: {
@@ -351,7 +351,7 @@ const AdminDashboard = () => {
 
     const handleBanUser = async (userId) => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('authToken');
             const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}/ban`, {
                 method: 'POST',
                 headers: {
@@ -370,7 +370,7 @@ const AdminDashboard = () => {
 
     const handleUnbanUser = async (userId) => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('authToken');
             const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}/unban`, {
                 method: 'POST',
                 headers: {
@@ -390,7 +390,7 @@ const AdminDashboard = () => {
     const fetchFreelancers = async () => {
         try {
             setLoading(true);
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('authToken');
 
             const queryParams = new URLSearchParams();
             if (filters.verified) queryParams.append('verified', filters.verified);
@@ -419,7 +419,7 @@ const AdminDashboard = () => {
 
     const fetchFreelancerStats = async () => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('authToken');
 
             const response = await fetch(`${API_BASE_URL}/api/admin/freelancers/stats`, {
                 headers: {
@@ -441,7 +441,7 @@ const AdminDashboard = () => {
 
     const handleVerifyFreelancer = async (freelancerId) => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('authToken');
             const response = await fetch(`${API_BASE_URL}/api/admin/freelancers/${freelancerId}/verify`, {
                 method: 'POST',
                 headers: {
@@ -461,7 +461,7 @@ const AdminDashboard = () => {
 
     const handleUnverifyFreelancer = async (freelancerId) => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('authToken');
             const response = await fetch(`${API_BASE_URL}/api/admin/freelancers/${freelancerId}/unverify`, {
                 method: 'POST',
                 headers: {

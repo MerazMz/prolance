@@ -25,13 +25,33 @@ export default function MyProjects() {
     const { user } = useAuth();
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState('all');
-    const [roleFilter, setRoleFilter] = useState('all'); // 'all', 'client', 'freelancer'
+
+    // Load saved filter from localStorage or default to 'all'
+    const [filter, setFilter] = useState(() => {
+        return localStorage.getItem('myProjectsFilter') || 'all';
+    });
+
+    // Load saved roleFilter from localStorage or default based on user role
+    const [roleFilter, setRoleFilter] = useState(() => {
+        const saved = localStorage.getItem('myProjectsRoleFilter');
+        return saved || (user?.role === 'freelancer' ? 'freelancer' : 'client');
+    });
+
     const [deleteConfirm, setDeleteConfirm] = useState(null);
     const [selectedProject, setSelectedProject] = useState(null);
     const [applications, setApplications] = useState([]);
     const [loadingApplications, setLoadingApplications] = useState(false);
     const [expandedApplication, setExpandedApplication] = useState(null);
+
+    // Save filter to localStorage whenever it changes
+    useEffect(() => {
+        localStorage.setItem('myProjectsFilter', filter);
+    }, [filter]);
+
+    // Save roleFilter to localStorage whenever it changes
+    useEffect(() => {
+        localStorage.setItem('myProjectsRoleFilter', roleFilter);
+    }, [roleFilter]);
 
     useEffect(() => {
         fetchProjects();
@@ -45,7 +65,13 @@ export default function MyProjects() {
 
             const params = new URLSearchParams();
             if (filter !== 'all') {
-                params.append('status', filter);
+                // For completed tab, fetch both completed and closed projects
+                if (filter === 'completed') {
+                    // Fetch all projects and filter on frontend
+                    // Or we can make multiple requests, but simpler to filter client-side
+                } else {
+                    params.append('status', filter);
+                }
             }
             if (roleFilter !== 'all') {
                 params.append('role', roleFilter);
@@ -59,7 +85,38 @@ export default function MyProjects() {
                 headers: { Authorization: token }
             });
 
-            setProjects(response.data.projects || []);
+            let fetchedProjects = response.data.projects || [];
+
+            // Filter for completed tab - include both completed and closed
+            if (filter === 'completed') {
+                fetchedProjects = fetchedProjects.filter(p =>
+                    p.status === 'completed' || p.status === 'closed'
+                );
+            }
+
+            // Sort projects: latest proposals first, closed at bottom
+            fetchedProjects.sort((a, b) => {
+                // First, separate by status - closed/completed/cancelled go to bottom
+                const aIsClosed = ['completed', 'cancelled', 'closed'].includes(a.status);
+                const bIsClosed = ['completed', 'cancelled', 'closed'].includes(b.status);
+
+                if (aIsClosed !== bIsClosed) {
+                    return aIsClosed ? 1 : -1;
+                }
+
+                // For non-closed projects, sort by latest proposal/activity
+                // If project has proposals, sort by most recent update
+                if (a.proposalCount > 0 || b.proposalCount > 0) {
+                    const aTime = new Date(a.updatedAt || a.createdAt).getTime();
+                    const bTime = new Date(b.updatedAt || b.createdAt).getTime();
+                    return bTime - aTime; // Most recent first
+                }
+
+                // Otherwise sort by creation date (newest first)
+                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+            });
+
+            setProjects(fetchedProjects);
         } catch (error) {
             console.error('Error fetching projects:', error);
             setProjects([]);
@@ -142,6 +199,19 @@ export default function MyProjects() {
         totalViews: projects.reduce((acc, p) => acc + p.viewCount, 0)
     };
 
+    // Helper to check if project has recent proposals (within 24 hours)
+    const hasRecentProposal = (project) => {
+        // Only show notification for projects owned by the current user
+        if (project.clientId?._id !== user?.userId) return false;
+
+        // Don't show notification for closed/completed/cancelled projects
+        if (['completed', 'cancelled', 'closed'].includes(project.status)) return false;
+
+        if (!project.updatedAt) return false;
+        const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        return new Date(project.updatedAt) > twentyFourHoursAgo && project.proposalCount > 0;
+    };
+
     return (
         <div className="min-h-screen bg-white">
             <div className="max-w-6xl mx-auto px-8 py-10">
@@ -192,49 +262,51 @@ export default function MyProjects() {
                         </div>
                     </div>
 
-                    {/* Role Filter Tabs */}
-                    <div className="flex gap-2 mb-4 overflow-x-auto">
-                        {[
-                            { key: 'all', label: 'All Projects', roles: ['client', 'freelancer', 'both'] },
-                            { key: 'client', label: 'My Posted Projects', roles: ['client', 'both'] },
-                            { key: 'freelancer', label: 'Assigned to Me', roles: ['freelancer', 'both'] }
-                        ]
-                            .filter(tab => tab.roles.includes(user?.role))
-                            .map(tab => (
+                    {/* Tabs Row - Role Filter on Left, Status Filter on Right */}
+                    <div className="flex items-center justify-between gap-4 mb-4">
+                        {/* Role Filter Tabs - Clean Preview/Code Style */}
+                        <div className="inline-flex gap-1 p-1 bg-gray-100 rounded-lg">
+                            {[
+                                { key: 'client', label: 'My Posted Projects', roles: ['client', 'both'] },
+                                { key: 'freelancer', label: 'Assigned to Me', roles: ['freelancer', 'both'] }
+                            ]
+                                .filter(tab => tab.roles.includes(user?.role))
+                                .map(tab => (
+                                    <button
+                                        key={tab.key}
+                                        onClick={() => setRoleFilter(tab.key)}
+                                        className={`px-6 py-2 text-sm rounded-md transition whitespace-nowrap font-light ${roleFilter === tab.key
+                                            ? 'bg-white text-gray-900 shadow-sm'
+                                            : 'text-gray-600 hover:text-gray-900'
+                                            }`}
+                                    >
+                                        {tab.label}
+                                    </button>
+                                ))
+                            }
+                        </div>
+
+                        {/* Status Filter Tabs - Smaller, on Right */}
+                        <div className="inline-flex gap-1 px-2 py-1 bg-gray-100 rounded-full">
+                            {[
+                                { key: 'all', label: 'All' },
+                                { key: 'open', label: 'Open' },
+                                { key: 'in-progress', label: 'In Progress' },
+                                { key: 'completed', label: 'Completed' },
+                                { key: 'cancelled', label: 'Cancelled' }
+                            ].map(tab => (
                                 <button
                                     key={tab.key}
-                                    onClick={() => setRoleFilter(tab.key)}
-                                    className={`px-4 py-2 text-sm rounded-lg transition whitespace-nowrap font-light ${roleFilter === tab.key
-                                        ? 'bg-green-600 text-white'
-                                        : 'text-gray-600 hover:bg-gray-50 border border-gray-200'
+                                    onClick={() => setFilter(tab.key)}
+                                    className={`px-3 py-1 text-xs rounded-full transition whitespace-nowrap font-light ${filter === tab.key
+                                        ? 'bg-white text-black shadow-sm'
+                                        : 'text-gray-600 hover:text-gray-900'
                                         }`}
                                 >
                                     {tab.label}
                                 </button>
-                            ))
-                        }
-                    </div>
-
-                    {/* Filter Tabs */}
-                    <div className="flex gap-2 overflow-x-auto">
-                        {[
-                            { key: 'all', label: 'All' },
-                            { key: 'open', label: 'Open' },
-                            { key: 'in-progress', label: 'In Progress' },
-                            { key: 'completed', label: 'Completed' },
-                            { key: 'cancelled', label: 'Cancelled' }
-                        ].map(tab => (
-                            <button
-                                key={tab.key}
-                                onClick={() => setFilter(tab.key)}
-                                className={`px-4 py-2 text-sm rounded-lg transition whitespace-nowrap font-light ${filter === tab.key
-                                    ? 'bg-green-50 text-green-700 border border-green-200'
-                                    : 'text-gray-600 hover:bg-gray-50 border border-transparent'
-                                    }`}
-                            >
-                                {tab.label}
-                            </button>
-                        ))}
+                            ))}
+                        </div>
                     </div>
                 </motion.div>
 
@@ -266,60 +338,63 @@ export default function MyProjects() {
                         )}
                     </motion.div>
                 ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                         {projects.map((project, index) => (
                             <motion.div
                                 key={project._id}
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: index * 0.05 }}
-                                className="border border-gray-100 rounded-lg p-5 hover:border-gray-200 hover:bg-gray-50/30 transition-all group"
+                                className="relative border-0 rounded-xl p-6 bg-gray-50 shadow-sm hover:shadow-md transition-all group"
                             >
+                                {/* Main Content - Thumbnail + Details */}
                                 <div className="flex gap-4">
                                     {/* Thumbnail */}
                                     {project.thumbnail ? (
                                         <img
                                             src={project.thumbnail}
                                             alt={project.title}
-                                            className="w-24 h-24 object-cover rounded-lg border border-gray-100 flex-shrink-0"
+                                            className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
                                         />
                                     ) : (
-                                        <div className="w-24 h-24 rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center flex-shrink-0">
+                                        <div className="w-20 h-20 rounded-lg bg-gray-50 flex items-center justify-center flex-shrink-0">
                                             <HiOutlineBriefcase className="w-8 h-8 text-gray-300" />
                                         </div>
                                     )}
 
-                                    {/* Content */}
+                                    {/* Content Section */}
+                                    <Link>
+
+                                    </Link>
                                     <div className="flex-1 min-w-0">
-                                        <div className="flex items-start justify-between mb-2">
-                                            <div className="flex-1">
-                                                <div className="flex items-center gap-2">
-                                                    <Link
-                                                        to={`/projects/${project._id}`}
-                                                        className="text-lg font-light text-gray-700 hover:text-green-600 transition line-clamp-1"
-                                                    >
-                                                        {project.title}
-                                                    </Link>
-                                                    {project.assignedFreelancerId?._id === user?.userId && (
-                                                        <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs rounded border border-blue-200 font-light">
-                                                            Assigned
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <span className={`px-2 py-0.5 text-xs rounded border font-light ${getStatusColor(project.status)}`}>
-                                                        {project.status}
-                                                    </span>
-                                                    <span className="px-2 py-0.5 bg-green-50 text-green-700 text-xs rounded-md font-light">
+                                        {/* Header Section */}
+                                        <div className="flex items-start justify-between gap-4 mb-3">
+                                            <div className="flex-1 min-w-0">
+                                                <Link
+                                                    to={`/projects/${project._id}`}
+                                                    className="text-xl font-normal text-gray-800 hover:text-green-600 transition block mb-2 line-clamp-1 text-left"
+                                                >
+                                                    {project.title}
+                                                </Link>
+
+                                                {/* Badges Row */}
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className="px-2.5 py-0.5 bg-white text-black text-xs rounded-full font-light">
                                                         {project.category}
                                                     </span>
-                                                    {project.assignedFreelancerId?._id === user?.userId && project.clientId && (
-                                                        <span className="text-xs text-gray-500 font-light">
-                                                            Client: {project.clientId.name}
+                                                    {/* Skills - show first 3 */}
+                                                    {project.skillsRequired?.slice(0, 3).map((skill, idx) => (
+                                                        <span key={idx} className="px-2.5 py-0.5 bg-white text-black text-xs rounded-full font-light">
+                                                            {skill}
+                                                        </span>
+                                                    ))}
+                                                    {project.skillsRequired?.length > 3 && (
+                                                        <span className="px-2.5 py-0.5 bg-gray-100 text-gray-500 text-xs rounded-full font-light">
+                                                            +{project.skillsRequired.length - 3}
                                                         </span>
                                                     )}
                                                     {project.visibility === 'private' && (
-                                                        <span className="flex items-center gap-1 px-2 py-0.5 bg-gray-50 text-gray-600 text-xs rounded-md font-light">
+                                                        <span className="flex items-center gap-1 px-2.5 py-1 bg-gray-50 text-gray-500 text-xs rounded-full font-light">
                                                             <HiOutlineEyeOff size={12} />
                                                             Private
                                                         </span>
@@ -327,18 +402,25 @@ export default function MyProjects() {
                                                 </div>
                                             </div>
 
-                                            {/* Actions */}
-                                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition">
-                                                {/* Show applications button only for client's own projects */}
-                                                {project.clientId?._id === user?.userId && project.proposalCount > 0 && (
-                                                    <button
-                                                        onClick={() => handleViewApplications(project)}
-                                                        className="px-3 py-1.5 text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition font-light cursor-pointer"
-                                                        title="View Applications"
-                                                    >
-                                                        {project.proposalCount} {project.proposalCount === 1 ? 'Application' : 'Applications'}
-                                                    </button>
-                                                )}
+                                            {/* Actions - Always Visible */}
+                                            <div className="flex items-center gap-1.5 flex-shrink-0">
+                                                {/* Status Badge */}
+                                                <span className={`px-2.5 py-1 text-xs rounded-full font-light ${getStatusColor(project.status)}`}>
+                                                    {project.status}
+                                                </span>
+
+                                                {/* Show applications button only for client's own projects that are NOT closed */}
+                                                {project.clientId?._id === user?.userId &&
+                                                    project.proposalCount > 0 &&
+                                                    !['completed', 'cancelled', 'closed'].includes(project.status) && (
+                                                        <button
+                                                            onClick={() => handleViewApplications(project)}
+                                                            className="px-3 py-1.5 text-xs text-green-600 bg-green-50 rounded-lg hover:bg-green-100 transition font-light cursor-pointer"
+                                                            title="View Applications"
+                                                        >
+                                                            {project.proposalCount} {project.proposalCount === 1 ? 'Application' : 'Applications'}
+                                                        </button>
+                                                    )}
                                                 <Link
                                                     to={project.assignedFreelancerId?._id === user?.userId
                                                         ? `/project-workspace/${project._id}`
@@ -347,9 +429,9 @@ export default function MyProjects() {
                                                     title={project.assignedFreelancerId?._id === user?.userId ? 'Open Workspace' : 'View Project'}
                                                 >
                                                     {project.assignedFreelancerId?._id === user?.userId ? (
-                                                        <HiOutlineBriefcase size={16} />
+                                                        <HiOutlineBriefcase size={18} />
                                                     ) : (
-                                                        <HiOutlineEye size={16} />
+                                                        <HiOutlineEye size={18} />
                                                     )}
                                                 </Link>
                                                 {/* Show edit button only for client's own projects */}
@@ -359,7 +441,7 @@ export default function MyProjects() {
                                                         className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition cursor-pointer"
                                                         title="Edit Project"
                                                     >
-                                                        <HiOutlinePencil size={16} />
+                                                        <HiOutlinePencil size={18} />
                                                     </Link>
                                                 )}
                                                 {/* Show delete button only for client's own projects */}
@@ -369,35 +451,44 @@ export default function MyProjects() {
                                                         className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition cursor-pointer"
                                                         title="Delete"
                                                     >
-                                                        <HiOutlineTrash size={16} />
+                                                        <HiOutlineTrash size={18} />
                                                     </button>
                                                 )}
                                             </div>
                                         </div>
 
-                                        <p className="text-sm text-left text-gray-600 font-light line-clamp-2 mb-3">
-                                            {project.description}
-                                        </p>
-
-                                        <div className="flex items-center justify-between text-xs text-gray-400 font-light">
-                                            <div className="flex items-center gap-4">
-                                                <div className="flex items-center gap-1">
-                                                    <HiOutlineClock size={14} />
-                                                    {new Date(project.createdAt).toLocaleDateString()}
-                                                </div>
-                                                <div className="flex items-center gap-1">
-                                                    <HiOutlineChat size={14} />
-                                                    {project.proposalCount} proposals
-                                                </div>
-                                                <div className="flex items-center gap-1">
-                                                    <HiOutlineEye size={14} />
-                                                    {project.viewCount} views
-                                                </div>
-                                            </div>
-                                            <div className="text-sm text-gray-700 font-light">
-                                                ₹{project.budget.min.toLocaleString()} - ₹{project.budget.max.toLocaleString()}
-                                            </div>
+                                        {/* Description - Only visible on hover */}
+                                        <div className="overflow-hidden transition-all duration-300 ease-in-out max-h-0 opacity-0 group-hover:max-h-20 group-hover:opacity-100">
+                                            <p className="text-sm text-gray-600 text-ellipsis font-light text-left line-clamp-2 mb-4">
+                                                {project.description}
+                                            </p>
                                         </div>
+                                    </div>
+                                </div>
+
+                                {/* Footer - Metrics and Budget */}
+                                <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                                    <div className="flex items-center gap-5 text-xs text-gray-500 font-light">
+                                        <div className="flex items-center gap-1.5">
+                                            <HiOutlineChat size={14} className="text-gray-400" />
+                                            <span>{project.proposalCount}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                            <HiOutlineEye size={14} className="text-gray-400" />
+                                            <span>{project.viewCount}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                            <HiOutlineClock size={14} className="text-gray-400" />
+                                            <span>{new Date(project.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                                        </div>
+                                        {project.assignedFreelancerId?._id === user?.userId && project.clientId && (
+                                            <span className="text-xs text-gray-400">
+                                                Client: {project.clientId.name}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="text-sm font-normal text-gray-800">
+                                        ₹{project.budget.min.toLocaleString()} - ₹{project.budget.max.toLocaleString()}
                                     </div>
                                 </div>
                             </motion.div>

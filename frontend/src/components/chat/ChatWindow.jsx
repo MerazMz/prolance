@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { HiOutlineChevronLeft, HiOutlineDocumentText, HiOutlinePaperClip } from 'react-icons/hi';
 import { CiCircleInfo } from "react-icons/ci";
 import axios from 'axios';
@@ -193,19 +194,20 @@ export default function ChatWindow({ conversation, onBack }) {
                 >
                     <HiOutlineChevronLeft size={20} className="text-gray-600" />
                 </button>
-
-                {otherUser?.avatar ? (
-                    <img
-                        src={otherUser.avatar}
-                        alt={otherUser.name}
-                        referrerPolicy="no-referrer"
-                        className="w-9 h-9 rounded-full object-cover"
-                    />
-                ) : (
-                    <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 text-sm font-medium">
-                        {otherUser?.name?.charAt(0).toUpperCase()}
-                    </div>
-                )}
+                <Link to={`/user/${otherUser.username}`}>
+                    {otherUser?.avatar ? (
+                        <img
+                            src={otherUser.avatar}
+                            alt={otherUser.name}
+                            referrerPolicy="no-referrer"
+                            className="w-9 h-9 rounded-full object-cover"
+                        />
+                    ) : (
+                        <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 text-sm font-medium">
+                            {otherUser?.name?.charAt(0).toUpperCase()}
+                        </div>
+                    )}
+                </Link>
 
                 <div className="flex-1 min-w-0">
                     <h2 className="text-sm font-medium text-gray-900 truncate">{otherUser?.name}</h2>
