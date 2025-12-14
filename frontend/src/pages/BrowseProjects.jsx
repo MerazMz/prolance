@@ -30,6 +30,7 @@ export default function BrowseProjects() {
     const [maxBudget, setMaxBudget] = useState('');
     const [showFilters, setShowFilters] = useState(false);
     const [activeTab, setActiveTab] = useState('bestMatch'); // 'trending', 'bestMatch', 'all'
+    const [applicationStatuses, setApplicationStatuses] = useState({}); // Map of projectId -> status
     const carouselRef = useRef(null);
 
     const categories = [
@@ -59,6 +60,25 @@ export default function BrowseProjects() {
         }
     }, [userSkills, isAuthenticated]);
 
+    // Check application statuses when projects are loaded
+    useEffect(() => {
+        if (isAuthenticated && projects.length > 0) {
+            checkApplicationStatuses(projects);
+        }
+    }, [projects, isAuthenticated]);
+
+    useEffect(() => {
+        if (isAuthenticated && trendingProjects.length > 0) {
+            checkApplicationStatuses(trendingProjects);
+        }
+    }, [trendingProjects, isAuthenticated]);
+
+    useEffect(() => {
+        if (isAuthenticated && bestMatchProjects.length > 0) {
+            checkApplicationStatuses(bestMatchProjects);
+        }
+    }, [bestMatchProjects, isAuthenticated]);
+
     const fetchProjects = async () => {
         setLoading(true);
         try {
@@ -84,6 +104,31 @@ export default function BrowseProjects() {
             setProjects([]);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const checkApplicationStatuses = async (projectList) => {
+        try {
+            const projectIds = projectList.map(p => p._id).join(',');
+            if (!projectIds) return;
+
+            const token = localStorage.getItem('authToken');
+            const response = await axios.get(
+                `${API_BASE_URL}/api/applications/check?projectIds=${projectIds}`,
+                {
+                    headers: { Authorization: token }
+                }
+            );
+
+            if (response.data.success && response.data.statuses) {
+                setApplicationStatuses(prev => ({
+                    ...prev,
+                    ...response.data.statuses
+                }));
+            }
+        } catch (error) {
+            // Silently fail - user might not be a freelancer
+            console.log('Could not check application statuses:', error.message);
         }
     };
 
@@ -377,7 +422,12 @@ export default function BrowseProjects() {
                                     >
                                         {trendingProjects.map((project, index) => (
                                             <div key={project._id} className="flex-shrink-0 w-80">
-                                                <ProjectCard project={project} index={index} getTimeSince={getTimeSince} />
+                                                <ProjectCard
+                                                    project={project}
+                                                    index={index}
+                                                    getTimeSince={getTimeSince}
+                                                    applicationStatus={applicationStatuses[project._id] || null}
+                                                />
                                             </div>
                                         ))}
                                     </div>
@@ -410,7 +460,14 @@ export default function BrowseProjects() {
                             ) : bestMatchProjects.length > 0 ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     {bestMatchProjects.map((project, index) => (
-                                        <ProjectCard key={project._id} project={project} index={index} getTimeSince={getTimeSince} highlight />
+                                        <ProjectCard
+                                            key={project._id}
+                                            project={project}
+                                            index={index}
+                                            getTimeSince={getTimeSince}
+                                            highlight
+                                            applicationStatus={applicationStatuses[project._id] || null}
+                                        />
                                     ))}
                                 </div>
                             ) : (
@@ -537,7 +594,7 @@ export default function BrowseProjects() {
 }
 
 // Reusable Project Card Component
-function ProjectCard({ project, index, getTimeSince, highlight = false }) {
+function ProjectCard({ project, index, getTimeSince, highlight = false, applicationStatus = null }) {
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -573,10 +630,32 @@ function ProjectCard({ project, index, getTimeSince, highlight = false }) {
                             }`}>
                             {project.title}
                         </h3>
-                        <span className={`inline-block px-2 py-0.5 text-xs rounded-md font-light ${highlight ? 'bg-green-100 text-green-700' : 'bg-green-50 text-green-700'
-                            }`}>
-                            {project.category}
-                        </span>
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`inline-block px-2 py-0.5 text-xs rounded-md font-light ${highlight ? 'bg-green-100 text-green-700' : 'bg-green-50 text-green-700'
+                                }`}>
+                                {project.category}
+                            </span>
+                            {/* Application Status Badge */}
+                            {applicationStatus && (
+                                <>
+                                    {applicationStatus === 'pending' && (
+                                        <span className="inline-block px-2 py-0.5 bg-blue-50 text-blue-700 text-xs rounded-md font-light border border-blue-200">
+                                            ✓ Applied
+                                        </span>
+                                    )}
+                                    {applicationStatus === 'accepted' && (
+                                        <span className="inline-block px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-md font-light border border-green-300">
+                                            ✓ Accepted
+                                        </span>
+                                    )}
+                                    {applicationStatus === 'rejected' && (
+                                        <span className="inline-block px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-md font-light border border-gray-200">
+                                            Not Selected
+                                        </span>
+                                    )}
+                                </>
+                            )}
+                        </div>
                     </div>
 
                     <p className={`text-gray-600 line-clamp-2 font-light ${highlight ? 'text-xs mb-2 min-h-[2rem]' : 'text-sm mb-3 min-h-[2.5rem]'

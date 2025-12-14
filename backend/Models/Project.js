@@ -23,7 +23,9 @@ const ProjectSchema = new Schema({
             'Music & Audio',
             'Business',
             'Consulting',
-            'Other'
+            'Health & Fitness',
+            'Education',
+            'Legal'
         ]
     },
     budget: {

@@ -200,6 +200,221 @@ const InteractiveChart = ({ data, timePeriod }) => {
     );
 };
 
+// Mixed Status Chart Component (for In Progress vs Completed)
+const MixedStatusChart = ({ inProgressData, completedData, timePeriod }) => {
+    const [hoveredPoint, setHoveredPoint] = useState(null);
+    const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+    const svgRef = useRef(null);
+
+    if (!inProgressData || !completedData || inProgressData.length === 0) {
+        return <div>No data available</div>;
+    }
+
+    const width = 800;
+    const height = 300;
+    const padding = { top: 20, right: 20, bottom: 40, left: 50 };
+
+    // Combine both datasets to find max/min
+    const allCounts = [...inProgressData.map(d => d.count), ...completedData.map(d => d.count)];
+    const maxCount = Math.max(...allCounts, 1);
+    const minCount = Math.min(...allCounts, 0);
+
+    const getSmoothPath = (data, color) => {
+        const points = data.map((d, i) => {
+            const x = padding.left + (i / (data.length - 1)) * (width - padding.left - padding.right);
+            const y = height - padding.bottom - ((d.count - minCount) / (maxCount - minCount || 1)) * (height - padding.top - padding.bottom);
+            return { x, y, data: d, color };
+        });
+
+        if (points.length < 2) return { line: '', area: '', points: [] };
+
+        let linePath = `M ${points[0].x} ${points[0].y}`;
+        let areaPath = `M ${points[0].x} ${height - padding.bottom}`;
+        areaPath += ` L ${points[0].x} ${points[0].y}`;
+
+        for (let i = 0; i < points.length - 1; i++) {
+            const cp1x = points[i].x + (points[i + 1].x - points[i].x) / 3;
+            const cp1y = points[i].y;
+            const cp2x = points[i + 1].x - (points[i + 1].x - points[i].x) / 3;
+            const cp2y = points[i + 1].y;
+
+            linePath += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${points[i + 1].x} ${points[i + 1].y}`;
+            areaPath += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${points[i + 1].x} ${points[i + 1].y}`;
+        }
+
+        areaPath += ` L ${points[points.length - 1].x} ${height - padding.bottom} Z`;
+
+        return { line: linePath, area: areaPath, points };
+    };
+
+    const inProgress = getSmoothPath(inProgressData, '#3b82f6'); // Blue
+    const completed = getSmoothPath(completedData, '#10b981'); // Green
+
+    const handleMouseMove = (e) => {
+        if (!svgRef.current) return;
+        const rect = svgRef.current.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+
+        let nearest = null;
+        let minDist = Infinity;
+
+        [...inProgress.points, ...completed.points].forEach((p) => {
+            const dist = Math.abs(p.x - x);
+            if (dist < minDist && dist < 30) {
+                minDist = dist;
+                nearest = p;
+            }
+        });
+
+        setHoveredPoint(nearest);
+        if (nearest) {
+            setTooltipPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+        }
+    };
+
+    const formatDate = (dateStr) => {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    };
+
+    return (
+        <div className="chart-wrapper" onMouseLeave={() => setHoveredPoint(null)}>
+            <svg
+                ref={svgRef}
+                viewBox={`0 0 ${width} ${height}`}
+                preserveAspectRatio="none"
+                onMouseMove={handleMouseMove}
+                className="area-chart-svg"
+            >
+                <defs>
+                    <linearGradient id="inProgressGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.1" />
+                        <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.02" />
+                    </linearGradient>
+                    <linearGradient id="completedGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="#10b981" stopOpacity="0.1" />
+                        <stop offset="100%" stopColor="#10b981" stopOpacity="0.02" />
+                    </linearGradient>
+                </defs>
+
+                {/* Completed Area (Green) */}
+                <path d={completed.area} fill="url(#completedGradient)" opacity="0.9" />
+
+                {/* In Progress Area (Blue) */}
+                <path d={inProgress.area} fill="url(#inProgressGradient)" opacity="0.9" />
+
+                {/* Completed Line */}
+                <path d={completed.line} fill="none" stroke="#10b981" strokeWidth="2" />
+
+                {/* In Progress Line */}
+                <path d={inProgress.line} fill="none" stroke="#3b82f6" strokeWidth="2" />
+
+                {/* Data points for In Progress */}
+                {inProgress.points.map((p, i) => (
+                    <circle
+                        key={`ip-${i}`}
+                        cx={p.x}
+                        cy={p.y}
+                        r={hoveredPoint === p ? 5 : 3}
+                        fill="#3b82f6"
+                        stroke="#fff"
+                        strokeWidth={hoveredPoint === p ? 2 : 1}
+                        style={{ transition: 'all 0.2s' }}
+                    />
+                ))}
+
+                {/* Data points for Completed */}
+                {completed.points.map((p, i) => (
+                    <circle
+                        key={`c-${i}`}
+                        cx={p.x}
+                        cy={p.y}
+                        r={hoveredPoint === p ? 5 : 3}
+                        fill="#10b981"
+                        stroke="#fff"
+                        strokeWidth={hoveredPoint === p ? 2 : 1}
+                        style={{ transition: 'all 0.2s' }}
+                    />
+                ))}
+
+                {/* Y-axis labels */}
+                {[0, 0.5, 1].map((ratio) => {
+                    const y = height - padding.bottom - ratio * (height - padding.top - padding.bottom);
+                    const value = Math.round(minCount + ratio * (maxCount - minCount));
+                    return (
+                        <text
+                            key={ratio}
+                            x={padding.left - 10}
+                            y={y}
+                            textAnchor="end"
+                            fontSize="12"
+                            fill="#7a7a7a"
+                            dy="0.3em"
+                        >
+                            {value}
+                        </text>
+                    );
+                })}
+
+                {/* X-axis labels */}
+                {inProgress.points.filter((_, i) => i % Math.ceil(inProgress.points.length / 6) === 0 || i === inProgress.points.length - 1).map((p, i) => (
+                    <text
+                        key={i}
+                        x={p.x}
+                        y={height - padding.bottom + 20}
+                        textAnchor="middle"
+                        fontSize="12"
+                        fill="#7a7a7a"
+                    >
+                        {formatDate(p.data.date)}
+                    </text>
+                ))}
+            </svg>
+
+            {/* Legend - positioned inside chart */}
+            <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                gap: '20px',
+                position: 'absolute',
+                bottom: '1px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                background: 'rgba(255, 255, 255, 0.9)',
+                padding: '6px 12px',
+                borderRadius: '6px',
+                border: '1px solid #e4e4e7'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ width: '12px', height: '12px', backgroundColor: '#3b82f6', borderRadius: '50%' }}></div>
+                    <span style={{ fontSize: '12px', color: '#71717a', fontWeight: '500' }}>In Progress</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ width: '12px', height: '12px', backgroundColor: '#10b981', borderRadius: '50%' }}></div>
+                    <span style={{ fontSize: '12px', color: '#71717a', fontWeight: '500' }}>Completed</span>
+                </div>
+            </div>
+
+            {/* Tooltip */}
+            {hoveredPoint && (
+                <div
+                    className="chart-tooltip"
+                    style={{
+                        left: `${tooltipPos.x}px`,
+                        top: `${tooltipPos.y - 60}px`,
+                    }}
+                >
+                    <div className="tooltip-date">{formatDate(hoveredPoint.data.date)}</div>
+                    <div className="tooltip-value" style={{ color: hoveredPoint.color }}>
+                        {hoveredPoint.data.count} projects
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+
 const AdminDashboard = () => {
     const navigate = useNavigate();
     const [activeView, setActiveView] = useState('dashboard');
@@ -212,6 +427,8 @@ const AdminDashboard = () => {
         recentUsers: 0
     });
     const [chartData, setChartData] = useState([]);
+    const [projectsData, setProjectsData] = useState([]);
+    const [projectStatusData, setProjectStatusData] = useState({ inProgress: [], completed: [] });
     const [users, setUsers] = useState([]);
     const [freelancers, setFreelancers] = useState([]);
     const [freelancerStats, setFreelancerStats] = useState(null);
@@ -249,7 +466,55 @@ const AdminDashboard = () => {
 
     useEffect(() => {
         fetchChartData();
+        fetchProjectsData();
+        fetchProjectStatusData();
     }, [timePeriod]);
+
+    // Fetch real project upload data
+    const fetchProjectsData = async () => {
+        try {
+            const token = localStorage.getItem('token');
+
+            const response = await fetch(`${API_BASE_URL}/api/admin/projects-growth?days=${timePeriod}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) throw new Error('Failed to fetch project growth data');
+
+            const data = await response.json();
+            if (data.success) {
+                setProjectsData(data.data);
+            }
+        } catch (err) {
+            console.error('Project growth data error:', err);
+        }
+    };
+
+    // Fetch real project status data
+    const fetchProjectStatusData = async () => {
+        try {
+            const token = localStorage.getItem('token');
+
+            const response = await fetch(`${API_BASE_URL}/api/admin/project-status?days=${timePeriod}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) throw new Error('Failed to fetch project status data');
+
+            const data = await response.json();
+            if (data.success) {
+                setProjectStatusData(data.data);
+            }
+        } catch (err) {
+            console.error('Project status data error:', err);
+        }
+    };
 
     const fetchStats = async () => {
         try {
@@ -662,6 +927,40 @@ const AdminDashboard = () => {
                                     </div>
                                 </div>
                                 <InteractiveChart data={chartData} timePeriod={timePeriod} />
+                            </div>
+
+                            {/* Two Charts Side by Side */}
+                            <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: '1fr 1fr',
+                                gap: '24px',
+                                marginTop: '24px'
+                            }}>
+                                {/* Projects Uploaded Chart */}
+                                <div className="chart-section">
+                                    <div className="chart-header">
+                                        <div className="chart-title-group">
+                                            <h3>Projects Uploaded</h3>
+                                            <p className="chart-subtitle">Project postings over time</p>
+                                        </div>
+                                    </div>
+                                    <InteractiveChart data={projectsData} timePeriod={timePeriod} />
+                                </div>
+
+                                {/* Project Status Mixed Chart */}
+                                <div className="chart-section">
+                                    <div className="chart-header">
+                                        <div className="chart-title-group">
+                                            <h3>Project Status</h3>
+                                            <p className="chart-subtitle">In Progress vs Completed</p>
+                                        </div>
+                                    </div>
+                                    <MixedStatusChart
+                                        inProgressData={projectStatusData.inProgress}
+                                        completedData={projectStatusData.completed}
+                                        timePeriod={timePeriod}
+                                    />
+                                </div>
                             </div>
                         </>
                     ) : activeView === 'users' ? (

@@ -318,12 +318,66 @@ const getPendingApplicationsCount = async (req, res) => {
     }
 };
 
+// Check application status for one or more projects
+const checkApplicationStatus = async (req, res) => {
+    try {
+        const freelancerId = req.user._id;
+        const { projectId, projectIds } = req.query;
+
+        // Handle single project check
+        if (projectId) {
+            const application = await ApplicationModel.findOne({
+                projectId,
+                freelancerId
+            }).select('status');
+
+            return res.status(200).json({
+                success: true,
+                status: application ? application.status : null
+            });
+        }
+
+        // Handle bulk project check
+        if (projectIds) {
+            const projectIdArray = projectIds.split(',').filter(id => id.trim());
+
+            const applications = await ApplicationModel.find({
+                projectId: { $in: projectIdArray },
+                freelancerId
+            }).select('projectId status');
+
+            // Create a map of projectId -> status
+            const statusMap = {};
+            applications.forEach(app => {
+                statusMap[app.projectId.toString()] = app.status;
+            });
+
+            return res.status(200).json({
+                success: true,
+                statuses: statusMap
+            });
+        }
+
+        return res.status(400).json({
+            message: 'Please provide either projectId or projectIds parameter',
+            success: false
+        });
+    } catch (err) {
+        res.status(500).json({
+            message: 'Internal server error',
+            success: false,
+            error: err.message
+        });
+    }
+};
+
 module.exports = {
     submitApplication,
     getApplicationsByProject,
     getMyApplications,
     getApplicationById,
     updateApplicationStatus,
-    getPendingApplicationsCount
+    getPendingApplicationsCount,
+    checkApplicationStatus
 };
 

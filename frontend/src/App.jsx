@@ -23,12 +23,18 @@ import FreelancerRoute from './components/FreelancerRoute'
 import GuestRoute from './components/GuestRoute'
 import Navbar from './components/ui/navbar'
 import SearchCommand from './components/ui/SearchCommand'
+<<<<<<< Updated upstream
+=======
+import { SplinePreloader } from './components/ui/spline'
+import { setupAxiosInterceptor } from './services/axiosInstance'
+>>>>>>> Stashed changes
 import './App.css'
 
 function App() {
   const location = useLocation();
   const isChatPage = location.pathname === '/messages';
   const isAdminPage = location.pathname === '/admin';
+  const isLoggedIn = !!localStorage.getItem('token');
 
   return (
     <>
@@ -36,6 +42,10 @@ function App() {
 
         {!isAdminPage && <Navbar />}
         {!isChatPage && !isAdminPage && <SearchCommand />}
+
+        {/* Preload 3D model when user is logged in */}
+        {isLoggedIn && <SplinePreloader />}
+
         <Routes>
           <Route path="/" element={<Home />} />
           <Route

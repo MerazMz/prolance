@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { getStats, getAllUsers, deleteUser, banUser, unbanUser, getUserGrowth, getFreelancers, getFreelancerStats, verifyFreelancer, unverifyFreelancer, getFreelancerDetails } = require('../Controllers/AdminController');
+const { getStats, getAllUsers, deleteUser, banUser, unbanUser, getUserGrowth, getFreelancers, getFreelancerStats, verifyFreelancer, unverifyFreelancer, getFreelancerDetails, getProjectsGrowth, getProjectStatusData } = require('../Controllers/AdminController');
 const ensureAdmin = require('../Middlewares/AdminAuth');
 
 // Get admin statistics
@@ -7,6 +7,10 @@ router.get('/stats', ensureAdmin, getStats);
 
 // User growth data for chart
 router.get('/user-growth', ensureAdmin, getUserGrowth);
+
+// Project data for charts
+router.get('/projects-growth', ensureAdmin, getProjectsGrowth);
+router.get('/project-status', ensureAdmin, getProjectStatusData);
 
 // User management routes
 router.get('/users', ensureAdmin, getAllUsers);

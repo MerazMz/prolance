@@ -54,7 +54,9 @@ export default function PostProject() {
         'Music & Audio',
         'Business',
         'Consulting',
-        'Other'
+        'Health & Fitness',
+        'Education',
+        'Legal'
     ];
 
     const handleChange = (field, value) => {

@@ -7,12 +7,14 @@ const {
     getMyApplications,
     getApplicationById,
     updateApplicationStatus,
-    getPendingApplicationsCount
+    getPendingApplicationsCount,
+    checkApplicationStatus
 } = require('../Controllers/ApplicationController');
 
 // All routes require authentication
 router.post('/', ensureAuthenticated, submitApplication);
 router.get('/my', ensureAuthenticated, getMyApplications);
+router.get('/check', ensureAuthenticated, checkApplicationStatus); // Check application status
 router.get('/pending/count', ensureAuthenticated, getPendingApplicationsCount); // Must come before /:id
 router.get('/project/:projectId', ensureAuthenticated, getApplicationsByProject);
 router.patch('/:id/status', ensureAuthenticated, updateApplicationStatus);

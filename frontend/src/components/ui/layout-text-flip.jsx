@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
+import CategoryProjectsDialog from '../CategoryProjectsDialog';
 
 export const LayoutTextFlip = ({
   text = "Discover",
@@ -18,6 +19,8 @@ export const LayoutTextFlip = ({
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showMouseIndicator, setShowMouseIndicator] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [showCategoryDialog, setShowCategoryDialog] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -38,6 +41,11 @@ export const LayoutTextFlip = ({
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const handleCategoryClick = (categoryName) => {
+    setSelectedCategory(categoryName);
+    setShowCategoryDialog(true);
+  };
 
   return (
     <>
@@ -75,52 +83,64 @@ export const LayoutTextFlip = ({
         </p><br /><br />
         <div className="flex gap-4 flex-wrap relative mt-10">
           <button
+            onClick={() => handleCategoryClick('Programming & Tech')}
             className=" cursor-pointer px-5 py-1.5 text-sm text-gray-700 font-light rounded-full border border-gray-300 hover:bg-green-300/30 hover:text-black hover:border-green-400 transition-all duration-300">
             Programming and Tech
           </button>
           <button
+            onClick={() => handleCategoryClick('Graphics & Design')}
             className="cursor-pointer px-5 py-1.5 text-sm text-gray-700 font-light rounded-full border border-gray-300 hover:bg-green-300/30 hover:text-black hover:border-green-400 transition-all duration-300">
             Graphics and Design
           </button>
           <button
+            onClick={() => handleCategoryClick('Digital Marketing')}
             className="cursor-pointer px-5 py-1.5 text-sm text-gray-700 font-light rounded-full border border-gray-300 hover:bg-green-300/30 hover:text-black hover:border-green-400 transition-all duration-300">
             Digital Marketing
           </button>
           <button
+            onClick={() => handleCategoryClick('Writing & Translation')}
             className="cursor-pointer px-5 py-1.5 text-sm text-gray-700 font-light rounded-full border border-gray-300 hover:bg-green-300/30 hover:text-black hover:border-green-400 transition-all duration-300">
             Writing and Translation
           </button>
           <button
+            onClick={() => handleCategoryClick('Video & Animation')}
             className="cursor-pointer px-5 py-1.5 text-sm text-gray-700 font-light rounded-full border border-gray-300 hover:bg-green-300/30 hover:text-black hover:border-green-400 transition-all duration-300">
             Video and Animation
           </button>
           <button
+            onClick={() => handleCategoryClick('AI Services')}
             className="cursor-pointer px-5 py-1.5 text-sm text-gray-700 font-light rounded-full border border-gray-300 hover:bg-green-300/30 hover:text-black hover:border-green-400 transition-all duration-300">
             Ai Services
           </button>
           <button
+            onClick={() => handleCategoryClick('Music & Audio')}
             className="cursor-pointer px-5 py-1.5 text-sm text-gray-700 font-light rounded-full border border-gray-300 hover:bg-green-300/30 hover:text-black hover:border-green-400 transition-all duration-300">
             Music and Audio
           </button>
         </div>
         <div className="flex gap-4 flex-wrap relative mt-5">
           <button
+            onClick={() => handleCategoryClick('Business')}
             className="cursor-pointer px-5 py-1.5 text-sm text-gray-700 font-light rounded-full border border-gray-300 hover:bg-green-300/30 hover:text-black hover:border-green-400 transition-all duration-300">
             Business
           </button>
           <button
+            onClick={() => handleCategoryClick('Consulting')}
             className="cursor-pointer px-5 py-1.5 text-sm text-gray-700 font-light rounded-full border border-gray-300 hover:bg-green-300/30 hover:text-black hover:border-green-400 transition-all duration-300">
             Consulting
           </button>
           <button
+            onClick={() => handleCategoryClick('Health & Fitness')}
             className="cursor-pointer px-5 py-1.5 text-sm text-gray-700 font-light rounded-full border border-gray-300 hover:bg-green-300/30 hover:text-black hover:border-green-400 transition-all duration-300">
             Health and Fitness
           </button>
           <button
+            onClick={() => handleCategoryClick('Education')}
             className="cursor-pointer px-5 py-1.5 text-sm text-gray-700 font-light rounded-full border border-gray-300 hover:bg-green-300/30 hover:text-black hover:border-green-400 transition-all duration-300">
             Education
           </button>
           <button
+            onClick={() => handleCategoryClick('Legal')}
             className="cursor-pointer px-5 py-1.5 text-sm text-gray-700 font-light rounded-full border border-gray-300 hover:bg-green-300/30 hover:text-black hover:border-green-400 transition-all duration-300">
             Legal
           </button>
@@ -192,6 +212,12 @@ export const LayoutTextFlip = ({
 
       </div>
 
+      {/* Category Projects Dialog */}
+      <CategoryProjectsDialog
+        isOpen={showCategoryDialog}
+        onClose={() => setShowCategoryDialog(false)}
+        category={selectedCategory}
+      />
     </>
   );
 };

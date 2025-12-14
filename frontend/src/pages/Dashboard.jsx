@@ -9,12 +9,129 @@ import {
     HiOutlineUser,
     HiOutlinePlusCircle,
     HiOutlineCog,
+<<<<<<< Updated upstream
     HiOutlineInbox
+=======
+    HiOutlineInbox,
+    HiOutlineCheckCircle,
+    HiOutlineCode,
+    HiOutlineColorSwatch,
+    HiOutlineTrendingUp,
+    HiOutlinePencil,
+    HiOutlineFilm,
+    HiOutlineLightningBolt,
+    HiOutlineMusicNote,
+    HiOutlineChatAlt2
+>>>>>>> Stashed changes
 } from 'react-icons/hi';
+import CategoryProjectsDialog from '../components/CategoryProjectsDialog';
 
 export default function Dashboard() {
     const { user } = useAuth();
     const navigate = useNavigate();
+<<<<<<< Updated upstream
+=======
+    const [stats, setStats] = useState({
+        activeProjects: 0,
+        completedProjects: 0,
+        totalEarnings: 0,
+        totalSpent: 0,
+        profileViews: 0
+    });
+    const [recentProjects, setRecentProjects] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [selectedCategory, setSelectedCategory] = useState(null);
+    const [showCategoryDialog, setShowCategoryDialog] = useState(false);
+
+    useEffect(() => {
+        fetchDashboardData();
+    }, []);
+
+    const fetchDashboardData = async () => {
+        try {
+            const token = localStorage.getItem('authToken');
+
+            // Fetch user profile with stats
+            const profileResponse = await axios.get(
+                `${API_BASE_URL}/api/users/me`,
+                { headers: { Authorization: token } }
+            );
+
+            const userData = profileResponse.data.user;
+
+            // Fetch projects
+            const projectsResponse = await axios.get(
+                `${API_BASE_URL}/api/projects/my/projects`,
+                { headers: { Authorization: token } }
+            );
+
+            const projects = projectsResponse.data.projects || [];
+            const activeProjects = projects.filter(p =>
+                ['open', 'in-progress', 'completed'].includes(p.status)
+            ).length;
+
+            setStats({
+                activeProjects,
+                completedProjects: userData.completedProjects || 0,
+                totalEarnings: userData.totalEarnings || 0,
+                totalSpent: userData.totalSpent || 0,
+                profileViews: userData.profileViews || 0
+            });
+
+            setRecentProjects(projects.slice(0, 5));
+            setLoading(false);
+        } catch (err) {
+            console.error('Error fetching dashboard data:', err);
+            setLoading(false);
+        }
+    };
+
+    const formatDate = (date) => {
+        return new Date(date).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        });
+    };
+
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'open': return 'text-blue-600 bg-blue-50';
+            case 'in-progress': return 'text-yellow-600 bg-yellow-50';
+            case 'completed': return 'text-purple-600 bg-purple-50';
+            case 'closed': return 'text-green-600 bg-green-50';
+            default: return 'text-gray-600 bg-gray-50';
+        }
+    };
+
+    const categories = [
+        { name: 'Programming & Tech', icon: HiOutlineCode, color: 'blue' },
+        { name: 'Graphics & Design', icon: HiOutlineColorSwatch, color: 'purple' },
+        { name: 'Digital Marketing', icon: HiOutlineTrendingUp, color: 'green' },
+        { name: 'Writing & Translation', icon: HiOutlinePencil, color: 'yellow' },
+        { name: 'Video & Animation', icon: HiOutlineFilm, color: 'red' },
+        { name: 'AI Services', icon: HiOutlineLightningBolt, color: 'indigo' },
+        { name: 'Music & Audio', icon: HiOutlineMusicNote, color: 'pink' },
+        { name: 'Business', icon: HiOutlineBriefcase, color: 'gray' },
+        { name: 'Consulting', icon: HiOutlineChatAlt2, color: 'teal' }
+    ];
+
+    const handleCategoryClick = (categoryName) => {
+        setSelectedCategory(categoryName);
+        setShowCategoryDialog(true);
+    };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen w-full bg-white flex items-center justify-center">
+                <div className="text-center">
+                    <div className="inline-block w-8 h-8 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-sm text-gray-500 mt-3">Loading dashboard...</p>
+                </div>
+            </div>
+        );
+    }
+>>>>>>> Stashed changes
 
     return (
         <div className="min-h-screen w-full bg-white">
@@ -147,7 +264,47 @@ export default function Dashboard() {
                     </div>
                 </motion.div>
 
+<<<<<<< Updated upstream
                 {/* Recent Activity */}
+=======
+                {/* Browse by Category */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.55, duration: 0.5 }}
+                    className="bg-white rounded-lg border border-gray-100 p-8 mb-8"
+                >
+                    <h2 className="text-lg font-light text-gray-700 mb-6">Browse by Category</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {categories.map((category, index) => {
+                            const Icon = category.icon;
+                            return (
+                                <motion.button
+                                    key={category.name}
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ delay: 0.55 + (index * 0.05), duration: 0.3 }}
+                                    onClick={() => handleCategoryClick(category.name)}
+                                    className="p-5 rounded-lg border border-gray-100 hover:border-green-600 hover:bg-green-50/30 transition-all text-left group cursor-pointer"
+                                >
+                                    <div className="flex items-center gap-3 mb-3">
+                                        <div className={`w-10 h-10 bg-${category.color}-50 rounded-lg flex items-center justify-center group-hover:bg-green-100 transition`}>
+                                            <Icon className={`w-5 h-5 text-${category.color}-600 group-hover:text-green-600 transition`} />
+                                        </div>
+                                        <h3 className="text-sm font-medium text-gray-700 group-hover:text-green-600 transition">
+                                            {category.name}
+                                        </h3>
+                                    </div>
+                                    <p className="text-xs text-gray-400 font-light group-hover:text-green-600 transition">
+                                        Explore →
+                                    </p>
+                                </motion.button>
+                            );
+                        })}
+                    </div>
+                </motion.div>
+
+>>>>>>> Stashed changes
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -164,6 +321,13 @@ export default function Dashboard() {
                     </div>
                 </motion.div>
             </div>
+
+            {/* Category Projects Dialog */}
+            <CategoryProjectsDialog
+                isOpen={showCategoryDialog}
+                onClose={() => setShowCategoryDialog(false)}
+                category={selectedCategory}
+            />
         </div>
     );
 }

@@ -1,4 +1,5 @@
 const UserModel = require('../Models/User');
+const ProjectModel = require('../Models/Project');
 
 const getStats = async (req, res) => {
     try {
@@ -324,6 +325,103 @@ const getFreelancerDetails = async (req, res) => {
     }
 };
 
+// Get projects uploaded over time
+const getProjectsGrowth = async (req, res) => {
+    try {
+        const { days = 7 } = req.query; // Default to 7 days
+        const numDays = parseInt(days);
+
+        const growthData = [];
+        const today = new Date();
+
+        for (let i = numDays - 1; i >= 0; i--) {
+            const date = new Date(today);
+            date.setDate(date.getDate() - i);
+            date.setHours(0, 0, 0, 0);
+
+            const nextDate = new Date(date);
+            nextDate.setDate(nextDate.getDate() + 1);
+
+            const count = await ProjectModel.countDocuments({
+                createdAt: { $gte: date, $lt: nextDate }
+            });
+
+            growthData.push({
+                date: date.toISOString().split('T')[0],
+                count
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: growthData
+        });
+    } catch (err) {
+        console.error('Error fetching project growth:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch project growth data'
+        });
+    }
+};
+
+// Get project status data (in-progress vs completed)
+const getProjectStatusData = async (req, res) => {
+    try {
+        const { days = 7 } = req.query; // Default to 7 days
+        const numDays = parseInt(days);
+
+        const inProgressData = [];
+        const completedData = [];
+        const today = new Date();
+
+        for (let i = numDays - 1; i >= 0; i--) {
+            const date = new Date(today);
+            date.setDate(date.getDate() - i);
+            date.setHours(0, 0, 0, 0);
+
+            const nextDate = new Date(date);
+            nextDate.setDate(nextDate.getDate() + 1);
+
+            // Count in-progress projects
+            const inProgressCount = await ProjectModel.countDocuments({
+                status: 'in-progress',
+                updatedAt: { $gte: date, $lt: nextDate }
+            });
+
+            // Count completed projects
+            const completedCount = await ProjectModel.countDocuments({
+                status: 'completed',
+                updatedAt: { $gte: date, $lt: nextDate }
+            });
+
+            inProgressData.push({
+                date: date.toISOString().split('T')[0],
+                count: inProgressCount
+            });
+
+            completedData.push({
+                date: date.toISOString().split('T')[0],
+                count: completedCount
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: {
+                inProgress: inProgressData,
+                completed: completedData
+            }
+        });
+    } catch (err) {
+        console.error('Error fetching project status data:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch project status data'
+        });
+    }
+};
+
 module.exports = {
     getStats,
     getAllUsers,
@@ -335,5 +433,7 @@ module.exports = {
     getFreelancerStats,
     verifyFreelancer,
     unverifyFreelancer,
-    getFreelancerDetails
+    getFreelancerDetails,
+    getProjectsGrowth,
+    getProjectStatusData
 };

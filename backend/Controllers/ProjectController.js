@@ -53,6 +53,67 @@ const createProject = async (req, res) => {
 
         await project.save();
 
+        // Send notifications to freelancers with matching skills
+        try {
+            // Parse skillsRequired if it's a string
+            let parsedSkills = skillsRequired;
+            if (typeof skillsRequired === 'string') {
+                parsedSkills = skillsRequired.split(',').map(s => s.trim()).filter(s => s.length > 0);
+            }
+
+            console.log('Project created with skills:', parsedSkills);
+
+            if (parsedSkills && Array.isArray(parsedSkills) && parsedSkills.length > 0) {
+                // Find freelancers who have ALL the required skills
+                const matchingFreelancers = await UserModel.find({
+                    $or: [{ role: 'freelancer' }, { role: 'both' }],
+                    skills: { $all: parsedSkills }, // Must have ALL required skills
+                    isBanned: false,
+                    'notificationSettings.projectUpdates': true
+                }).select('_id name skills');
+
+                console.log(`Found ${matchingFreelancers.length} matching freelancers for skills:`, parsedSkills);
+
+                if (matchingFreelancers.length > 0) {
+                    console.log('Matching freelancers:', matchingFreelancers.map(f => ({ name: f.name, skills: f.skills })));
+
+                    // Create notification object
+                    const notification = {
+                        type: 'new_project_match',
+                        title: 'New Project Match!',
+                        message: `New project "${title}" matches your skills: ${parsedSkills.join(', ')}`,
+                        projectId: project._id,
+                        read: false,
+                        createdAt: new Date()
+                    };
+
+                    // Get freelancer IDs
+                    const freelancerIds = matchingFreelancers.map(f => f._id);
+
+                    // Bulk update: add notification to all matching freelancers
+                    await UserModel.updateMany(
+                        { _id: { $in: freelancerIds } },
+                        { $push: { notifications: notification } }
+                    );
+
+                    // Send Socket.IO events to online freelancers
+                    const io = req.app.get('io');
+                    if (io) {
+                        freelancerIds.forEach(freelancerId => {
+                            io.to(`user:${freelancerId}`).emit('new-notification', notification);
+                        });
+                    }
+
+                    console.log(`Sent project notifications to ${matchingFreelancers.length} matching freelancers`);
+                }
+            } else {
+                console.log('No skills required for this project, skipping notifications');
+            }
+        } catch (notifErr) {
+            // Log error but don't fail project creation
+            console.error('Error sending project notifications:', notifErr);
+        }
+
         res.status(201).json({
             message: 'Project created successfully',
             success: true,

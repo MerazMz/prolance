@@ -1,6 +1,7 @@
-import React from 'react';
-import { FiCode, FiPenTool, FiVideo, FiTrendingUp, FiMusic, FiFileText } from 'react-icons/fi';
+import React, { useState } from 'react';
+import { FiCode, FiPenTool, FiVideo, FiTrendingUp, FiMusic, FiFileText, FiActivity, FiBook, FiShield } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
+import CategoryProjectsDialog from '../CategoryProjectsDialog';
 
 export default function PopularCategories() {
     const categories = [
@@ -39,8 +40,34 @@ export default function PopularCategories() {
             title: "Writing & Translation",
             count: "1,100+ freelancers",
             color: "from-teal-50 to-teal-100 border-teal-200"
+        },
+        {
+            icon: <FiActivity className="w-8 h-8" />,
+            title: "Health & Fitness",
+            count: "420+ freelancers",
+            color: "from-red-50 to-red-100 border-red-200"
+        },
+        {
+            icon: <FiBook className="w-8 h-8" />,
+            title: "Education",
+            count: "750+ freelancers",
+            color: "from-indigo-50 to-indigo-100 border-indigo-200"
+        },
+        {
+            icon: <FiShield className="w-8 h-8" />,
+            title: "Legal",
+            count: "380+ freelancers",
+            color: "from-slate-50 to-slate-100 border-slate-200"
         }
     ];
+
+    const [selectedCategory, setSelectedCategory] = useState(null);
+    const [showCategoryDialog, setShowCategoryDialog] = useState(false);
+
+    const handleCategoryClick = (categoryName) => {
+        setSelectedCategory(categoryName);
+        setShowCategoryDialog(true);
+    };
 
     return (
         <div className="w-full py-20 px-4 bg-gray-50">
@@ -56,9 +83,9 @@ export default function PopularCategories() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {categories.map((category, index) => (
-                        <Link
+                        <button
                             key={index}
-                            to="#"
+                            onClick={() => handleCategoryClick(category.title)}
                             className={`group p-8 rounded-xl border bg-gradient-to-br ${category.color} hover:shadow-xl transition-all duration-300 cursor-pointer`}
                         >
                             <div className="text-gray-700 mb-4 group-hover:scale-110 transition-transform duration-300">
@@ -70,7 +97,7 @@ export default function PopularCategories() {
                             <p className="text-sm text-gray-600">
                                 {category.count}
                             </p>
-                        </Link>
+                        </button>
                     ))}
                 </div>
 
@@ -83,6 +110,13 @@ export default function PopularCategories() {
                     </Link>
                 </div>
             </div>
+
+            {/* Category Projects Dialog */}
+            <CategoryProjectsDialog
+                isOpen={showCategoryDialog}
+                onClose={() => setShowCategoryDialog(false)}
+                category={selectedCategory}
+            />
         </div>
     );
 }

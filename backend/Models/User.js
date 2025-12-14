@@ -198,11 +198,11 @@ const UserSchema = new Schema({
     notifications: [{
         type: {
             type: String,
-<<<<<<< HEAD
+<<<<<<< Updated upstream
             enum: ['project_completed', 'project_accepted', 'review_requested', 'application_received', 'application_accepted', 'message_received'],
 =======
-            enum: ['project_completed', 'project_accepted', 'application_received', 'application_accepted', 'message_received'],
->>>>>>> 14bd1ae (feat: project timeline and other minor changes)
+            enum: ['project_completed', 'project_accepted', 'review_requested', 'application_received', 'application_accepted', 'contract_accepted', 'contract_rejected', 'message_received', 'payment_received', 'new_project_match'],
+>>>>>>> Stashed changes
             required: true
         },
         title: {

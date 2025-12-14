@@ -28,10 +28,18 @@ export default function ProjectDetail() {
     const [selectedImage, setSelectedImage] = useState(0);
     const [showApplicationModal, setShowApplicationModal] = useState(false);
     const [applicationSuccess, setApplicationSuccess] = useState(false);
+    const [applicationStatus, setApplicationStatus] = useState(null); // null, 'pending', 'accepted', 'rejected', 'withdrawn'
 
     useEffect(() => {
         fetchProject();
     }, [id]);
+
+    useEffect(() => {
+        // Check application status after project is loaded and user is authenticated
+        if (project && isAuthenticated) {
+            checkApplicationStatus();
+        }
+    }, [project, isAuthenticated]);
 
     const fetchProject = async () => {
         try {
@@ -41,6 +49,25 @@ export default function ProjectDetail() {
         } catch (err) {
             setError('Project not found');
             setLoading(false);
+        }
+    };
+
+    const checkApplicationStatus = async () => {
+        try {
+            const token = localStorage.getItem('authToken');
+            const response = await axios.get(
+                `${API_BASE_URL}/api/applications/check?projectId=${id}`,
+                {
+                    headers: { Authorization: token }
+                }
+            );
+
+            if (response.data.success) {
+                setApplicationStatus(response.data.status);
+            }
+        } catch (err) {
+            // Silently fail - user might not be a freelancer or not logged in
+            console.log('Could not check application status:', err.message);
         }
     };
 
@@ -290,6 +317,32 @@ export default function ProjectDetail() {
                                 <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700 font-light mb-3">
                                     ✓ Application submitted successfully! The client will review your application.
                                 </div>
+                            ) : applicationStatus === 'pending' ? (
+                                <div className="mb-3">
+                                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700 font-light mb-2">
+                                        ✓ Application Pending Review
+                                    </div>
+                                    <p className="text-xs text-gray-500 font-light">You've already applied to this project. The client will review your application soon.</p>
+                                </div>
+                            ) : applicationStatus === 'accepted' ? (
+                                <div className="mb-3">
+                                    <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700 font-light mb-2">
+                                        ✓ Application Accepted
+                                    </div>
+                                    <p className="text-xs text-gray-500 font-light">Congratulations! Your application has been accepted.</p>
+                                </div>
+                            ) : applicationStatus === 'rejected' ? (
+                                <div className="mb-3">
+                                    <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600 font-light mb-2">
+                                        Application Not Selected
+                                    </div>
+                                    <button
+                                        onClick={() => setShowApplicationModal(true)}
+                                        className="w-full px-4 py-3 text-sm rounded-lg transition font-light bg-green-600 text-white hover:bg-green-700 cursor-pointer"
+                                    >
+                                        Reapply for this Project
+                                    </button>
+                                </div>
                             ) : (
                                 <button
                                     disabled={isOwner || !isAuthenticated}
@@ -396,6 +449,7 @@ export default function ProjectDetail() {
                 onSuccess={() => {
                     setShowApplicationModal(false);
                     setApplicationSuccess(true);
+                    setApplicationStatus('pending'); // Update status after successful submission
                 }}
             />
         </div>
