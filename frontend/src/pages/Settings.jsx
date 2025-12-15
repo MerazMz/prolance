@@ -87,14 +87,14 @@ export default function Settings() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-white flex items-center justify-center">
-                <p className="text-gray-500 font-light">Loading settings...</p>
+            <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center">
+                <p className="text-gray-500 dark:text-gray-400 font-light">Loading settings...</p>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-white dark:bg-black">
             <div className="max-w-7xl mx-auto px-8 py-10">
                 <div className="flex gap-8">
                     {/* Left Sidebar */}
@@ -107,8 +107,8 @@ export default function Settings() {
                                         key={section.id}
                                         onClick={() => setActiveSection(section.id)}
                                         className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg transition-all cursor-pointer ${activeSection === section.id
-                                            ? 'bg-green-50 text-green-700 border border-green-100'
-                                            : 'text-gray-600 hover:bg-gray-50 border border-transparent'
+                                            ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-100 dark:border-green-800'
+                                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 border border-transparent'
                                             }`}
                                     >
                                         <Icon size={18} />
@@ -155,20 +155,20 @@ function EditableField({ label, value, onSave, type = 'text', placeholder, isEdi
     };
 
     return (
-        <div className="py-3 border-b border-gray-100 last:border-0">
+        <div className="py-3 border-b border-gray-100 dark:border-gray-800 last:border-0">
             <div className="flex items-center justify-between">
                 <div className="flex items-center flex-1 gap-3">
-                    <p className="text-sm text-left text-gray-600 font-light w-[140px]">{label}</p>
-                    <span className="text-sm text-gray-600 font-light">:</span>
+                    <p className="text-sm text-left text-gray-600 dark:text-gray-400 font-light w-[140px]">{label}</p>
+                    <span className="text-sm text-gray-600 dark:text-gray-400 font-light">:</span>
                     {!isEditing ? (
-                        <p className="text-sm text-left text-gray-700 font-light">{value || <span className="text-gray-400">Not set</span>}</p>
+                        <p className="text-sm text-left text-gray-700 dark:text-gray-200 font-light">{value || <span className="text-gray-400 dark:text-gray-500">Not set</span>}</p>
                     ) : (
                         <input
                             type={type}
                             value={editValue}
                             onChange={(e) => setEditValue(e.target.value)}
                             placeholder={placeholder}
-                            className="flex-1 px-3 py-2 text-sm rounded-lg border border-gray-200 focus:border-green-600 focus:outline-none transition-all font-light"
+                            className="flex-1 px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 focus:border-green-600 dark:focus:border-green-500 focus:outline-none transition-all font-light bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                             autoFocus
                         />
                     )}
@@ -178,7 +178,7 @@ function EditableField({ label, value, onSave, type = 'text', placeholder, isEdi
                         !disabled && (
                             <button
                                 onClick={() => onEditToggle(true)}
-                                className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition"
+                                className="p-2 text-gray-400 dark:text-gray-500 hover:text-green-600 dark:hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition"
                             >
                                 <HiPencil size={16} />
                             </button>
@@ -188,13 +188,13 @@ function EditableField({ label, value, onSave, type = 'text', placeholder, isEdi
                             <button
                                 onClick={handleSave}
                                 disabled={saving}
-                                className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition disabled:opacity-50"
+                                className="p-2 text-green-600 dark:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition disabled:opacity-50"
                             >
                                 <HiCheck size={16} />
                             </button>
                             <button
                                 onClick={handleCancel}
-                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                                className="p-2 text-red-600 dark:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition"
                             >
                                 <HiX size={16} />
                             </button>
@@ -215,6 +215,7 @@ function ProfileSection({ settings, onUpdate }) {
     const [isSuccess, setIsSuccess] = useState(false);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
     const [countdown, setCountdown] = useState(5);
+    const [showImagePreview, setShowImagePreview] = useState(false);
     const countryOptions = useMemo(() => countryList().getData(), []);
 
     useEffect(() => {
@@ -322,40 +323,41 @@ function ProfileSection({ settings, onUpdate }) {
     return (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
             {message && (
-                <div className={`p-3 rounded-lg text-sm font-light ${isSuccess ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                <div className={`p-3 rounded-lg text-sm font-light ${isSuccess ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400' : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'}`}>
                     {message}
                 </div>
             )}
 
             {/* Profile Photo Card */}
-            <div className="p-4 bg-gray-50 border border-gray-100 rounded-lg">
+            <div className="p-4 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-lg">
                 <div className="flex items-center gap-4">
                     {photoPreview ? (
                         <img
                             src={photoPreview}
                             alt="Profile"
                             referrerPolicy="no-referrer"
-                            className="w-16 h-16 rounded-full object-cover border-2 border-white shadow-sm"
+                            onClick={() => setShowImagePreview(true)}
+                            className="w-16 h-16 rounded-full object-cover border-2 border-white dark:border-gray-700 shadow-sm cursor-pointer hover:opacity-90 transition"
                         />
                     ) : (
-                        <div className="w-16 h-16 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center">
-                            <HiOutlineUser size={24} className="text-gray-400" />
+                        <div className="w-16 h-16 rounded-full bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 flex items-center justify-center">
+                            <HiOutlineUser size={24} className="text-gray-400 dark:text-gray-500" />
                         </div>
                     )}
                     <div className="flex-1">
-                        <h3 className="text-sm font-medium text-gray-700">{settings?.profile?.name || 'User'}</h3>
-                        <p className="text-xs text-gray-500 mt-0.5">@{settings?.profile?.username || 'username'}</p>
+                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-200">{settings?.profile?.name || 'User'}</h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">@{settings?.profile?.username || 'username'}</p>
                     </div>
                     <div className="flex gap-2">
                         <input type="file" id="photo-upload" onChange={handlePhotoUpload} accept="image/*" className="hidden" />
-                        <label htmlFor="photo-upload" className={`px-3 py-1.5 text-xs border border-gray-200 bg-white rounded-lg hover:bg-gray-50 transition font-light cursor-pointer inline-block ${photoOperation ? 'opacity-50 pointer-events-none' : ''}`}>
+                        <label htmlFor="photo-upload" className={`px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition font-light cursor-pointer inline-block ${photoOperation ? 'opacity-50 pointer-events-none' : ''}`}>
                             {photoOperation === 'uploading' ? 'Uploading...' : 'Change'}
                         </label>
                         {photoPreview && (
                             <button
                                 onClick={handlePhotoRemove}
                                 disabled={photoOperation !== null}
-                                className="px-3 py-1.5 text-xs border border-red-200 bg-white text-red-600 rounded-lg hover:bg-red-50 transition font-light cursor-pointer disabled:opacity-50"
+                                className="px-3 py-1.5 text-xs border border-red-200 dark:border-red-800 bg-white dark:bg-gray-800 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition font-light cursor-pointer disabled:opacity-50"
                             >
                                 {photoOperation === 'removing' ? 'Removing...' : 'Remove'}
                             </button>
@@ -367,13 +369,13 @@ function ProfileSection({ settings, onUpdate }) {
             {/* Basic Info - 2 Column Grid */}
             <div className="grid grid-cols-2 gap-3">
                 {/* Name Card */}
-                <div className="p-3 bg-white border border-gray-100 rounded-lg">
+                <div className="p-3 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-lg">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center flex-1 gap-3 min-w-0">
-                            <p className="text-sm text-left text-gray-600 font-light w-[140px]">Full Name</p>
-                            <span className="text-sm text-gray-600 font-light">:</span>
+                            <p className="text-sm text-left text-gray-600 dark:text-gray-400 font-light w-[140px]">Full Name</p>
+                            <span className="text-sm text-gray-600 dark:text-gray-400 font-light">:</span>
                             {editingField !== 'name' ? (
-                                <p className="text-sm text-gray-700 font-light truncate">{settings?.profile?.name || <span className="text-gray-400">Not set</span>}</p>
+                                <p className="text-sm text-gray-700 dark:text-gray-200 font-light truncate">{settings?.profile?.name || <span className="text-gray-400 dark:text-gray-500">Not set</span>}</p>
                             ) : (
                                 <input
                                     type="text"
@@ -413,21 +415,21 @@ function ProfileSection({ settings, onUpdate }) {
                 </div>
 
                 {/* Username Card */}
-                <div className="p-3 bg-white border border-gray-100 rounded-lg">
+                <div className="p-3 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-lg">
                     <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-3">
                                 <p className="text-sm text-left text-gray-600 font-light w-[140px]">Username {!settings?.profile?.username && <span className="text-red-500">*</span>}</p>
-                                <span className="text-sm text-gray-600 font-light">:</span>
+                                <span className="text-sm text-gray-600 dark:text-gray-400 font-light">:</span>
                                 {editingField !== 'username' ? (
-                                    <p className="text-sm text-gray-700 font-light truncate">{settings?.profile?.username || <span className="text-red-400">Not set - Required!</span>}</p>
+                                    <p className="text-sm text-gray-700 dark:text-gray-200 font-light truncate">{settings?.profile?.username || <span className="text-red-400">Not set - Required!</span>}</p>
                                 ) : (
                                     <input
                                         type="text"
                                         defaultValue={settings?.profile?.username}
                                         id="username-input"
                                         placeholder="username123"
-                                        className="flex-1 px-2 py-1 text-sm rounded border border-gray-200 focus:border-green-600 focus:outline-none font-light lowercase"
+                                        className="flex-1 px-2 py-1 text-sm rounded border border-gray-200 dark:border-gray-700 focus:border-green-600 dark:focus:border-green-500 focus:outline-none font-light bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 lowercase"
                                         autoFocus
                                         onChange={(e) => {
                                             // Convert to lowercase automatically
@@ -489,12 +491,12 @@ function ProfileSection({ settings, onUpdate }) {
                 </div>
 
                 {/* Email Card - Read Only */}
-                <div className="p-3 bg-gray-50 border border-gray-100 rounded-lg">
+                <div className="p-3 bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-800 rounded-lg">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center flex-1 gap-3 min-w-0">
                             <p className="text-sm text-left text-gray-600 font-light w-[140px]">Email</p>
-                            <span className="text-sm text-gray-600 font-light">:</span>
-                            <p className="text-sm text-gray-700 font-light truncate">{settings?.profile?.email || <span className="text-gray-400">Not set</span>}</p>
+                            <span className="text-sm text-gray-600 dark:text-gray-400 font-light">:</span>
+                            <p className="text-sm text-gray-700 dark:text-gray-200 font-light truncate">{settings?.profile?.email || <span className="text-gray-400">Not set</span>}</p>
                         </div>
                         <div className="p-1 text-gray-300 ml-2">
                             <HiOutlineLockClosed size={14} />
@@ -503,18 +505,18 @@ function ProfileSection({ settings, onUpdate }) {
                 </div>
 
                 {/* Role Card */}
-                <div className="p-3 bg-white border border-gray-100 rounded-lg">
+                <div className="p-3 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-lg">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center flex-1 gap-3 min-w-0">
                             <p className="text-sm text-left text-gray-600 font-light w-[140px]">Account Role</p>
-                            <span className="text-sm text-gray-600 font-light">:</span>
+                            <span className="text-sm text-gray-600 dark:text-gray-400 font-light">:</span>
                             {editingField !== 'role' ? (
-                                <p className="text-sm text-gray-700 font-light capitalize truncate">{settings?.profile?.role || <span className="text-gray-400">Not set</span>}</p>
+                                <p className="text-sm text-gray-700 dark:text-gray-200 font-light capitalize truncate">{settings?.profile?.role || <span className="text-gray-400">Not set</span>}</p>
                             ) : (
                                 <select
                                     defaultValue={settings?.profile?.role}
                                     id="role-input"
-                                    className="flex-1 px-2 py-1 text-sm rounded border border-gray-200 focus:border-green-600 focus:outline-none font-light bg-white cursor-pointer"
+                                    className="flex-1 px-2 py-1 text-sm rounded border border-gray-200 dark:border-gray-700 focus:border-green-600 dark:focus:border-green-500 focus:outline-none font-light bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 cursor-pointer"
                                     autoFocus
                                 >
                                     <option value="freelancer">Freelancer</option>
@@ -552,14 +554,14 @@ function ProfileSection({ settings, onUpdate }) {
                 </div>
 
                 {/* Location Card */}
-                <div className="p-3 bg-white border border-gray-100 rounded-lg">
+                <div className="p-3 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-lg">
                     <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-3">
                                 <p className="text-sm text-left text-gray-600 font-light w-[140px]">Location</p>
-                                <span className="text-sm text-gray-600 font-light">:</span>
+                                <span className="text-sm text-gray-600 dark:text-gray-400 font-light">:</span>
                                 {editingField !== 'location' ? (
-                                    <p className="text-sm text-gray-700 font-light truncate">{settings?.profile?.location || <span className="text-gray-400">Not set</span>}</p>
+                                    <p className="text-sm text-gray-700 dark:text-gray-200 font-light truncate">{settings?.profile?.location || <span className="text-gray-400">Not set</span>}</p>
                                 ) : (
                                     <div className="flex-1">
                                         <Select
@@ -611,19 +613,19 @@ function ProfileSection({ settings, onUpdate }) {
             </div>
 
             {/* Bio - Full Width */}
-            <div className="p-3 bg-white border border-gray-100 rounded-lg">
+            <div className="p-3 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-lg">
                 <div className="flex items-start justify-between">
                     <div className="flex items-start flex-1 gap-3">
                         <p className="text-sm text-left text-gray-600 font-light w-[140px]">Bio</p>
-                        <span className="text-sm text-gray-600 font-light">:</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400 font-light">:</span>
                         {editingField !== 'bio' ? (
-                            <p className="text-sm text-gray-700 font-light flex-1">{settings?.profile?.bio || <span className="text-gray-400">Not set</span>}</p>
+                            <p className="text-sm text-gray-700 dark:text-gray-200 font-light flex-1">{settings?.profile?.bio || <span className="text-gray-400">Not set</span>}</p>
                         ) : (
                             <textarea
                                 defaultValue={settings?.profile?.bio}
                                 id="bio-input"
                                 rows="2"
-                                className="flex-1 px-2 py-1 text-sm rounded border border-gray-200 focus:border-green-600 focus:outline-none font-light resize-none"
+                                className="flex-1 px-2 py-1 text-sm rounded border border-gray-200 dark:border-gray-700 focus:border-green-600 dark:focus:border-green-500 focus:outline-none font-light bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-none"
                                 autoFocus
                             />
                         )}
@@ -657,14 +659,14 @@ function ProfileSection({ settings, onUpdate }) {
             </div>
 
             {/* Timezone - Single Card */}
-            <div className="p-3 bg-white border border-gray-100 rounded-lg">
+            <div className="p-3 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-lg">
                 <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-3">
                             <p className="text-sm text-left text-gray-600 font-light w-[140px]">Timezone</p>
-                            <span className="text-sm text-gray-600 font-light">:</span>
+                            <span className="text-sm text-gray-600 dark:text-gray-400 font-light">:</span>
                             {editingField !== 'timezone' ? (
-                                <p className="text-sm text-gray-700 font-light">{settings?.profile?.timezone || <span className="text-gray-400">Not set</span>}</p>
+                                <p className="text-sm text-gray-700 dark:text-gray-200 font-light">{settings?.profile?.timezone || <span className="text-gray-400">Not set</span>}</p>
                             ) : (
                                 <div className="flex-1">
                                     <TimezoneSelect
@@ -710,20 +712,48 @@ function ProfileSection({ settings, onUpdate }) {
                 </div>
             </div>
 
-            {/* Logout Countdown Modal */}
-            {showLogoutModal && (
-                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+            {/* Image Preview Modal */}
+            {showImagePreview && photoPreview && (
+                <div
+                    className="fixed inset-0 bg-black/80 dark:bg-black/90 flex items-center justify-center z-50 p-4"
+                    onClick={() => setShowImagePreview(false)}
+                >
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="bg-white rounded-lg max-w-md w-full p-8 text-center shadow-2xl"
+                        className="relative max-w-2xl w-full"
+                        onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <HiOutlineLockClosed className="text-green-600" size={32} />
+                        <button
+                            onClick={() => setShowImagePreview(false)}
+                            className="absolute -top-10 right-0 p-2 text-white hover:text-gray-300 transition"
+                        >
+                            <HiX size={24} />
+                        </button>
+                        <img
+                            src={photoPreview}
+                            alt="Profile Preview"
+                            referrerPolicy="no-referrer"
+                            className="w-full h-auto rounded-lg shadow-2xl"
+                        />
+                    </motion.div>
+                </div>
+            )}
+
+            {/* Logout Countdown Modal */}
+            {showLogoutModal && (
+                <div className="fixed inset-0 bg-black/60 dark:bg-black/80 flex items-center justify-center z-50 p-4">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-white dark:bg-gray-900 rounded-lg max-w-md w-full p-8 text-center shadow-2xl"
+                    >
+                        <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <HiOutlineLockClosed className="text-green-600 dark:text-green-500" size={32} />
                         </div>
 
-                        <h3 className="text-xl font-medium text-gray-800 mb-2">Role Updated Successfully!</h3>
-                        <p className="text-sm text-gray-600 font-light mb-6">
+                        <h3 className="text-xl font-medium text-gray-800 dark:text-gray-200 mb-2">Role Updated Successfully!</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 font-light mb-6">
                             Your account role has been changed. You need to log out and log back in for the changes to take effect.
                         </p>
 
@@ -849,15 +879,15 @@ function SecuritySection() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
             {message && <div className="p-3 rounded-lg text-sm font-light bg-red-50 text-red-700">{message}</div>}
 
-            <div className="p-4 border border-gray-100 rounded-lg">
-                <h3 className="text-sm font-light text-gray-700 mb-4">Change Password</h3>
+            <div className="p-4 border border-gray-100 dark:border-gray-800 rounded-lg dark:bg-black">
+                <h3 className="text-sm font-light text-gray-700 mb-4 dark:text-gray-100">Change Password</h3>
                 <form onSubmit={handlePasswordChange} className="space-y-3">
                     <input
                         type="password"
                         value={passwordData.currentPassword}
                         onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
                         placeholder="Current password"
-                        className="w-full px-4 py-2.5 text-sm rounded-lg border border-gray-200 focus:border-green-600 focus:outline-none font-light"
+                        className="w-full px-4 py-2.5 text-sm rounded-lg border border-gray-200 focus:border-green-600 focus:outline-none font-light dark:border-gray-700"
                         required
                     />
                     <input
@@ -865,7 +895,7 @@ function SecuritySection() {
                         value={passwordData.newPassword}
                         onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
                         placeholder="New password"
-                        className="w-full px-4 py-2.5 text-sm rounded-lg border border-gray-200 focus:border-green-600 focus:outline-none font-light"
+                        className="w-full px-4 py-2.5 text-sm rounded-lg border border-gray-200 focus:border-green-600 focus:outline-none font-light dark:border-gray-700"
                         required
                     />
                     <input
@@ -873,7 +903,7 @@ function SecuritySection() {
                         value={passwordData.confirmPassword}
                         onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
                         placeholder="Confirm new password"
-                        className="w-full px-4 py-2.5 text-sm rounded-lg border border-gray-200 focus:border-green-600 focus:outline-none font-light"
+                        className="w-full px-4 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 focus:border-green-600 dark:focus:border-green-500 focus:outline-none font-light bg-white dark:bg-black text-gray-900 dark:text-gray-100"
                         required
                     />
                     <button
@@ -911,7 +941,7 @@ function NotificationsSection({ settings, onUpdate }) {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
             {message && <div className="p-3 rounded-lg text-sm font-light bg-green-50 text-green-700">{message}</div>}
 
-            <div className="flex items-center justify-between p-4 border border-gray-100 rounded-lg">
+            <div className="flex items-center justify-between p-4 border border-gray-100 dark:border-gray-800 rounded-lg dark:bg-gray-900">
                 <div>
                     <h3 className="text-sm font-light text-gray-700">In-App Notifications</h3>
                     <p className="text-xs text-gray-400 mt-1 font-light">Receive notifications within the platform</p>
@@ -927,7 +957,7 @@ function NotificationsSection({ settings, onUpdate }) {
                 </label>
             </div>
 
-            <div className="flex items-center justify-between p-4 border border-gray-100 rounded-lg">
+            <div className="flex items-center justify-between p-4 border border-gray-100 dark:border-gray-800 rounded-lg dark:bg-gray-900">
                 <div>
                     <h3 className="text-sm font-light text-gray-700">Project Updates</h3>
                     <p className="text-xs text-gray-400 mt-1 font-light">Get notified about project status changes</p>
@@ -982,7 +1012,7 @@ function PrivacySection({ settings, onUpdate }) {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
             {message && <div className="p-3 rounded-lg text-sm font-light bg-green-50 text-green-700">{message}</div>}
 
-            <div className="flex items-center justify-between p-4 border border-gray-100 rounded-lg">
+            <div className="flex items-center justify-between p-4 border border-gray-100 dark:border-gray-800 rounded-lg dark:bg-gray-900">
                 <div>
                     <h3 className="text-sm font-light text-gray-700">Public Profile</h3>
                     <p className="text-xs text-gray-400 mt-1 font-light">Make your profile visible to everyone</p>
@@ -998,12 +1028,12 @@ function PrivacySection({ settings, onUpdate }) {
                 </label>
             </div>
 
-            <div className="p-4 border border-gray-100 rounded-lg">
+            <div className="p-4 border border-gray-100 dark:border-gray-800 rounded-lg dark:bg-gray-900">
                 <h3 className="text-sm font-light text-gray-700 mb-3">Who Can Message Me</h3>
                 <select
                     value={settings?.privacy?.whoCanMessage || 'everyone'}
                     onChange={(e) => handleSelectChange(e.target.value)}
-                    className="w-full px-4 py-2.5 text-sm rounded-lg border border-gray-200 focus:border-green-600 focus:outline-none font-light bg-white cursor-pointer"
+                    className="w-full px-4 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 focus:border-green-600 dark:focus:border-green-500 focus:outline-none font-light bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 cursor-pointer"
                 >
                     <option value="everyone">Everyone</option>
                     <option value="connections">Only connections</option>
@@ -1011,7 +1041,7 @@ function PrivacySection({ settings, onUpdate }) {
                 </select>
             </div>
 
-            <div className="flex items-center justify-between p-4 border border-gray-100 rounded-lg">
+            <div className="flex items-center justify-between p-4 border border-gray-100 dark:border-gray-800 rounded-lg dark:bg-gray-900">
                 <div>
                     <h3 className="text-sm font-light text-gray-700">Show Work History</h3>
                     <p className="text-xs text-gray-400 mt-1 font-light">Display your completed projects</p>
