@@ -83,27 +83,27 @@ export default function Dashboard() {
 
     const getStatusColor = (status) => {
         switch (status) {
-            case 'open': return 'text-blue-600 bg-blue-50';
-            case 'in-progress': return 'text-yellow-600 bg-yellow-50';
-            case 'completed': return 'text-purple-600 bg-purple-50';
-            case 'closed': return 'text-green-600 bg-green-50';
-            default: return 'text-gray-600 bg-gray-50';
+            case 'open': return 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20';
+            case 'in-progress': return 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20';
+            case 'completed': return 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20';
+            case 'closed': return 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20';
+            default: return 'text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800';
         }
     };
 
     if (loading) {
         return (
-            <div className="min-h-screen w-full bg-white flex items-center justify-center">
+            <div className="min-h-screen w-full bg-white dark:bg-black flex items-center justify-center">
                 <div className="text-center">
-                    <div className="inline-block w-8 h-8 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-sm text-gray-500 mt-3">Loading dashboard...</p>
+                    <div className="inline-block w-8 h-8 border-2 border-green-600 dark:border-green-500 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">Loading dashboard...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen w-full bg-white">
+        <div className="min-h-screen w-full bg-white dark:bg-black">
             <div className="max-w-7xl mx-auto px-8 py-10">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -111,10 +111,10 @@ export default function Dashboard() {
                     transition={{ duration: 0.6 }}
                     className="mb-10"
                 >
-                    <h1 className="text-3xl font-light text-gray-700 mb-2">
-                        Welcome back, <span className="text-green-600">{user?.name}</span>
+                    <h1 className="text-3xl font-light text-gray-700 dark:text-gray-200 mb-2">
+                        Welcome back, <span className="text-green-600 dark:text-green-500">{user?.name}</span>
                     </h1>
-                    <p className="text-sm text-gray-500 font-light">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 font-light">
                         Here's what's happening with your account today
                     </p>
                 </motion.div>
@@ -124,18 +124,18 @@ export default function Dashboard() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1, duration: 0.5 }}
-                        className="bg-white rounded-lg border border-gray-100 p-6 hover:border-gray-200 transition-colors"
+                        className="bg-white dark:bg-gray-900 rounded-lg border border-gray-100 dark:border-gray-800 p-6 hover:border-gray-200 dark:hover:border-gray-700 transition-colors"
                     >
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                                <HiOutlineBriefcase className="w-5 h-5 text-blue-600" />
+                            <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                                <HiOutlineBriefcase className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                             </div>
                             <div>
-                                <h3 className="text-xs text-gray-500 font-light">Active Projects</h3>
-                                <p className="text-2xl font-light text-gray-700">{stats.activeProjects}</p>
+                                <h3 className="text-xs text-gray-500 dark:text-gray-400 font-light">Active Projects</h3>
+                                <p className="text-2xl font-light text-gray-700 dark:text-gray-200">{stats.activeProjects}</p>
                             </div>
                         </div>
-                        <p className="text-xs text-gray-400 font-light">
+                        <p className="text-xs text-gray-400 dark:text-gray-500 font-light">
                             {stats.activeProjects === 0 ? 'No active projects' : 'Currently working on'}
                         </p>
                     </motion.div>
@@ -144,35 +144,35 @@ export default function Dashboard() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2, duration: 0.5 }}
-                        className="bg-white rounded-lg border border-gray-100 p-6 hover:border-gray-200 transition-colors"
+                        className="bg-white dark:bg-gray-900 rounded-lg border border-gray-100 dark:border-gray-800 p-6 hover:border-gray-200 dark:hover:border-gray-700 transition-colors"
                     >
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
-                                <HiOutlineCheckCircle className="w-5 h-5 text-green-600" />
+                            <div className="w-10 h-10 bg-green-50 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                                <HiOutlineCheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
                             </div>
                             <div>
-                                <h3 className="text-xs text-gray-500 font-light">Completed</h3>
-                                <p className="text-2xl font-light text-gray-700">{stats.completedProjects}</p>
+                                <h3 className="text-xs text-gray-500 dark:text-gray-400 font-light">Completed</h3>
+                                <p className="text-2xl font-light text-gray-700 dark:text-gray-200">{stats.completedProjects}</p>
                             </div>
                         </div>
-                        <p className="text-xs text-gray-400 font-light">Projects finished</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 font-light">Projects finished</p>
                     </motion.div>
 
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.3, duration: 0.5 }}
-                        className="bg-white rounded-lg border border-gray-100 p-6 hover:border-gray-200 transition-colors"
+                        className="bg-white dark:bg-gray-900 rounded-lg border border-gray-100 dark:border-gray-800 p-6 hover:border-gray-200 dark:hover:border-gray-700 transition-colors"
                     >
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
-                                <HiOutlineCurrencyDollar className="w-5 h-5 text-green-600" />
+                            <div className="w-10 h-10 bg-green-50 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                                <HiOutlineCurrencyDollar className="w-5 h-5 text-green-600 dark:text-green-400" />
                             </div>
                             <div>
-                                <h3 className="text-xs text-gray-500 font-light">
+                                <h3 className="text-xs text-gray-500 dark:text-gray-400 font-light">
                                     {user?.role === 'freelancer' || user?.role === 'both' ? 'Total Earnings' : 'Total Spent'}
                                 </h3>
-                                <p className="text-2xl font-light text-gray-700">
+                                <p className="text-2xl font-light text-gray-700 dark:text-gray-200">
                                     ₹{(user?.role === 'freelancer' || user?.role === 'both'
                                         ? stats.totalEarnings
                                         : stats.totalSpent
@@ -180,7 +180,7 @@ export default function Dashboard() {
                                 </p>
                             </div>
                         </div>
-                        <p className="text-xs text-gray-400 font-light">
+                        <p className="text-xs text-gray-400 dark:text-gray-500 font-light">
                             {stats.totalEarnings === 0 && stats.totalSpent === 0 ? 'Start earning today' : 'All time'}
                         </p>
                     </motion.div>
@@ -189,18 +189,18 @@ export default function Dashboard() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.4, duration: 0.5 }}
-                        className="bg-white rounded-lg border border-gray-100 p-6 hover:border-gray-200 transition-colors"
+                        className="bg-white dark:bg-gray-900 rounded-lg border border-gray-100 dark:border-gray-800 p-6 hover:border-gray-200 dark:hover:border-gray-700 transition-colors"
                     >
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center">
-                                <HiOutlineEye className="w-5 h-5 text-gray-600" />
+                            <div className="w-10 h-10 bg-gray-50 dark:bg-gray-800 rounded-lg flex items-center justify-center">
+                                <HiOutlineEye className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                             </div>
                             <div>
-                                <h3 className="text-xs text-gray-500 font-light">Profile Views</h3>
-                                <p className="text-2xl font-light text-gray-700">{stats.profileViews}</p>
+                                <h3 className="text-xs text-gray-500 dark:text-gray-400 font-light">Profile Views</h3>
+                                <p className="text-2xl font-light text-gray-700 dark:text-gray-200">{stats.profileViews}</p>
                             </div>
                         </div>
-                        <p className="text-xs text-gray-400 font-light">Build your profile</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 font-light">Build your profile</p>
                     </motion.div>
                 </div>
 
@@ -208,52 +208,52 @@ export default function Dashboard() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.5, duration: 0.5 }}
-                    className="bg-white rounded-lg border border-gray-100 p-8 mb-8"
+                    className="bg-white dark:bg-gray-900 rounded-lg border border-gray-100 dark:border-gray-800 p-8 mb-8"
                 >
-                    <h2 className="text-lg font-light text-gray-700 mb-6">Quick Actions</h2>
+                    <h2 className="text-lg font-light text-gray-700 dark:text-gray-200 mb-6">Quick Actions</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <button
                             onClick={() => navigate('/projects')}
-                            className="p-5 rounded-lg border border-gray-100 hover:border-green-600 hover:bg-green-50/30 transition-all text-left group cursor-pointer"
+                            className="p-5 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-green-600 dark:hover:border-green-500 hover:bg-green-50/30 dark:hover:bg-green-900/20 transition-all text-left group cursor-pointer"
                         >
                             <div className="flex items-center gap-2 mb-2">
-                                <HiOutlineDocumentText className="w-4 h-4 text-gray-500 group-hover:text-green-600" />
-                                <h3 className="text-sm font-medium text-gray-700 group-hover:text-green-600">Browse Projects</h3>
+                                <HiOutlineDocumentText className="w-4 h-4 text-gray-500 dark:text-gray-400 group-hover:text-green-600 dark:group-hover:text-green-500" />
+                                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-200 group-hover:text-green-600 dark:group-hover:text-green-500">Browse Projects</h3>
                             </div>
-                            <p className="text-xs text-gray-400 font-light">Find your next gig</p>
+                            <p className="text-xs text-gray-400 dark:text-gray-500 font-light">Find your next gig</p>
                         </button>
 
                         <button
                             onClick={() => navigate(`/profile/${user?.username}`)}
-                            className="p-5 rounded-lg border border-gray-100 hover:border-green-600 hover:bg-green-50/30 transition-all text-left group cursor-pointer"
+                            className="p-5 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-green-600 dark:hover:border-green-500 hover:bg-green-50/30 dark:hover:bg-green-900/20 transition-all text-left group cursor-pointer"
                         >
                             <div className="flex items-center gap-2 mb-2">
-                                <HiOutlineUser className="w-4 h-4 text-gray-500 group-hover:text-green-600" />
-                                <h3 className="text-sm font-medium text-gray-700 group-hover:text-green-600">Edit Profile</h3>
+                                <HiOutlineUser className="w-4 h-4 text-gray-500 dark:text-gray-400 group-hover:text-green-600 dark:group-hover:text-green-500" />
+                                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-200 group-hover:text-green-600 dark:group-hover:text-green-500">Edit Profile</h3>
                             </div>
-                            <p className="text-xs text-gray-400 font-light">Update your details</p>
+                            <p className="text-xs text-gray-400 dark:text-gray-500 font-light">Update your details</p>
                         </button>
 
                         <button
                             onClick={() => navigate('/post-project')}
-                            className="p-5 rounded-lg border border-gray-100 hover:border-green-600 hover:bg-green-50/30 transition-all text-left group cursor-pointer"
+                            className="p-5 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-green-600 dark:hover:border-green-500 hover:bg-green-50/30 dark:hover:bg-green-900/20 transition-all text-left group cursor-pointer"
                         >
                             <div className="flex items-center gap-2 mb-2">
-                                <HiOutlinePlusCircle className="w-4 h-4 text-gray-500 group-hover:text-green-600" />
-                                <h3 className="text-sm font-medium text-gray-700 group-hover:text-green-600">Post a Job</h3>
+                                <HiOutlinePlusCircle className="w-4 h-4 text-gray-500 dark:text-gray-400 group-hover:text-green-600 dark:group-hover:text-green-500" />
+                                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-200 group-hover:text-green-600 dark:group-hover:text-green-500">Post a Job</h3>
                             </div>
-                            <p className="text-xs text-gray-400 font-light">Hire talented freelancers</p>
+                            <p className="text-xs text-gray-400 dark:text-gray-500 font-light">Hire talented freelancers</p>
                         </button>
 
                         <button
                             onClick={() => navigate('/settings')}
-                            className="p-5 rounded-lg border border-gray-100 hover:border-green-600 hover:bg-green-50/30 transition-all text-left group cursor-pointer"
+                            className="p-5 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-green-600 dark:hover:border-green-500 hover:bg-green-50/30 dark:hover:bg-green-900/20 transition-all text-left group cursor-pointer"
                         >
                             <div className="flex items-center gap-2 mb-2">
-                                <HiOutlineCog className="w-4 h-4 text-gray-500 group-hover:text-green-600" />
-                                <h3 className="text-sm font-medium text-gray-700 group-hover:text-green-600">Settings</h3>
+                                <HiOutlineCog className="w-4 h-4 text-gray-500 dark:text-gray-400 group-hover:text-green-600 dark:group-hover:text-green-500" />
+                                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-200 group-hover:text-green-600 dark:group-hover:text-green-500">Settings</h3>
                             </div>
-                            <p className="text-xs text-gray-400 font-light">Manage your account</p>
+                            <p className="text-xs text-gray-400 dark:text-gray-500 font-light">Manage your account</p>
                         </button>
                     </div>
                 </motion.div>
@@ -262,20 +262,20 @@ export default function Dashboard() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.6, duration: 0.5 }}
-                    className="bg-white rounded-lg border border-gray-100 p-8"
+                    className="bg-white dark:bg-gray-900 rounded-lg border border-gray-100 dark:border-gray-800 p-8"
                 >
-                    <h2 className="text-lg font-light text-gray-700 mb-6">Recent Projects</h2>
+                    <h2 className="text-lg font-light text-gray-700 dark:text-gray-200 mb-6">Recent Projects</h2>
                     {recentProjects.length > 0 ? (
                         <div className="space-y-4">
                             {recentProjects.map((project) => (
                                 <div
                                     key={project._id}
                                     onClick={() => navigate(`/project-workspace/${project._id}`)}
-                                    className="flex items-center justify-between p-4 rounded-lg border border-gray-100 hover:border-green-200 hover:bg-green-50/30 transition cursor-pointer"
+                                    className="flex items-center justify-between p-4 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-green-200 dark:hover:border-green-800 hover:bg-green-50/30 dark:hover:bg-green-900/20 transition cursor-pointer"
                                 >
                                     <div className="flex-1">
-                                        <h3 className="text-sm font-medium text-gray-700 mb-1">{project.title}</h3>
-                                        <p className="text-xs text-gray-500 font-light">
+                                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">{project.title}</h3>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 font-light">
                                             Updated: {formatDate(project.updatedAt)}
                                         </p>
                                     </div>
@@ -287,11 +287,11 @@ export default function Dashboard() {
                         </div>
                     ) : (
                         <div className="text-center py-12">
-                            <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
-                                <HiOutlineInbox className="w-6 h-6 text-gray-400" />
+                            <div className="w-12 h-12 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <HiOutlineInbox className="w-6 h-6 text-gray-400 dark:text-gray-500" />
                             </div>
-                            <p className="text-sm text-gray-600 font-light mb-1">No recent projects</p>
-                            <p className="text-xs text-gray-400 font-light">Your projects will appear here</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-300 font-light mb-1">No recent projects</p>
+                            <p className="text-xs text-gray-400 dark:text-gray-500 font-light">Your projects will appear here</p>
                         </div>
                     )}
                 </motion.div>
