@@ -1,8 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
-import { HiOutlinePhotograph, HiOutlineX, HiCheck } from 'react-icons/hi';
+import { HiOutlinePhotograph, HiOutlineX, HiCheck, HiOutlineUpload, HiOutlineCloudUpload } from 'react-icons/hi';
 import axios from 'axios';
 import ReactCrop from 'react-image-crop';
-import { FaUpload } from "react-icons/fa6";
 import 'react-image-crop/dist/ReactCrop.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
@@ -14,11 +13,11 @@ export default function ImageUpload({ value, onChange, label = 'Upload Image' })
     const [imageSrc, setImageSrc] = useState('');
     const [crop, setCrop] = useState({ unit: '%', width: 90, aspect: 1 });
     const [completedCrop, setCompletedCrop] = useState(null);
+    const [isDragging, setIsDragging] = useState(false);
     const imgRef = useRef(null);
     const fileRef = useRef(null);
 
-    const handleFileChange = (e) => {
-        const file = e.target.files[0];
+    const processFile = (file) => {
         if (!file) return;
 
         // Validate file type
@@ -43,6 +42,40 @@ export default function ImageUpload({ value, onChange, label = 'Upload Image' })
             setShowCrop(true);
         });
         reader.readAsDataURL(file);
+    };
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        processFile(file);
+    };
+
+    // Drag and drop handlers
+    const handleDragEnter = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    };
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+
+        const files = e.dataTransfer.files;
+        if (files && files.length > 0) {
+            processFile(files[0]);
+        }
     };
 
     const onImageLoad = useCallback((e) => {
@@ -256,33 +289,59 @@ export default function ImageUpload({ value, onChange, label = 'Upload Image' })
                     <img
                         src={value}
                         alt="Upload"
-                        className="w-full h-48 object-cover rounded-lg border border-gray-200"
+                        className="w-full h-48 object-cover rounded-xl border border-gray-200 dark:border-gray-700"
                     />
                     <button
                         type="button"
                         onClick={handleRemove}
-                        className="absolute top-2 right-2 p-2 bg-white text-red-600 rounded-full shadow-md hover:bg-red-50 transition opacity-0 group-hover:opacity-100"
+                        className="absolute top-3 right-3 p-2 bg-white dark:bg-gray-900 text-red-600 dark:text-red-500 rounded-full shadow-md hover:bg-red-50 dark:hover:bg-red-900/30 transition opacity-0 group-hover:opacity-100"
                     >
                         <HiOutlineX size={16} />
                     </button>
                 </div>
             ) : (
-                <label className="block w-full h-48 border-2 border-dashed border-gray-200 rounded-lg hover:border-gray-300 transition cursor-pointer">
-                    <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileChange}
-                        className="hidden"
-                    />
-                    <div className="h-full flex flex-col items-center justify-center text-gray-400">
-                        <HiOutlinePhotograph size={32} className="mb-2" />
-                        <p className="text-sm font-light">{label}</p>
-                        <p className="text-xs text-gray-400 mt-1">PNG, JPG up to 5MB</p>
-                    </div>
-                </label>
+                <div
+                    onDragEnter={handleDragEnter}
+                    onDragLeave={handleDragLeave}
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                    className={`relative transition-all ${isDragging
+                        ? 'border-green-500 dark:border-green-500 bg-green-50 dark:bg-green-900/20 scale-[1.02]'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                        }`}
+                >
+                    <label className="block w-full h-48 border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 rounded-xl cursor-pointer transition-all">
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFileChange}
+                            className="hidden"
+                        />
+                        <div className="h-full flex flex-col items-center justify-center p-6">
+                            {isDragging ? (
+                                <>
+                                    <HiOutlineCloudUpload size={48} className="text-green-600 dark:text-green-500 mb-3 animate-bounce" />
+                                    <p className="text-sm font-medium text-green-600 dark:text-green-500">Drop your image here</p>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-3">
+                                        <HiOutlinePhotograph size={32} className="text-gray-400 dark:text-gray-500" />
+                                    </div>
+                                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{label}</p>
+                                    <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">or drag and drop</p>
+                                    <div className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg text-xs text-gray-500 dark:text-gray-400">
+                                        <HiOutlineUpload size={14} />
+                                        PNG, JPG up to 5MB
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </label>
+                </div>
             )}
             {error && (
-                <p className="text-xs text-red-500 mt-2 font-light">{error}</p>
+                <p className="text-xs text-red-500 dark:text-red-400 mt-2 font-light">{error}</p>
             )}
         </div>
     );
