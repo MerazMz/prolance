@@ -186,6 +186,6 @@ This project is private and proprietary.
 
 ## 👤 Author
 
-**Meraz Haque**
+**Anjali Singh**
 
 ---
