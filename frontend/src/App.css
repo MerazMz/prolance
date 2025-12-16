@@ -2,6 +2,7 @@
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
+
 #root {
   max-width: 1920px;
   margin: 0 auto;
@@ -9,4 +10,3 @@
   text-align: center;
   overflow-x: hidden;
 }
-

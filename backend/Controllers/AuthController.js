@@ -80,7 +80,7 @@ const login = async (req, res) => {
             const jwtToken = jwt.sign(
                 { email: email, _id: 'admin', isAdmin: true },
                 process.env.JWT_SECRET,
-                { expiresIn: '1h' }
+                { expiresIn: '24h' }
             );
 
             return res.status(200).json({
@@ -114,7 +114,7 @@ const login = async (req, res) => {
         const jwtToken = jwt.sign(
             { email: user.email, _id: user._id, isAdmin: user.isAdmin || false },
             process.env.JWT_SECRET,
-            { expiresIn: '1h' }
+            { expiresIn: '24h' }
         );
 
         res.status(200).json({

@@ -89,7 +89,7 @@ const UserSchema = new Schema({
     },
     experienceLevel: {
         type: String,
-        enum: ['beginner', 'intermediate', 'expert', ''],
+        // enum: ['beginner', 'intermediate', 'expert', ''],
         default: ''
     },
     hourlyCharges: {

@@ -32,16 +32,16 @@ export default function ConversationsList({ conversations, selectedConversation,
         return (
             <div className="flex-1 flex items-center justify-center p-8">
                 <div className="text-center">
-                    <HiOutlineChat className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-sm text-gray-500">No conversations yet</p>
-                    <p className="text-xs text-gray-400 mt-1">Search for freelancers to start chatting</p>
+                    <HiOutlineChat className="w-12 h-12 text-gray-300 dark:text-gray-700 mx-auto mb-3" />
+                    <p className="text-sm text-gray-500 dark:text-gray-400">No conversations yet</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Search for freelancers to start chatting</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="divide-y divide-gray-100">
+        <div className="divide-y divide-gray-100 dark:divide-gray-800">
             {conversations.map((conversation) => {
                 // Get the other participant (not the current user)
                 const otherParticipant = conversation.participants.find(p => p._id !== user?.userId) || conversation.participants[0];
@@ -52,7 +52,7 @@ export default function ConversationsList({ conversations, selectedConversation,
                     <button
                         key={conversation._id}
                         onClick={() => onSelectConversation(conversation)}
-                        className={`w-full px-4 py-3 hover:bg-gray-50 transition text-left ${isSelected ? 'bg-green-50 border-l-2 border-green-600' : ''
+                        className={`w-full px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition text-left ${isSelected ? 'bg-green-50 dark:bg-green-900/20 border-l-2 border-green-600 dark:border-green-500' : ''
                             }`}
                     >
                         <div className="flex items-start gap-3">
@@ -65,8 +65,8 @@ export default function ConversationsList({ conversations, selectedConversation,
                                     className="w-11 h-11 rounded-full object-cover flex-shrink-0"
                                 />
                             ) : (
-                                <div className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                                    <span className="text-gray-600 font-medium text-sm">
+                                <div className="w-11 h-11 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+                                    <span className="text-gray-600 dark:text-gray-400 font-medium text-sm">
                                         {otherParticipant?.name?.charAt(0).toUpperCase()}
                                     </span>
                                 </div>
@@ -75,28 +75,28 @@ export default function ConversationsList({ conversations, selectedConversation,
                             {/* Content */}
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-baseline justify-between gap-2 mb-1">
-                                    <h3 className={`text-sm truncate ${hasUnread ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'}`}>
+                                    <h3 className={`text-sm truncate ${hasUnread ? 'font-semibold text-gray-900 dark:text-gray-100' : 'font-medium text-gray-700 dark:text-gray-300'}`}>
                                         {otherParticipant?.name}
                                     </h3>
-                                    <span className="text-xs text-gray-400 flex-shrink-0">
+                                    <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">
                                         {formatTime(conversation.lastMessageAt)}
                                     </span>
                                 </div>
 
                                 {/* Project Title */}
                                 {conversation.projectId?.title && (
-                                    <p className="text-xs text-gray-500 truncate mb-1">
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate mb-1">
                                         {conversation.projectId.title}
                                     </p>
                                 )}
 
                                 {/* Last Message */}
                                 <div className="flex items-center justify-between gap-2">
-                                    <p className={`text-xs truncate ${hasUnread ? 'font-medium text-gray-900' : 'text-gray-500'}`}>
+                                    <p className={`text-xs truncate ${hasUnread ? 'font-medium text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>
                                         {conversation.lastMessage?.content || 'Start chatting...'}
                                     </p>
                                     {hasUnread && (
-                                        <span className="flex-shrink-0 w-5 h-5 bg-green-600 text-white text-xs rounded-full flex items-center justify-center">
+                                        <span className="flex-shrink-0 w-5 h-5 bg-green-600 dark:bg-green-500 text-white text-xs rounded-full flex items-center justify-center">
                                             {conversation.unreadCount}
                                         </span>
                                     )}

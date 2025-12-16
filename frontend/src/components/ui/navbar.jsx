@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 import { useProjectNotifications } from "../../hooks/useProjectNotifications";
 import socketService from "../../services/socketService";
 import axios from "axios";
+import { ThemeToggleButton, useThemeTransition } from "../ui/shadcn-io/theme-toggle-button/index";
 import {
   HiOutlineHome,
   HiOutlineSearch,
@@ -26,6 +28,8 @@ const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 export default function Navbar() {
   const { isAuthenticated, user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const { startTransition } = useThemeTransition();
   const { notificationCount, recentProjects, newProjectIds, markAsSeen } = useProjectNotifications();
   const navigate = useNavigate();
   const location = useLocation();
@@ -207,26 +211,26 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 w-full px-4 md:px-8 py-3 flex items-center justify-between bg-white border-b border-gray-100 z-50 rounded-full outline-1 outline-gray-100">
+    <nav className="sticky top-0 w-full px-4 md:px-8 py-3 flex items-center justify-between bg-white dark:bg-black border-b border-gray-100 dark:border-gray-800 z-50 rounded-full outline-1 outline-gray-100 dark:outline-gray-800 transition-colors duration-200">
 
       {/* LEFT: LOGO */}
       <Link to="/" className="flex items-center gap-2 cursor-pointer">
         <h1 className="text-xl font-light tracking-wide flex items-center">
-          <span className="text-green-600">Pro</span>
-          <span className="text-gray-700">&lt;lance&gt;</span>
+          <span className="text-green-600 dark:text-green-500">Pro</span>
+          <span className="text-gray-700 dark:text-gray-200">&lt;lance&gt;</span>
         </h1>
       </Link>
 
       {/* MOBILE MENU BUTTON */}
       <button
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="md:hidden text-gray-600 hover:text-green-600 transition"
+        className="md:hidden text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-500 transition"
       >
         {isMobileMenuOpen ? <HiX size={24} /> : <HiOutlineMenu size={24} />}
       </button>
 
       {/* CENTER MENU - Desktop */}
-      <div className="hidden md:flex items-center gap-8 text-gray-600 text-sm font-light">
+      <div className="hidden md:flex items-center gap-8 text-gray-600 dark:text-gray-300 text-sm font-light">
 
         {/* HOME */}
         <Link
@@ -320,21 +324,37 @@ export default function Navbar() {
         </Link>
 
       </div>
+      
 
       {/* RIGHT SIDE - Hidden on mobile */}
       <div className="hidden md:flex items-center gap-4">
+        {/* Theme Toggle Button - Always visible */}
+        <ThemeToggleButton
+          title="Toggle Theme"
+          theme={theme}
+          variant="polygon"
+          // url="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZ3JwcXdzcHd5MW92NWprZXVpcTBtNXM5cG9obWh0N3I4NzFpaDE3byZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/WgsVx6C4N8tjy/giphy.gif"
+          start="center"
+          className="mt-1"
+          onClick={() => {
+            startTransition(() => {
+              toggleTheme();
+            });
+          }}
+        />
+
         {isAuthenticated ? (
           <div className="flex items-center gap-4">
             {/* Notification Bell */}
             <div className="relative" ref={notificationRef}>
               <button
                 onClick={handleNotificationClick}
-                className="relative text-gray-600 hover:text-green-600 transition cursor-pointer"
+                className="mt-2 relative text-gray-600 hover:text-green-600 transition dark:text-white cursor-pointer"
                 title="Notifications"
               >
                 <HiOutlineBell size={18} />
                 {(isClient ? appNotifCount : notificationCount) > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-medium rounded-full flex items-center justify-center px-1">
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-medium rounded-full flex items-center justify-center px-1 font-light">
                     {(isClient ? appNotifCount : notificationCount) > 9 ? '9+' : (isClient ? appNotifCount : notificationCount)}
                   </span>
                 )}
@@ -342,9 +362,9 @@ export default function Navbar() {
 
               {/* Notification Dropdown */}
               {isNotificationOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-100 rounded-lg shadow-lg py-2 z-50 max-h-96 overflow-y-auto">
-                  <div className="px-4 py-2 border-b border-gray-100">
-                    <h3 className="text-sm font-medium text-gray-700">
+                <div className="absolute right-0 mt-2 w-80 bg-white border dark:border-gray-700 dark:bg-black border-gray-100 rounded-lg shadow-lg py-2 z-50 max-h-96 overflow-y-auto">
+                  <div className="px-4 py-2 border-b dark:border-gray-700 border-gray-100">
+                    <h3 className="text-sm font-medium text-gray-700 dark:text-white">
                       {isClient ? (
                         <>
                           Project Applications {appNotifCount > 0 && `(${appNotifCount} pending)`}
@@ -362,7 +382,7 @@ export default function Navbar() {
                     applicationNotifications.length === 0 ? (
                       <div className="px-4 py-8 text-center">
                         <HiOutlineBell className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                        <p className="text-sm text-gray-500 font-light">No pending applications</p>
+                        <p className="text-xs text-gray-500 font-light">No pending applications</p>
                       </div>
                     ) : (
                       <div className="py-1">
@@ -480,16 +500,16 @@ export default function Navbar() {
                     className="w-7 h-7 rounded-full object-cover border border-gray-200"
                   />
                 ) : (
-                  <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-xs font-medium text-gray-600 border border-gray-200">
+                  <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-xs font-medium text-gray-600 border border-gray-200 dark:border-gray-700 hover:text-green-600">
                     {user?.name?.charAt(0).toUpperCase()}
                   </div>
                 )}
-                <span className="font-light">{user?.name?.split(' ')[0]}</span>
+                <span className="font-light dark:text-white dark:hover:text-green-500">{user?.name?.split(' ')[0]}</span>
               </button>
 
               {/* Dropdown Menu */}
               {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-lg shadow-sm py-2 z-50">
+                <div className="absolute dark:bg-black  right-0 mt-2 w-48 bg-white border border-gray-100 rounded-lg shadow-sm py-2 z-50">
                   <Link
                     to={user?.username ? `/user/${user.username}` : '/settings'}
                     onClick={() => {
@@ -497,7 +517,7 @@ export default function Navbar() {
                       console.log('Username:', user?.username);
                       setIsDropdownOpen(false);
                     }}
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-green-600 transition"
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-white hover:dark:text-green-500 light:hover:bg-gray-50 hover:text-green-600 transition"
                   >
                     <HiOutlineUser size={16} />
                     <span>{user?.username ? 'My Profile' : 'Set Username'}</span>
@@ -505,7 +525,7 @@ export default function Navbar() {
                   <Link
                     to="/dashboard"
                     onClick={() => setIsDropdownOpen(false)}
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-green-600 transition"
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-white hover:dark:text-green-500 light:hover:bg-gray-50 hover:text-green-600 transition"
                   >
                     <HiOutlineBriefcase size={16} />
                     <span>Dashboard</span>
@@ -513,14 +533,14 @@ export default function Navbar() {
                   <Link
                     to="/settings"
                     onClick={() => setIsDropdownOpen(false)}
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-green-600 transition"
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-white hover:dark:text-green-500 light:hover:bg-gray-50 hover:text-green-600 transition"
                   >
                     <HiOutlineCog size={16} />
                     <span>Settings</span>
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-green-600 transition"
+                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-white hover:dark:text-green-500 light:hover:bg-gray-50 hover:text-green-600 transition"
                   >
                     <HiOutlineLogout size={16} />
                     <span>Logout</span>
@@ -532,7 +552,7 @@ export default function Navbar() {
         ) : (
           <Link
             to="/login"
-            className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-green-600 transition cursor-pointer"
+            className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-green-600 dark:text-white dark:hover:text-green-500 transition cursor-pointer"
           >
             <HiOutlineLogin size={16} />
             <span>Login</span>
@@ -630,6 +650,24 @@ export default function Navbar() {
               <span className="text-sm font-light">Support</span>
             </Link>
 
+            {/* Border separator */}
+            <div className="border-t border-gray-100 my-3"></div>
+
+            {/* Theme Toggle - Always visible */}
+            <div className="flex items-center justify-between px-4 py-2.5">
+              <span className="text-sm font-light text-gray-600 dark:text-gray-300">Theme</span>
+              <ThemeToggleButton
+                theme={theme}
+                variant="circle"
+                start="center"
+                onClick={() => {
+                  startTransition(() => {
+                    toggleTheme();
+                  });
+                }}
+              />
+            </div>
+
             {/* User Section */}
             {isAuthenticated ? (
               <>
@@ -687,7 +725,7 @@ export default function Navbar() {
               <Link
                 to="/login"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-lg transition text-gray-600 hover:bg-gray-50"
+                className=" flex items-center gap-2 px-4 py-2.5 rounded-lg transition text-gray-600 hover:bg-gray-50"
               >
                 <HiOutlineLogin size={18} />
                 <span className="text-sm font-light">Login</span>

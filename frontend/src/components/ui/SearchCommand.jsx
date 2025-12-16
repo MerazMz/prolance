@@ -57,18 +57,18 @@ export default function SearchCommand() {
             {/* Trigger Button */}
             <button
                 onClick={() => setOpen(true)}
-                className="fixed bottom-8 right-8 flex items-center gap-2 px-4 py-2 outline outline-1 outline-gray-200 rounded-full shadow-lg hover:bg-gray-200 transition-all z-50 bg-white cursor-pointer"
+                className="dark:bg-black fixed bottom-8 right-8 flex items-center gap-2 px-4 py-2 outline outline-1 outline-gray-200 rounded-full shadow-lg hover:bg-gray-200 transition-all z-50 bg-white cursor-pointer"
                 title="Search (⌘K)"
             >
-                <SearchIcon className="w-5 h-5 text-gray-600 font-light " />
-                <span className="text-gray-500 text-sm font-light">Search (⌘K)</span>
+                <SearchIcon className="w-5 h-5 text-gray-600 font-light dark:text-white" />
+                <span className="text-gray-500 text-sm font-light dark:text-white">Search (⌘K)</span>
             </button>
 
 
             {/* Command Dialog */}
             <Dialog open={open} onOpenChange={setOpen}>
-                <DialogContent className="p-0 max-w-2xl bg-white" showCloseButton={false}>
-                    <Command className="rounded-lg border-none bg-white">
+                <DialogContent className="p-0 max-w-2xl bg-white dark:bg-black" showCloseButton={false}>
+                    <Command className="rounded-lg border-none bg-white dark:bg-black">
                         <CommandInput placeholder="Search for pages, features..." />
                         <CommandList>
                             <CommandEmpty>No results found.</CommandEmpty>

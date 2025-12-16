@@ -216,38 +216,38 @@ export default function Chat() {
 
     if (loading) {
         return (
-            <div className="h-screen flex items-center justify-center bg-gray-50">
+            <div className="h-screen flex items-center justify-center bg-gray-50 dark:bg-black">
                 <div className="text-center">
-                    <div className="inline-block w-8 h-8 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-sm text-gray-500 mt-3">Loading...</p>
+                    <div className="inline-block w-8 h-8 border-2 border-green-600 dark:border-green-500 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">Loading...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="flex flex-col bg-gray-50" style={{ height: 'calc(100vh - 90px)' }}>
+        <div className="flex flex-col bg-gray-50 dark:bg-black" style={{ height: 'calc(100vh - 90px)' }}>
             {/* Fixed height container - no scrolling */}
             <div className="flex-1 flex overflow-hidden max-w-[1600px] mx-auto w-full">
                 {/* Conversations List Sidebar */}
                 <div
-                    className={`${showMobileChat ? 'hidden md:flex' : 'flex'} border-r border-gray-200 bg-white flex-col relative`}
+                    className={`${showMobileChat ? 'hidden md:flex' : 'flex'} border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-black flex-col relative`}
                     style={{ width: `${sidebarWidth}px` }}
                 >
                     {/* Sidebar Header */}
-                    <div className="px-4 py-4 border-b border-gray-100">
-                        <h2 className="text-lg font-medium text-gray-900 mb-3">Messages</h2>
+                    <div className="px-4 py-4 border-b border-gray-100 dark:border-gray-800">
+                        <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-3">Messages</h2>
 
                         {/* Search */}
                         <div className="relative">
-                            <HiOutlineSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                            <HiOutlineSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
                             <input
                                 type="text"
                                 placeholder="Search..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 onFocus={() => setShowSearch(true)}
-                                className="w-full pl-9 pr-9 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-green-500 transition bg-gray-50"
+                                className="w-full pl-9 pr-9 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:border-green-500 dark:focus:border-green-500 transition bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500"
                             />
                             {searchQuery && (
                                 <button
@@ -255,7 +255,7 @@ export default function Chat() {
                                         setSearchQuery('');
                                         setShowSearch(false);
                                     }}
-                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                                 >
                                     <HiOutlineX className="w-4 h-4" />
                                 </button>
@@ -264,10 +264,10 @@ export default function Chat() {
 
                         {/* Search Results Dropdown */}
                         {showSearch && searchQuery && (
-                            <div className="absolute left-4 right-4 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
+                            <div className="absolute left-4 right-4 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
                                 {searching ? (
                                     <div className="p-4 text-center">
-                                        <div className="inline-block w-5 h-5 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
+                                        <div className="inline-block w-5 h-5 border-2 border-green-600 dark:border-green-500 border-t-transparent rounded-full animate-spin"></div>
                                     </div>
                                 ) : searchResults.length > 0 ? (
                                     <div>
@@ -275,27 +275,27 @@ export default function Chat() {
                                             <button
                                                 key={user._id}
                                                 onClick={() => handleStartChat(user)}
-                                                className="w-full px-4 py-3 hover:bg-gray-50 transition flex items-center gap-3 text-left"
+                                                className="w-full px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition flex items-center gap-3 text-left"
                                             >
-                                                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                                <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center flex-shrink-0">
                                                     {user.avatar ? (
                                                         <img src={user.avatar} alt={user.name} className="w-full h-full rounded-full object-cover" />
                                                     ) : (
-                                                        <span className="text-green-700 font-medium text-sm">
+                                                        <span className="text-green-700 dark:text-green-400 font-medium text-sm">
                                                             {user.name.charAt(0).toUpperCase()}
                                                         </span>
                                                     )}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="text-sm font-medium text-gray-800 truncate">{user.name}</p>
-                                                    <p className="text-xs text-gray-500 truncate">@{user.username}</p>
+                                                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{user.name}</p>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">@{user.username}</p>
                                                 </div>
                                             </button>
                                         ))}
                                     </div>
                                 ) : (
                                     <div className="p-4 text-center">
-                                        <p className="text-sm text-gray-500">No users found</p>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">No users found</p>
                                     </div>
                                 )}
                             </div>
@@ -314,25 +314,25 @@ export default function Chat() {
                     {/* Resize Handle */}
                     <div
                         onMouseDown={handleMouseDown}
-                        className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-green-500 transition-colors group"
+                        className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-green-500 dark:hover:bg-green-600 transition-colors group"
                         title="Drag to resize"
                     >
-                        <div className="absolute top-1/2 right-0 transform -translate-y-1/2 w-1 h-12 bg-gray-300 group-hover:bg-green-500 rounded-l transition-colors"></div>
+                        <div className="absolute top-1/2 right-0 transform -translate-y-1/2 w-1 h-12 bg-gray-300 dark:bg-gray-700 group-hover:bg-green-500 dark:group-hover:bg-green-600 rounded-l transition-colors"></div>
                     </div>
                 </div>
 
                 {/* Chat Window */}
-                <div className={`flex-1 ${showMobileChat ? 'block' : 'hidden md:block'} bg-white`}>
+                <div className={`flex-1 ${showMobileChat ? 'block' : 'hidden md:block'} bg-white dark:bg-gray-900`}>
                     {selectedConversation ? (
                         <ChatWindow
                             conversation={selectedConversation}
                             onBack={handleBackToList}
                         />
                     ) : (
-                        <div className="h-full flex items-center justify-center bg-gray-50">
+                        <div className="h-full flex items-center justify-center bg-gray-50 dark:bg-black">
                             <div className="text-center">
-                                <HiOutlineChat className="w-16 h-16 text-gray-300 mx-auto mb-3" />
-                                <p className="text-sm text-gray-500">
+                                <HiOutlineChat className="w-16 h-16 text-gray-300 dark:text-gray-700 mx-auto mb-3" />
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
                                     Select a conversation to start messaging
                                 </p>
                             </div>
