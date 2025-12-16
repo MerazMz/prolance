@@ -10,12 +10,17 @@ const MessageSchema = new Schema({
     senderId: {
         type: Schema.Types.ObjectId,
         ref: 'users',
-        required: true
+        required: false // Not required for system messages
     },
     content: {
         type: String,
         required: true,
         maxlength: 5000
+    },
+    messageType: {
+        type: String,
+        enum: ['user', 'system'],
+        default: 'user'
     },
     read: {
         type: Boolean,

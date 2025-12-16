@@ -14,14 +14,14 @@ function Home() {
     return (
         <>
 
-            {/* Hero Section with Particles Background */}
-            <div style={{ width: '100%', height: '600px', position: 'absolute' }}>
+            {/* Hero Section with Particles Background - Responsive */}
+            <div className="w-full h-[400px] md:h-[600px] absolute">
                 <Particles
                     particleColors={['#b2ffc8', '#b2ffc8']}
-                    particleCount={100}
+                    particleCount={window.innerWidth < 768 ? 30 : 100}
                     particleSpread={10}
                     speed={0.1}
-                    particleBaseSize={100}
+                    particleBaseSize={window.innerWidth < 768 ? 60 : 100}
                     moveParticlesOnHover={true}
                     alphaParticles={false}
                     disableRotation={false}
@@ -29,11 +29,12 @@ function Home() {
             </div>
             <ClickSpark sparkColor="#000000ff" sparkSize={10} sparkRadius={15} sparkCount={8} duration={400} easing="ease-out" extraScale={1.0}>
                 {/* Hero - Text Flip Animation */}
-                <div>
+                <div className="px-4 md:px-0">
                     <LayoutTextFlip />
                 </div>
 
-                <div>
+                {/* Scroll Velocity - Hidden on mobile */}
+                <div className="hidden md:block">
                     <ScrollVelocity
                         texts={['Match Align Sync Blend', 'Discover Explore Hunt Scout', 'Advance Thrive Ascend']}
                         velocity={50}
@@ -41,13 +42,15 @@ function Home() {
                     />
                 </div>
 
-                {/* How It Works Timeline */}
-                <div className="mt-20">
+                {/* Globe Demo - Hidden on mobile, visible on md and up */}
+                <div className="hidden md:block mt-20">
                     <GlobeDemo />
                 </div>
 
-                {/* Dual Section - For Freelancers & Clients */}
-                <DualSection />
+                {/* Dual Section - For Freelancers & Clients - Responsive */}
+                <div className="px-4 md:px-0">
+                    <DualSection />
+                </div>
 
             </ClickSpark>
             {/* Footer */}
@@ -57,3 +60,4 @@ function Home() {
 }
 
 export default Home
+

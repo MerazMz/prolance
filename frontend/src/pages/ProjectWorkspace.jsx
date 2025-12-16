@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import axios from 'axios';
+import confetti from 'canvas-confetti';
 import socketService from '../services/socketService';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -79,10 +80,16 @@ export default function ProjectWorkspace() {
         };
 
         const handleDeliverableAdded = ({ deliverable }) => {
-            setProject(prev => ({
-                ...prev,
-                deliverables: [...prev.deliverables, deliverable]
-            }));
+            setProject(prev => {
+                // Check if deliverable already exists to prevent duplicates
+                const exists = prev.deliverables?.some(d => d._id === deliverable._id);
+                if (exists) return prev;
+
+                return {
+                    ...prev,
+                    deliverables: [...(prev.deliverables || []), deliverable]
+                };
+            });
         };
 
         socketService.on('work-status-updated', handleWorkStatusUpdate);
@@ -113,6 +120,45 @@ export default function ProjectWorkspace() {
             setLoading(false);
         }
     };
+
+    // Celebration confetti effect when payment is successful
+    useEffect(() => {
+        if (project?.status === 'closed' && paymentDetails) {
+            // Wait a bit for the UI to render
+            const timer = setTimeout(() => {
+                // Party popper effect from multiple angles
+                const duration = 3000;
+                const animationEnd = Date.now() + duration;
+                const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+                const randomInRange = (min, max) => Math.random() * (max - min) + min;
+
+                const interval = setInterval(() => {
+                    const timeLeft = animationEnd - Date.now();
+
+                    if (timeLeft <= 0) {
+                        return clearInterval(interval);
+                    }
+
+                    const particleCount = 50 * (timeLeft / duration);
+
+                    // Launch confetti from left and right
+                    confetti({
+                        ...defaults,
+                        particleCount,
+                        origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+                    });
+                    confetti({
+                        ...defaults,
+                        particleCount,
+                        origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+                    });
+                }, 250);
+            }, 500);
+
+            return () => clearTimeout(timer);
+        }
+    }, [project?.status, paymentDetails]);
 
     const updateWorkStatus = async (newStatus, isRollback = false) => {
         if (isRollback) {
@@ -216,7 +262,12 @@ export default function ProjectWorkspace() {
                 `${API_BASE_URL}/api/projects/${id}/deliverables/${deliverableId}`,
                 { headers: { Authorization: token } }
             );
-            fetchWorkspace();
+
+            // Update local state immediately by filtering out the deleted deliverable
+            setProject(prev => ({
+                ...prev,
+                deliverables: prev.deliverables.filter(d => d._id !== deliverableId)
+            }));
         } catch (error) {
             console.error('Error deleting deliverable:', error);
             setError(error.response?.data?.message || 'Failed to delete deliverable');
@@ -296,11 +347,20 @@ export default function ProjectWorkspace() {
         e.preventDefault();
         try {
             const token = localStorage.getItem('authToken');
-            await axios.post(
+            const response = await axios.post(
                 `${API_BASE_URL}/api/projects/${id}/deliverables`,
                 { ...deliverableForm, fileName: 'document.pdf', fileSize: 0 },
                 { headers: { Authorization: token } }
             );
+
+            // Update local state immediately with the new deliverable
+            if (response.data.deliverable) {
+                setProject(prev => ({
+                    ...prev,
+                    deliverables: [...(prev.deliverables || []), response.data.deliverable]
+                }));
+            }
+
             setShowDeliverableModal(false);
             setDeliverableForm({ title: '', description: '', fileUrl: '' });
             // Clear error if it was about missing deliverables
@@ -309,6 +369,7 @@ export default function ProjectWorkspace() {
             }
         } catch (err) {
             console.error('Error adding deliverable:', err);
+            setError(err.response?.data?.message || 'Failed to add deliverable');
         }
     };
 
@@ -587,15 +648,28 @@ export default function ProjectWorkspace() {
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     {deliverable.fileUrl && (
-                                                        <a
-                                                            href={deliverable.fileUrl}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="p-2 text-green-600 hover:bg-green-50 rounded transition"
-                                                            title="Download"
-                                                        >
-                                                            <HiOutlineDownload size={18} />
-                                                        </a>
+                                                        <>
+                                                            {/* Freelancers can always download, clients need to pay first */}
+                                                            {isFreelancer || paymentDetails ? (
+                                                                <a
+                                                                    href={deliverable.fileUrl}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="p-2 text-green-600 hover:bg-green-50 rounded transition"
+                                                                    title="Download"
+                                                                >
+                                                                    <HiOutlineDownload size={18} />
+                                                                </a>
+                                                            ) : (
+                                                                <button
+                                                                    disabled
+                                                                    className="p-2 text-gray-400 bg-gray-100 rounded transition cursor-not-allowed"
+                                                                    title="Payment required to download deliverables"
+                                                                >
+                                                                    <HiOutlineDownload size={18} />
+                                                                </button>
+                                                            )}
+                                                        </>
                                                     )}
                                                     {isFreelancer && (
                                                         <button
@@ -619,6 +693,23 @@ export default function ProjectWorkspace() {
                                 <p className="text-sm text-gray-500 font-light text-center py-8">
                                     No deliverables yet. {isFreelancer && 'Upload files for client review.'}
                                 </p>
+                            )}
+
+                            {/* Payment Required Notice for Clients */}
+                            {!isFreelancer && project.deliverables?.length > 0 && !paymentDetails && project.status !== 'closed' && (
+                                <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <div className="flex items-start gap-3">
+                                        <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                        </svg>
+                                        <div className="flex-1">
+                                            <h4 className="text-sm font-medium text-blue-800 mb-1">Payment Required</h4>
+                                            <p className="text-sm text-blue-700 font-light">
+                                                Complete the payment to download deliverables. Accept the project below to proceed with payment.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
                             )}
 
                             {/* Client: Request Review & Accept Buttons */}
