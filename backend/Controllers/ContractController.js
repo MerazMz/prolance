@@ -72,11 +72,60 @@ const proposeContract = async (req, res) => {
         await contract.populate('clientId', 'name avatar');
         await contract.populate('projectId', 'title');
 
-        // Emit Socket.IO event
+        // Create notification for client
+        const UserModel = require('../Models/User');
+        const MessageModel = require('../Models/Message');
+
+        const clientNotification = {
+            type: 'contract_proposed',
+            title: 'New Contract Proposal 📋',
+            message: `${contract.freelancerId.name} has proposed a work contract for "${contract.projectId.title}". Review and respond to the proposal.`,
+            projectId: contract.projectId._id,
+            read: false,
+            createdAt: new Date()
+        };
+
+        await UserModel.findByIdAndUpdate(
+            contract.clientId._id,
+            { $push: { notifications: clientNotification } }
+        );
+
+        // Create system message in chat to show proposal banner
+        const systemMessageContent = `Contract Proposal: ${contract.freelancerId.name} has proposed a work contract for "${contract.projectId.title}" with a budget of ₹${contract.contractDetails.finalAmount.toLocaleString()}. Please review and respond.`;
+
+        const systemMessage = new MessageModel({
+            conversationId,
+            content: systemMessageContent,
+            messageType: 'system'
+        });
+
+        await systemMessage.save();
+
+        // Update conversation's lastMessage to show in sidebar
+        await ConversationModel.findByIdAndUpdate(conversationId, {
+            lastMessage: {
+                content: systemMessageContent,
+                senderId: null,
+                createdAt: systemMessage.createdAt
+            },
+            lastMessageAt: systemMessage.createdAt
+        });
+
+        // Emit Socket.IO events
         const io = req.app.get('io');
         if (io) {
+            // Emit contract-proposed event
             io.to(`conversation:${conversationId}`).emit('contract-proposed', {
                 contract,
+                conversationId
+            });
+
+            // Send notification to client
+            io.to(`user:${contract.clientId._id}`).emit('new-notification', clientNotification);
+
+            // Broadcast system message to chat
+            io.to(`conversation:${conversationId}`).emit('new-message', {
+                message: systemMessage,
                 conversationId
             });
         }
@@ -226,6 +275,16 @@ const updateContractStatus = async (req, res) => {
         });
 
         await systemMessage.save();
+
+        // Update conversation's lastMessage to show in sidebar
+        await ConversationModel.findByIdAndUpdate(contract.conversationId, {
+            lastMessage: {
+                content: systemMessageContent,
+                senderId: null,
+                createdAt: systemMessage.createdAt
+            },
+            lastMessageAt: systemMessage.createdAt
+        });
 
         // Emit Socket.IO events
         const io = req.app.get('io');

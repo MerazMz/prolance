@@ -51,6 +51,20 @@ const submitApplication = async (req, res) => {
             });
         }
 
+        // Check if user was previously rejected for this project
+        const previousRejection = await ApplicationModel.findOne({
+            projectId,
+            freelancerId,
+            status: 'rejected'
+        });
+
+        if (previousRejection) {
+            return res.status(403).json({
+                message: 'You cannot reapply to this project as your previous application was rejected',
+                success: false
+            });
+        }
+
         // Create application
         const application = new ApplicationModel({
             projectId,
@@ -258,7 +272,7 @@ const updateApplicationStatus = async (req, res) => {
             }
 
             // Update project status
-            application.projectId.status = 'in-progress';
+            // application.projectId.status = 'in-progress'; //should still be available in explore projects
             application.projectId.acceptedProposalId = application._id;
             await application.projectId.save();
         }

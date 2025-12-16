@@ -137,17 +137,17 @@ const PaymentPage = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-white flex items-center justify-center">
+            <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center">
                 <div className="text-center">
                     <div className="inline-block w-8 h-8 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-sm text-gray-500 mt-3 font-light">Loading payment details...</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-3 font-light">Loading payment details...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white py-12 px-4">
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white dark:from-black dark:to-gray-900 py-12 px-4">
             <div className="max-w-2xl mx-auto">
                 {/* Header */}
                 <motion.div
@@ -157,13 +157,13 @@ const PaymentPage = () => {
                 >
                     <button
                         onClick={() => navigate(-1)}
-                        className="flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-4 font-light transition"
+                        className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 mb-4 font-light transition"
                     >
                         <HiOutlineArrowLeft size={20} />
                         Back
                     </button>
-                    <h1 className="text-3xl font-light text-gray-800 mb-2">Complete Payment</h1>
-                    <p className="text-sm text-gray-500 font-light">Secure payment powered by Razorpay</p>
+                    <h1 className="text-3xl font-light text-gray-800 dark:text-gray-200 mb-2">Complete Payment</h1>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 font-light">Secure payment powered by Razorpay</p>
                 </motion.div>
 
                 {/* Error Message */}
@@ -171,9 +171,9 @@ const PaymentPage = () => {
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg"
+                        className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
                     >
-                        <p className="text-sm text-red-700 font-light">{error}</p>
+                        <p className="text-sm text-red-700 dark:text-red-400 font-light">{error}</p>
                     </motion.div>
                 )}
 
@@ -182,17 +182,17 @@ const PaymentPage = () => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
+                    className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden"
                 >
                     {/* Project Info */}
-                    <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-green-50 to-white">
+                    <div className="p-6 border-b border-gray-100 dark:border-gray-800 bg-gradient-to-r from-green-50 to-white dark:from-green-900/20 dark:to-gray-900">
                         <div className="flex items-start gap-4">
-                            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <HiOutlineBriefcase className="w-6 h-6 text-green-600" />
+                            <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <HiOutlineBriefcase className="w-6 h-6 text-green-600 dark:text-green-400" />
                             </div>
                             <div className="flex-1">
-                                <h2 className="text-lg font-medium text-gray-800 mb-1">{project?.title}</h2>
-                                <p className="text-sm text-gray-600 font-light line-clamp-2">
+                                <h2 className="text-lg text-left font-medium text-gray-800 dark:text-gray-200 mb-1">{project?.title}</h2>
+                                <p className="text-sm text-left text-gray-600 dark:text-gray-400 font-light line-clamp-2">
                                     {project?.description}
                                 </p>
                             </div>
@@ -200,49 +200,49 @@ const PaymentPage = () => {
                     </div>
 
                     {/* Amount Section */}
-                    <div className="p-6 border-b border-gray-100">
+                    <div className="p-6 border-b border-gray-100 dark:border-gray-800">
                         <div className="flex items-center justify-between mb-4">
-                            <span className="text-sm text-gray-600 font-light">Project Amount</span>
-                            <div className="flex items-center gap-1 text-2xl font-light text-gray-800">
+                            <span className="text-sm text-gray-600 dark:text-gray-400 font-light">Project Amount</span>
+                            <div className="flex items-center gap-1 text-2xl font-light text-gray-800 dark:text-gray-200">
                                 <HiOutlineCurrencyRupee size={24} />
                                 {amount?.toLocaleString('en-IN')}
                             </div>
                         </div>
 
                         {/* Payment breakdown */}
-                        <div className="space-y-2 pt-4 border-t border-gray-100">
+                        <div className="space-y-2 pt-4 border-t border-gray-100 dark:border-gray-800">
                             <div className="flex items-center justify-between text-sm">
-                                <span className="text-gray-600 font-light">Subtotal</span>
-                                <span className="text-gray-700 font-light">₹{amount?.toLocaleString('en-IN')}</span>
+                                <span className="text-gray-600 dark:text-gray-400 font-light">Subtotal</span>
+                                <span className="text-gray-700 dark:text-gray-300 font-light">₹{amount?.toLocaleString('en-IN')}</span>
                             </div>
                             <div className="flex items-center justify-between text-sm">
-                                <span className="text-gray-600 font-light">Processing Fee</span>
-                                <span className="text-green-600 font-light">Free</span>
+                                <span className="text-gray-600 dark:text-gray-400 font-light">Processing Fee</span>
+                                <span className="text-green-600 dark:text-green-400 font-light">Free</span>
                             </div>
-                            <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                                <span className="text-gray-800 font-medium">Total Amount</span>
-                                <span className="text-lg font-medium text-gray-800">₹{amount?.toLocaleString('en-IN')}</span>
+                            <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-800">
+                                <span className="text-gray-800 dark:text-gray-200 font-medium">Total Amount</span>
+                                <span className="text-lg font-medium text-gray-800 dark:text-gray-200">₹{amount?.toLocaleString('en-IN')}</span>
                             </div>
                         </div>
                     </div>
 
                     {/* Security Info */}
-                    <div className="p-6 bg-gray-50">
+                    <div className="p-6 bg-gray-50 dark:bg-gray-800/50">
                         <div className="flex items-start gap-3 mb-4">
-                            <HiOutlineShieldCheck className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                            <HiOutlineShieldCheck className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
                             <div>
-                                <h3 className="text-sm font-medium text-gray-800 mb-1">Secure Payment</h3>
-                                <p className="text-xs text-gray-600 font-light">
+                                <h3 className="text-sm text-left font-medium text-gray-800 dark:text-gray-200 mb-1">Secure Payment</h3>
+                                <p className="text-xs text-left text-gray-600 dark:text-gray-400 font-light">
                                     Your payment is secured with 256-bit encryption and processed by Razorpay
                                 </p>
                             </div>
                         </div>
 
                         <div className="flex items-start gap-3">
-                            <HiOutlineCheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                            <HiOutlineCheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
                             <div>
-                                <h3 className="text-sm font-medium text-gray-800 mb-1">Money-back Guarantee</h3>
-                                <p className="text-xs text-gray-600 font-light">
+                                <h3 className="text-sm text-left font-medium text-gray-800 dark:text-gray-200 mb-1">Money-back Guarantee</h3>
+                                <p className="text-xs text-left text-gray-600 dark:text-gray-400 font-light">
                                     Protected by Prolance's secure escrow system
                                 </p>
                             </div>
@@ -255,8 +255,8 @@ const PaymentPage = () => {
                             onClick={handlePayment}
                             disabled={processing || !amount}
                             className={`w-full py-3 px-6 rounded-lg font-light text-white transition-all flex items-center justify-center gap-2 ${processing || !amount
-                                    ? 'bg-gray-300 cursor-not-allowed'
-                                    : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-sm hover:shadow-md'
+                                ? 'bg-gray-300 dark:bg-gray-700 cursor-not-allowed'
+                                : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-sm hover:shadow-md'
                                 }`}
                         >
                             {processing ? (
@@ -272,7 +272,7 @@ const PaymentPage = () => {
                             )}
                         </button>
 
-                        <p className="text-xs text-center text-gray-500 font-light mt-4">
+                        <p className="text-xs text-center text-gray-500 dark:text-gray-400 font-light mt-4">
                             By proceeding, you agree to Prolance's terms and conditions
                         </p>
                     </div>
@@ -285,21 +285,21 @@ const PaymentPage = () => {
                     transition={{ delay: 0.2 }}
                     className="mt-6 text-center"
                 >
-                    <p className="text-xs text-gray-500 font-light mb-3">Accepted Payment Methods</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 font-light mb-3">Accepted Payment Methods</p>
                     <div className="flex items-center justify-center gap-4 flex-wrap">
-                        <span className="px-3 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-600 font-light">
+                        <span className="px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded text-xs text-gray-600 dark:text-gray-300 font-light">
                             Credit Card
                         </span>
-                        <span className="px-3 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-600 font-light">
+                        <span className="px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded text-xs text-gray-600 dark:text-gray-300 font-light">
                             Debit Card
                         </span>
-                        <span className="px-3 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-600 font-light">
+                        <span className="px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded text-xs text-gray-600 dark:text-gray-300 font-light">
                             UPI
                         </span>
-                        <span className="px-3 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-600 font-light">
+                        <span className="px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded text-xs text-gray-600 dark:text-gray-300 font-light">
                             Net Banking
                         </span>
-                        <span className="px-3 py-1.5 bg-white border border-gray-200 rounded text-xs text-gray-600 font-light">
+                        <span className="px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded text-xs text-gray-600 dark:text-gray-300 font-light">
                             Wallets
                         </span>
                     </div>

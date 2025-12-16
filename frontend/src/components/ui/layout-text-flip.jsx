@@ -41,16 +41,16 @@ export const LayoutTextFlip = ({
 
   return (
     <>
-      <div className="flex flex-col items-center justify-center min-h-screen w-full -mt-10 relative px-4">
-        <div className="flex flex-col md:flex-row items-center gap-3 md:gap-6">
+      <div className="flex flex-col items-center justify-center min-h-screen w-full -mt-10 relative px-4  ">
+        <div className="flex flex-col md:flex-row items-center gap-3 md:gap-6 ">
           <motion.span
             layoutId="subtext"
-            className="text-xl md:text-2xl lg:text-4xl font-bold tracking-tight drop-shadow-lg">
+            className="text-xl md:text-2xl lg:text-4xl font-bold tracking-tight drop-shadow-lg dark:text-white">
             {text}
           </motion.span>
           <motion.span
             layout
-            className="relative overflow-hidden rounded-md border border-transparent bg-white px-3 md:px-4 py-1.5 md:py-2 font-sans text-xl md:text-2xl lg:text-4xl font-bold tracking-tight text-green-400 shadow-sm ring shadow-black/10 ring-black/10 drop-shadow-lg dark:bg-neutral-900 dark:text-white dark:shadow-sm dark:ring-1 dark:shadow-white/10 dark:ring-white/10">
+            className="relative overflow-hidden dark:border-gray-600 rounded-md border border-transparent bg-white px-3 md:px-4 py-1.5 md:py-2 font-sans text-xl md:text-2xl lg:text-4xl font-bold tracking-tight text-green-400 shadow-sm ring shadow-black/10 ring-black/10 drop-shadow-lg dark:bg-neutral-900 dark:shadow-sm dark:ring-1 dark:shadow-white/10 dark:ring-white/10">
             <AnimatePresence mode="popLayout">
               <motion.span
                 key={currentIndex}
@@ -70,58 +70,58 @@ export const LayoutTextFlip = ({
           </motion.span>
           <br /><br />
         </div>
-        <p className="categories text-center font-light text-gray-400 mt-6 md:mt-8 max-w-2xl text-sm md:text-base px-4">
+        <p className="categories text-center font-light text-gray-400 dark:text-gray-500 mt-6 md:mt-8 max-w-2xl text-sm md:text-base px-4">
           Find the perfect freelancer for your project. Browse our talented professionals and get your work done efficiently.
         </p><br /><br />
         <div className="flex gap-2 md:gap-4 flex-wrap justify-center relative mt-6 md:mt-10">
           <button
-            className="cursor-pointer px-3 md:px-5 py-1 md:py-1.5 text-xs md:text-sm text-gray-700 font-light rounded-full border border-gray-300 hover:bg-green-300/30 hover:text-black hover:border-green-400 transition-all duration-300">
+            className="cursor-pointer px-3 md:px-5 py-1 md:py-1.5 text-xs md:text-sm text-gray-700 dark:text-gray-300 font-light rounded-full border border-gray-300 dark:border-gray-600 hover:bg-green-300/30 dark:hover:bg-green-600/20 hover:text-black dark:hover:text-white hover:border-green-400 dark:hover:border-green-500 transition-all duration-300">
             Programming and Tech
           </button>
           <button
-            className="cursor-pointer px-3 md:px-5 py-1 md:py-1.5 text-xs md:text-sm text-gray-700 font-light rounded-full border border-gray-300 hover:bg-green-300/30 hover:text-black hover:border-green-400 transition-all duration-300">
+            className="cursor-pointer px-3 md:px-5 py-1 md:py-1.5 text-xs md:text-sm text-gray-700 dark:text-gray-300 font-light rounded-full border border-gray-300 dark:border-gray-600 hover:bg-green-300/30 dark:hover:bg-green-600/20 hover:text-black dark:hover:text-white hover:border-green-400 dark:hover:border-green-500 transition-all duration-300">
             Graphics and Design
           </button>
           <button
-            className="cursor-pointer px-3 md:px-5 py-1 md:py-1.5 text-xs md:text-sm text-gray-700 font-light rounded-full border border-gray-300 hover:bg-green-300/30 hover:text-black hover:border-green-400 transition-all duration-300">
+            className="cursor-pointer px-3 md:px-5 py-1 md:py-1.5 text-xs md:text-sm text-gray-700 dark:text-gray-300 font-light rounded-full border border-gray-300 dark:border-gray-600 hover:bg-green-300/30 dark:hover:bg-green-600/20 hover:text-black dark:hover:text-white hover:border-green-400 dark:hover:border-green-500 transition-all duration-300">
             Digital Marketing
           </button>
           <button
-            className="cursor-pointer px-3 md:px-5 py-1 md:py-1.5 text-xs md:text-sm text-gray-700 font-light rounded-full border border-gray-300 hover:bg-green-300/30 hover:text-black hover:border-green-400 transition-all duration-300">
+            className="cursor-pointer px-3 md:px-5 py-1 md:py-1.5 text-xs md:text-sm text-gray-700 dark:text-gray-300 font-light rounded-full border border-gray-300 dark:border-gray-600 hover:bg-green-300/30 dark:hover:bg-green-600/20 hover:text-black dark:hover:text-white hover:border-green-400 dark:hover:border-green-500 transition-all duration-300">
             Writing and Translation
           </button>
           <button
-            className="cursor-pointer px-3 md:px-5 py-1 md:py-1.5 text-xs md:text-sm text-gray-700 font-light rounded-full border border-gray-300 hover:bg-green-300/30 hover:text-black hover:border-green-400 transition-all duration-300">
+            className="cursor-pointer px-3 md:px-5 py-1 md:py-1.5 text-xs md:text-sm text-gray-700 dark:text-gray-300 font-light rounded-full border border-gray-300 dark:border-gray-600 hover:bg-green-300/30 dark:hover:bg-green-600/20 hover:text-black dark:hover:text-white hover:border-green-400 dark:hover:border-green-500 transition-all duration-300">
             Video and Animation
           </button>
           <button
-            className="cursor-pointer px-3 md:px-5 py-1 md:py-1.5 text-xs md:text-sm text-gray-700 font-light rounded-full border border-gray-300 hover:bg-green-300/30 hover:text-black hover:border-green-400 transition-all duration-300">
+            className="cursor-pointer px-3 md:px-5 py-1 md:py-1.5 text-xs md:text-sm text-gray-700 dark:text-gray-300 font-light rounded-full border border-gray-300 dark:border-gray-600 hover:bg-green-300/30 dark:hover:bg-green-600/20 hover:text-black dark:hover:text-white hover:border-green-400 dark:hover:border-green-500 transition-all duration-300">
             Ai Services
           </button>
           <button
-            className="cursor-pointer px-3 md:px-5 py-1 md:py-1.5 text-xs md:text-sm text-gray-700 font-light rounded-full border border-gray-300 hover:bg-green-300/30 hover:text-black hover:border-green-400 transition-all duration-300">
+            className="cursor-pointer px-3 md:px-5 py-1 md:py-1.5 text-xs md:text-sm text-gray-700 dark:text-gray-300 font-light rounded-full border border-gray-300 dark:border-gray-600 hover:bg-green-300/30 dark:hover:bg-green-600/20 hover:text-black dark:hover:text-white hover:border-green-400 dark:hover:border-green-500 transition-all duration-300">
             Music and Audio
           </button>
         </div>
         <div className="flex gap-2 md:gap-4 flex-wrap justify-center relative mt-3 md:mt-5">
           <button
-            className="cursor-pointer px-3 md:px-5 py-1 md:py-1.5 text-xs md:text-sm text-gray-700 font-light rounded-full border border-gray-300 hover:bg-green-300/30 hover:text-black hover:border-green-400 transition-all duration-300">
+            className="cursor-pointer px-3 md:px-5 py-1 md:py-1.5 text-xs md:text-sm text-gray-700 dark:text-gray-300 font-light rounded-full border border-gray-300 dark:border-gray-600 hover:bg-green-300/30 dark:hover:bg-green-600/20 hover:text-black dark:hover:text-white hover:border-green-400 dark:hover:border-green-500 transition-all duration-300">
             Business
           </button>
           <button
-            className="cursor-pointer px-3 md:px-5 py-1 md:py-1.5 text-xs md:text-sm text-gray-700 font-light rounded-full border border-gray-300 hover:bg-green-300/30 hover:text-black hover:border-green-400 transition-all duration-300">
+            className="cursor-pointer px-3 md:px-5 py-1 md:py-1.5 text-xs md:text-sm text-gray-700 dark:text-gray-300 font-light rounded-full border border-gray-300 dark:border-gray-600 hover:bg-green-300/30 dark:hover:bg-green-600/20 hover:text-black dark:hover:text-white hover:border-green-400 dark:hover:border-green-500 transition-all duration-300">
             Consulting
           </button>
           <button
-            className="cursor-pointer px-3 md:px-5 py-1 md:py-1.5 text-xs md:text-sm text-gray-700 font-light rounded-full border border-gray-300 hover:bg-green-300/30 hover:text-black hover:border-green-400 transition-all duration-300">
+            className="cursor-pointer px-3 md:px-5 py-1 md:py-1.5 text-xs md:text-sm text-gray-700 dark:text-gray-300 font-light rounded-full border border-gray-300 dark:border-gray-600 hover:bg-green-300/30 dark:hover:bg-green-600/20 hover:text-black dark:hover:text-white hover:border-green-400 dark:hover:border-green-500 transition-all duration-300">
             Health and Fitness
           </button>
           <button
-            className="cursor-pointer px-3 md:px-5 py-1 md:py-1.5 text-xs md:text-sm text-gray-700 font-light rounded-full border border-gray-300 hover:bg-green-300/30 hover:text-black hover:border-green-400 transition-all duration-300">
+            className="cursor-pointer px-3 md:px-5 py-1 md:py-1.5 text-xs md:text-sm text-gray-700 dark:text-gray-300 font-light rounded-full border border-gray-300 dark:border-gray-600 hover:bg-green-300/30 dark:hover:bg-green-600/20 hover:text-black dark:hover:text-white hover:border-green-400 dark:hover:border-green-500 transition-all duration-300">
             Education
           </button>
           <button
-            className="cursor-pointer px-3 md:px-5 py-1 md:py-1.5 text-xs md:text-sm text-gray-700 font-light rounded-full border border-gray-300 hover:bg-green-300/30 hover:text-black hover:border-green-400 transition-all duration-300">
+            className="cursor-pointer px-3 md:px-5 py-1 md:py-1.5 text-xs md:text-sm text-gray-700 dark:text-gray-300 font-light rounded-full border border-gray-300 dark:border-gray-600 hover:bg-green-300/30 dark:hover:bg-green-600/20 hover:text-black dark:hover:text-white hover:border-green-400 dark:hover:border-green-500 transition-all duration-300">
             Legal
           </button>
         </div>

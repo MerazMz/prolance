@@ -259,9 +259,9 @@ export default function VerifyOTP() {
     };
 
     return (
-        <div className="min-h-screen w-full flex bg-white">
+        <div className="min-h-screen w-full flex bg-white dark:bg-gray-950">
             {/* Left Side - Illustration with Particles */}
-            <div className="hidden rounded-3xl lg:flex lg:w-1/2 relative bg-gradient-to-br from-green-50 to-white items-center justify-center p-12 overflow-hidden">
+            <div className="hidden rounded-3xl lg:flex lg:w-1/2 relative bg-gradient-to-br from-green-50 to-white dark:from-gray-900 dark:to-gray-950 items-center justify-center p-12 overflow-hidden">
                 <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }}>
                     <Particles
                         particleColors={['#b2ffc8', '#b2ffc8']}
@@ -282,12 +282,12 @@ export default function VerifyOTP() {
                     className="relative z-10 text-center"
                 >
                     <div className="mb-8">
-                        <svg className="w-32 h-32 mx-auto text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-32 h-32 mx-auto text-green-600 dark:text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
-                    <h2 className="text-2xl font-light text-gray-700 mb-2">Check Your Email</h2>
-                    <p className="text-sm text-gray-500 font-light max-w-md">
+                    <h2 className="text-2xl font-light text-gray-700 dark:text-gray-300 mb-2">Check Your Email</h2>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 font-light max-w-md">
                         We've sent a verification code to {maskedEmail}
                     </p>
                 </motion.div>
@@ -302,8 +302,8 @@ export default function VerifyOTP() {
                     className="w-full max-w-md"
                 >
                     <div className="mb-6">
-                        <h1 className="text-2xl font-light text-gray-700 mb-2">Verify OTP</h1>
-                        <p className="text-sm text-gray-500 font-light">
+                        <h1 className="text-2xl font-light text-gray-700 dark:text-gray-200 mb-2">Verify OTP</h1>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 font-light">
                             Enter the 6-digit code sent to your email
                         </p>
                     </div>
@@ -313,7 +313,7 @@ export default function VerifyOTP() {
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            className="mb-6 p-3 bg-red-50 border border-red-100 rounded-lg text-red-600 text-sm font-light"
+                            className="mb-6 p-3 bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900 rounded-lg text-red-600 dark:text-red-400 text-sm font-light"
                         >
                             {error}
                         </motion.div>
@@ -324,7 +324,7 @@ export default function VerifyOTP() {
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            className="mb-6 p-3 bg-green-50 border border-green-100 rounded-lg text-green-600 text-sm font-light"
+                            className="mb-6 p-3 bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900 rounded-lg text-green-600 dark:text-green-400 text-sm font-light"
                         >
                             {success}
                         </motion.div>
@@ -335,7 +335,7 @@ export default function VerifyOTP() {
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            className="mb-6 p-3 bg-blue-50 border border-blue-100 rounded-lg text-blue-600 text-sm font-light"
+                            className="mb-6 p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-lg text-blue-600 dark:text-blue-400 text-sm font-light"
                         >
                             {resendSuccess}
                         </motion.div>
@@ -353,7 +353,7 @@ export default function VerifyOTP() {
                                     value={digit}
                                     onChange={(e) => handleChange(index, e.target.value)}
                                     onKeyDown={(e) => handleKeyDown(index, e)}
-                                    className="w-12 h-14 text-center text-2xl font-light border border-gray-200 rounded-lg focus:border-green-600 focus:outline-none transition-all"
+                                    className="w-12 h-14 text-center text-2xl font-light border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 rounded-lg focus:border-green-600 dark:focus:border-green-500 focus:outline-none transition-all"
                                     disabled={isLoading || success}
                                 />
                             ))}
@@ -362,7 +362,7 @@ export default function VerifyOTP() {
                         <button
                             type="submit"
                             disabled={isLoading || success}
-                            className="w-full bg-green-600 text-white font-light py-2.5 text-sm rounded-lg hover:bg-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full bg-green-600 dark:bg-green-700 text-white font-light py-2.5 text-sm rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isLoading ? 'Verifying...' : success ? 'Redirecting...' : 'Verify OTP'}
                         </button>
@@ -373,14 +373,14 @@ export default function VerifyOTP() {
                             type="button"
                             onClick={handleResendOTP}
                             disabled={isResending || isInCooldown}
-                            className="text-sm text-gray-500 hover:text-green-600 transition font-light disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="text-sm text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-500 transition font-light disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isResending ? 'Resending...' : isInCooldown ? `Resend OTP in ${formatTime(cooldownSeconds)}` : 'Resend OTP'}
                         </button>
                         <div>
                             <Link
                                 to="/login"
-                                className="text-sm text-gray-500 hover:text-green-600 transition font-light"
+                                className="text-sm text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-500 transition font-light"
                             >
                                 ← Back to Login
                             </Link>

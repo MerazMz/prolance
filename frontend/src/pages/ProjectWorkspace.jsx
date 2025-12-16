@@ -355,10 +355,16 @@ export default function ProjectWorkspace() {
 
             // Update local state immediately with the new deliverable
             if (response.data.deliverable) {
-                setProject(prev => ({
-                    ...prev,
-                    deliverables: [...(prev.deliverables || []), response.data.deliverable]
-                }));
+                setProject(prev => {
+                    // Check if deliverable already exists to prevent duplicates
+                    const exists = prev.deliverables?.some(d => d._id === response.data.deliverable._id);
+                    if (exists) return prev;
+
+                    return {
+                        ...prev,
+                        deliverables: [...(prev.deliverables || []), response.data.deliverable]
+                    };
+                });
             }
 
             setShowDeliverableModal(false);
@@ -410,10 +416,10 @@ export default function ProjectWorkspace() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-white flex items-center justify-center">
+            <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center">
                 <div className="text-center">
                     <div className="inline-block w-8 h-8 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-sm text-gray-500 mt-3 font-light">Loading workspace...</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-3 font-light">Loading workspace...</p>
                 </div>
             </div>
         );
@@ -421,10 +427,10 @@ export default function ProjectWorkspace() {
 
     if (error || !project) {
         return (
-            <div className="min-h-screen bg-white flex items-center justify-center">
+            <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center">
                 <div className="text-center">
                     <HiOutlineBriefcase className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <p className="text-sm text-gray-600 font-light mb-4">{error || 'Workspace not found'}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 font-light mb-4">{error || 'Workspace not found'}</p>
                     <button
                         onClick={() => navigate('/my-projects')}
                         className="px-4 py-2 text-sm text-green-600 border border-green-600 rounded-lg hover:bg-green-50 transition font-light"
@@ -441,28 +447,28 @@ export default function ProjectWorkspace() {
     const currentPhaseIndex = WORK_PHASES.findIndex(p => p.key === project.workStatus);
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-50 dark:bg-black">
             <div className="max-w-7xl mx-auto px-6 py-8">
                 {/* Breadcrumb */}
-                <div className="flex items-center gap-2 text-sm text-gray-500 mb-6 font-light">
+                <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-6 font-light">
                     <Link to="/my-projects" className="hover:text-green-600 transition">
                         My Projects
                     </Link>
                     <HiOutlineChevronRight size={14} />
-                    <span className="text-gray-700">{project.title}</span>
+                    <span className="text-gray-700 dark:text-gray-300">{project.title}</span>
                 </div>
 
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8">
                     <div>
-                        <h1 className="text-3xl font-light text-gray-800 mb-2">{project.title}</h1>
-                        <p className="text-sm text-gray-500 font-light">
+                        <h1 className="text-3xl font-light text-gray-800 dark:text-gray-200 mb-2">{project.title}</h1>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 font-light">
                             {isFreelancer ? `Client: ${project.clientId?.name}` : `Freelancer: ${project.assignedFreelancerId?.name}`}
                         </p>
                     </div>
                     <button
                         onClick={() => navigate(-1)}
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition font-light"
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 rounded-lg transition font-light"
                     >
                         <HiOutlineArrowLeft size={16} />
                         Back
@@ -485,9 +491,9 @@ export default function ProjectWorkspace() {
                     <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className="bg-white rounded-lg border border-gray-200 p-6"
+                        className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-6"
                     >
-                        <h2 className="text-lg font-light text-gray-800 mb-4">Project Progress</h2>
+                        <h2 className="text-lg font-light text-gray-800 dark:text-gray-200 mb-4">Project Progress</h2>
 
                         <Timeline position="right" sx={{ padding: 0, margin: 0 }}>
                             {WORK_PHASES.map((phase, index) => {
@@ -552,48 +558,48 @@ export default function ProjectWorkspace() {
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border-2 border-green-200 p-6 shadow-sm"
+                                className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/10 rounded-lg border-2 border-green-200 dark:border-green-800 p-6 shadow-sm"
                             >
                                 <div className="flex items-center justify-between mb-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center">
+                                        <div className="w-12 h-12 bg-green-600 dark:bg-green-700 rounded-full flex items-center justify-center">
                                             <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                             </svg>
                                         </div>
                                         <div>
-                                            <h2 className="text-lg font-semibold text-green-800">
+                                            <h2 className="text-lg font-semibold text-green-800 dark:text-green-300">
                                                 {isClient ? 'Payment Done Successfully' : 'Payment Received Successfully'}
                                             </h2>
-                                            <p className="text-sm text-green-700 font-light">
+                                            <p className="text-sm text-green-700 dark:text-green-400 font-light">
                                                 {isClient ? 'Payment completed • Project closed' : 'Transaction completed • Project closed'}
                                             </p>
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-2xl font-bold text-green-800">₹{paymentDetails.amount?.toLocaleString('en-IN')}</p>
-                                        <p className="text-xs text-green-600 font-light">
+                                        <p className="text-2xl font-bold text-green-800 dark:text-green-300">₹{paymentDetails.amount?.toLocaleString('en-IN')}</p>
+                                        <p className="text-xs text-green-600 dark:text-green-400 font-light">
                                             {isClient ? 'Amount paid' : 'Amount received'}
                                         </p>
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-green-200">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-green-200 dark:border-green-800">
                                     <div>
-                                        <p className="text-xs text-green-700 font-light mb-1">Transaction ID</p>
-                                        <p className="text-sm font-mono text-green-900">{paymentDetails.razorpayPaymentId || 'Processing...'}</p>
+                                        <p className="text-xs text-green-700 dark:text-green-400 font-light mb-1">Transaction ID</p>
+                                        <p className="text-sm font-mono text-green-900 dark:text-green-300">{paymentDetails.razorpayPaymentId || 'Processing...'}</p>
                                     </div>
                                     <div>
-                                        <p className="text-xs text-green-700 font-light mb-1">Payment Date</p>
-                                        <p className="text-sm text-green-900">{formatDate(paymentDetails.capturedAt || paymentDetails.createdAt)}</p>
+                                        <p className="text-xs text-green-700 dark:text-green-400 font-light mb-1">Payment Date</p>
+                                        <p className="text-sm text-green-900 dark:text-green-300">{formatDate(paymentDetails.capturedAt || paymentDetails.createdAt)}</p>
                                     </div>
                                     <div>
-                                        <p className="text-xs text-green-700 font-light mb-1">Payment Method</p>
-                                        <p className="text-sm text-green-900 capitalize">{paymentDetails.paymentMethod || 'Online Payment'}</p>
+                                        <p className="text-xs text-green-700 dark:text-green-400 font-light mb-1">Payment Method</p>
+                                        <p className="text-sm text-green-900 dark:text-green-300 capitalize">{paymentDetails.paymentMethod || 'Online Payment'}</p>
                                     </div>
                                 </div>
 
-                                <div className="mt-4 pt-4 border-t border-green-200 flex items-center gap-2 text-sm text-green-700">
+                                <div className="mt-4 pt-4 border-t border-green-200 dark:border-green-800 flex items-center gap-2 text-sm text-green-700 dark:text-green-400">
                                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                         <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                                     </svg>
@@ -606,17 +612,17 @@ export default function ProjectWorkspace() {
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="bg-white rounded-lg border border-gray-200 p-6"
+                            className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-6"
                         >
                             <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-lg font-light text-gray-800">Deliverables</h2>
+                                <h2 className="text-lg font-light text-gray-800 dark:text-gray-200">Deliverables</h2>
                                 {isFreelancer && (
                                     <button
                                         onClick={() => setShowDeliverableModal(true)}
                                         disabled={project.status === 'closed'}
                                         className={`flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg transition font-light ${project.status === 'closed'
-                                            ? 'text-gray-400 bg-gray-100 border border-gray-200 cursor-not-allowed'
-                                            : 'text-green-600 border border-green-600 hover:bg-green-50 cursor-pointer'
+                                            ? 'text-gray-400 bg-gray-100 dark:bg-gray-800 dark:text-gray-600 border border-gray-200 dark:border-gray-700 cursor-not-allowed'
+                                            : 'text-green-600 dark:text-green-400 border border-green-600 dark:border-green-600 hover:bg-green-50 dark:hover:bg-green-600 cursor-pointer '
                                             }`}
                                         title={project.status === 'closed' ? 'Project is closed' : 'Upload a new deliverable'}
                                     >
@@ -631,53 +637,40 @@ export default function ProjectWorkspace() {
                                     {project.deliverables.map((deliverable) => (
                                         <div
                                             key={deliverable._id}
-                                            className="p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition"
+                                            className="p-4 border border-gray-100 dark:border-gray-800 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 dark:hover:bg-gray-800 transition"
                                         >
                                             <div className="flex items-start justify-between">
                                                 <div className="flex items-start gap-3 flex-1">
                                                     <HiOutlineDocumentText className="text-gray-400 flex-shrink-0 mt-1" size={20} />
                                                     <div className="flex-1">
-                                                        <h3 className="text-sm font-medium text-gray-800">{deliverable.title}</h3>
+                                                        <h3 className="text-sm font-medium text-gray-800 dark:text-gray-200">{deliverable.title}</h3>
                                                         {deliverable.description && (
-                                                            <p className="text-sm text-gray-600 font-light mt-1">{deliverable.description}</p>
+                                                            <p className="text-sm text-gray-600 dark:text-gray-400 font-light mt-1">{deliverable.description}</p>
                                                         )}
-                                                        <p className="text-xs text-gray-500 font-light mt-2">
+                                                        <p className="text-xs text-gray-500 dark:text-gray-400 font-light mt-2">
                                                             Uploaded: {formatDate(deliverable.uploadedAt)}
                                                         </p>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     {deliverable.fileUrl && (
-                                                        <>
-                                                            {/* Freelancers can always download, clients need to pay first */}
-                                                            {isFreelancer || paymentDetails ? (
-                                                                <a
-                                                                    href={deliverable.fileUrl}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    className="p-2 text-green-600 hover:bg-green-50 rounded transition"
-                                                                    title="Download"
-                                                                >
-                                                                    <HiOutlineDownload size={18} />
-                                                                </a>
-                                                            ) : (
-                                                                <button
-                                                                    disabled
-                                                                    className="p-2 text-gray-400 bg-gray-100 rounded transition cursor-not-allowed"
-                                                                    title="Payment required to download deliverables"
-                                                                >
-                                                                    <HiOutlineDownload size={18} />
-                                                                </button>
-                                                            )}
-                                                        </>
+                                                        <a
+                                                            href={deliverable.fileUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="p-2 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded transition"
+                                                            title="Download"
+                                                        >
+                                                            <HiOutlineDownload size={18} />
+                                                        </a>
                                                     )}
                                                     {isFreelancer && (
                                                         <button
                                                             onClick={() => handleDeleteDeliverable(deliverable._id)}
                                                             disabled={project.status === 'closed'}
                                                             className={`p-2 rounded transition ${project.status === 'closed'
-                                                                ? 'text-gray-400 cursor-not-allowed'
-                                                                : 'text-red-500 hover:bg-red-50'
+                                                                ? 'text-gray-400 dark:text-gray-600 cursor-not-allowed'
+                                                                : 'text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30'
                                                                 }`}
                                                             title={project.status === 'closed' ? 'Project is closed' : 'Delete deliverable'}
                                                         >
@@ -690,22 +683,22 @@ export default function ProjectWorkspace() {
                                     ))}
                                 </div>
                             ) : (
-                                <p className="text-sm text-gray-500 font-light text-center py-8">
+                                <p className="text-sm text-gray-500 dark:text-gray-400 font-light text-center py-8">
                                     No deliverables yet. {isFreelancer && 'Upload files for client review.'}
                                 </p>
                             )}
 
                             {/* Payment Required Notice for Clients */}
                             {!isFreelancer && project.deliverables?.length > 0 && !paymentDetails && project.status !== 'closed' && (
-                                <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                                     <div className="flex items-start gap-3">
-                                        <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                        <svg className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                                             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                                         </svg>
                                         <div className="flex-1">
-                                            <h4 className="text-sm font-medium text-blue-800 mb-1">Payment Required</h4>
-                                            <p className="text-sm text-blue-700 font-light">
-                                                Complete the payment to download deliverables. Accept the project below to proceed with payment.
+                                            <h4 className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-1">Payment Required</h4>
+                                            <p className="text-sm text-blue-700 dark:text-blue-400 font-light">
+                                                Accept the project to proceed with payment.
                                             </p>
                                         </div>
                                     </div>
@@ -714,7 +707,7 @@ export default function ProjectWorkspace() {
 
                             {/* Client: Request Review & Accept Buttons */}
                             {!isFreelancer && project.status === 'completed' && project.deliverables?.length > 0 && (
-                                <div className="mt-6 pt-6 border-t border-gray-100">
+                                <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-800">
                                     <div className="grid grid-cols-2 gap-3">
                                         {/* Request Review Button */}
                                         <button
@@ -733,7 +726,7 @@ export default function ProjectWorkspace() {
                                             Accept & Pay
                                         </button>
                                     </div>
-                                    <p className="text-xs text-gray-500 font-light mt-3 text-center">
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 font-light mt-3 text-center">
                                         Request changes or accept the deliverables to finalize the project
                                     </p>
                                 </div>
@@ -746,11 +739,11 @@ export default function ProjectWorkspace() {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.1 }}
-                                className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm"
+                                className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 dark:border-gray-800 p-6 shadow-sm"
                             >
                                 <div className="mb-5">
-                                    <h2 className="text-lg font-light text-gray-800">Update Project Status</h2>
-                                    <p className="text-xs text-gray-500 font-light mt-1">Track your progress through each phase</p>
+                                    <h2 className="text-lg font-light text-gray-800 dark:text-gray-200">Update Project Status</h2>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 font-light mt-1">Track your progress through each phase</p>
                                 </div>
 
                                 <div className="space-y-2">
@@ -766,12 +759,12 @@ export default function ProjectWorkspace() {
                                                 onClick={() => handlePhaseClickWithValidation(phase, index)}
                                                 disabled={isProjectClosed}
                                                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border transition-all duration-200 ${isProjectClosed
-                                                    ? 'bg-gray-50 border-gray-200 cursor-not-allowed opacity-60'
+                                                    ? 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 cursor-not-allowed opacity-60'
                                                     : isCurrent
-                                                        ? 'bg-gradient-to-r from-green-50 to-green-50/50 border-green-200 shadow-sm'
+                                                        ? 'bg-gradient-to-r from-green-50 to-green-50/50 dark:from-green-900/30 dark:to-green-900/10 border-green-200 dark:border-green-700 shadow-sm'
                                                         : isCompleted
-                                                            ? 'bg-green-50/40 border-green-100 hover:bg-green-50/60'
-                                                            : 'bg-white border-gray-100 hover:bg-gray-50 hover:border-gray-200'
+                                                            ? 'bg-green-50/40 dark:bg-green-900/20 border-green-100 dark:border-green-800 hover:bg-green-50/60 dark:hover:bg-green-900/30'
+                                                            : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-200 dark:hover:border-gray-600'
                                                     } ${isProjectClosed ? '' : 'cursor-pointer'} group`}
                                                 title={isProjectClosed ? 'Project is closed' : ''}
                                             >
@@ -783,7 +776,7 @@ export default function ProjectWorkspace() {
 
                                                 {/* Label */}
                                                 <div className="flex-1 text-left">
-                                                    <p className={`text-sm font-medium ${isCurrent ? 'text-green-800' : isCompleted ? 'text-green-700' : 'text-gray-700'
+                                                    <p className={`text-sm font-medium ${isCurrent ? 'text-green-800' : isCompleted ? 'text-green-700' : 'text-gray-700 dark:text-gray-300'
                                                         }`}>
                                                         {phase.label}
                                                     </p>
@@ -805,8 +798,8 @@ export default function ProjectWorkspace() {
                                     })}
                                 </div>
 
-                                <div className="mt-5 pt-4 border-t border-gray-100">
-                                    <p className="text-xs text-gray-500 font-light flex items-start gap-2">
+                                <div className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-800">
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 font-light flex items-start gap-2">
                                         <span className="text-gray-400">💡</span>
                                         <span>Click on any previous phase to roll back the project status</span>
                                     </p>
@@ -822,7 +815,7 @@ export default function ProjectWorkspace() {
                                             <HiOutlineCheck size={20} />
                                             Submit Work to Client
                                         </button>
-                                        <p className="text-xs text-gray-500 font-light mt-2 text-center">
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 font-light mt-2 text-center">
                                             Finalize and submit your work for client review
                                         </p>
                                     </div>
@@ -837,27 +830,27 @@ export default function ProjectWorkspace() {
                         <motion.div
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
-                            className="bg-white rounded-lg border border-gray-200 p-6"
+                            className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-6"
                         >
-                            <h3 className="text-sm font-medium text-gray-800 mb-4">Project Details</h3>
+                            <h3 className="text-sm font-medium text-gray-800 dark:text-gray-200 mb-4">Project Details</h3>
                             <div className="space-y-3 text-sm">
                                 <div>
-                                    <span className="text-gray-500 font-light">Budget:</span>
-                                    <p className="text-gray-800 font-light">₹{project.budget?.min?.toLocaleString()} - ₹{project.budget?.max?.toLocaleString()}</p>
+                                    <span className="text-gray-500 dark:text-gray-400 font-light">Budget:</span>
+                                    <p className="text-gray-800 dark:text-gray-200 font-light">₹{project.budget?.min?.toLocaleString()} - ₹{project.budget?.max?.toLocaleString()}</p>
                                 </div>
                                 <div>
-                                    <span className="text-gray-500 font-light">Duration:</span>
-                                    <p className="text-gray-800 font-light">{project.duration}</p>
+                                    <span className="text-gray-500 dark:text-gray-400 font-light">Duration:</span>
+                                    <p className="text-gray-800 dark:text-gray-200 font-light">{project.duration}</p>
                                 </div>
                                 {project.deadline && (
                                     <div>
-                                        <span className="text-gray-500 font-light">Deadline:</span>
-                                        <p className="text-gray-800 font-light">{formatDate(project.deadline)}</p>
+                                        <span className="text-gray-500 dark:text-gray-400 font-light">Deadline:</span>
+                                        <p className="text-gray-800 dark:text-gray-200 font-light">{formatDate(project.deadline)}</p>
                                     </div>
                                 )}
                                 <div>
-                                    <span className="text-gray-500 font-light">Status:</span>
-                                    <p className="text-gray-800 font-light capitalize">{project.status}</p>
+                                    <span className="text-gray-500 dark:text-gray-400 font-light">Status:</span>
+                                    <p className="text-gray-800 dark:text-gray-200 font-light capitalize">{project.status}</p>
                                 </div>
                             </div>
                         </motion.div>
@@ -867,40 +860,40 @@ export default function ProjectWorkspace() {
 
             {/* Deliverable Modal */}
             {showDeliverableModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="bg-white rounded-lg max-w-md w-full p-6"
+                        className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6"
                     >
-                        <h3 className="text-lg font-light text-gray-800 mb-4">Upload Deliverable</h3>
+                        <h3 className="text-lg font-light text-gray-800 dark:text-gray-200 mb-4">Upload Deliverable</h3>
                         <form onSubmit={handleAddDeliverable} className="space-y-4">
                             <div>
-                                <label className="block text-sm text-gray-700 font-light mb-1">Title</label>
+                                <label className="block text-sm text-gray-700 dark:text-gray-300 font-light mb-1">Title</label>
                                 <input
                                     type="text"
                                     value={deliverableForm.title}
                                     onChange={(e) => setDeliverableForm({ ...deliverableForm, title: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent font-light"
+                                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent font-light"
                                     required
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm text-gray-700 font-light mb-1">Description</label>
+                                <label className="block text-sm text-gray-700 dark:text-gray-300 font-light mb-1">Description</label>
                                 <textarea
                                     value={deliverableForm.description}
                                     onChange={(e) => setDeliverableForm({ ...deliverableForm, description: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent font-light"
+                                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent font-light"
                                     rows={3}
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm text-gray-700 font-light mb-1">File URL</label>
+                                <label className="block text-sm text-gray-700 dark:text-gray-300 font-light mb-1">File URL</label>
                                 <input
                                     type="url"
                                     value={deliverableForm.fileUrl}
                                     onChange={(e) => setDeliverableForm({ ...deliverableForm, fileUrl: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent font-light"
+                                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent font-light"
                                     placeholder="https://example.com/file.pdf"
                                     required
                                 />
@@ -909,7 +902,7 @@ export default function ProjectWorkspace() {
                                 <button
                                     type="button"
                                     onClick={() => setShowDeliverableModal(false)}
-                                    className="flex-1 px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition font-light"
+                                    className="flex-1 px-4 py-2 text-sm text-gray-600 dark:text-gray-200 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 transition font-light"
                                 >
                                     Cancel
                                 </button>
@@ -927,14 +920,14 @@ export default function ProjectWorkspace() {
 
             {/* Rollback Confirmation Modal */}
             {showRollbackConfirm && pendingRollbackPhase && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="bg-white rounded-lg max-w-md w-full p-6"
+                        className="bg-white rounded-lg max-w-md w-full p-6 dark:bg-gray-800"
                     >
-                        <h3 className="text-lg font-light text-gray-800 mb-3">Confirm Status Rollback</h3>
-                        <p className="text-sm text-gray-600 font-light mb-6">
+                        <h3 className="text-lg font-light text-gray-800 dark:text-gray-200 mb-3">Confirm Status Rollback</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 font-light mb-6">
                             Are you sure you want to step back to <strong>{pendingRollbackPhase.phase.label}</strong>?
                             This will remove all progress after this phase.
                         </p>
@@ -944,7 +937,7 @@ export default function ProjectWorkspace() {
                                     setShowRollbackConfirm(false);
                                     setPendingRollbackPhase(null);
                                 }}
-                                className="flex-1 px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition font-light"
+                                className="flex-1 px-4 py-2 text-sm text-gray-600 dark:text-gray-200 border border-gray-200 dark:border-gray-400 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800 transition font-light"
                             >
                                 Cancel
                             </button>
@@ -961,14 +954,14 @@ export default function ProjectWorkspace() {
 
             {/* Submit Work Confirmation Modal */}
             {showSubmitModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="bg-white rounded-lg max-w-md w-full p-6"
+                        className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6"
                     >
-                        <h3 className="text-lg font-light text-gray-800 mb-3">Submit Work to Client</h3>
-                        <p className="text-sm text-gray-600 font-light mb-6">
+                        <h3 className="text-lg font-light text-gray-800 dark:text-gray-200 mb-3">Submit Work to Client</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 font-light mb-6">
                             Are you sure you want to submit this work to the client?
                             This will mark the project as completed and notify the client for final review.
                         </p>
@@ -976,7 +969,7 @@ export default function ProjectWorkspace() {
                             <button
                                 onClick={() => setShowSubmitModal(false)}
                                 disabled={submitting}
-                                className="flex-1 px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition font-light disabled:opacity-50"
+                                className="flex-1 px-4 py-2 text-sm text-gray-600 dark:text-gray-200 border border-gray-200 dark:border-gray-400 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-800 transition font-light disabled:opacity-50"
                             >
                                 Cancel
                             </button>
@@ -1004,21 +997,21 @@ export default function ProjectWorkspace() {
 
             {/* Client: Accept Project Confirmation Modal */}
             {showAcceptModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="bg-white rounded-lg max-w-md w-full p-6"
+                        className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6"
                     >
-                        <h3 className="text-lg font-light text-gray-800 mb-3">Accept & Pay for Project</h3>
-                        <p className="text-sm text-gray-600 font-light mb-6">
+                        <h3 className="text-lg font-light text-gray-800 dark:text-gray-200 mb-3">Accept & Pay for Project</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 font-light mb-6">
                             You'll be redirected to make a secure payment. After successful payment, the project will be closed and marked as completed.
                         </p>
                         <div className="flex gap-3">
                             <button
                                 onClick={() => setShowAcceptModal(false)}
                                 disabled={acceptingProject}
-                                className="flex-1 px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition font-light disabled:opacity-50"
+                                className="flex-1  px-4 py-2 text-sm text-gray-600 dark:text-gray-200 border border-gray-200 dark:border-gray-400 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-800 transition font-light disabled:opacity-50"
                             >
                                 Cancel
                             </button>
@@ -1046,25 +1039,25 @@ export default function ProjectWorkspace() {
 
             {/* Client: Request Review Modal */}
             {showReviewModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="bg-white rounded-lg max-w-md w-full p-6"
+                        className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6"
                     >
-                        <h3 className="text-lg font-light text-gray-800 mb-3">Request Review</h3>
-                        <p className="text-sm text-gray-600 font-light mb-4">
+                        <h3 className="text-lg font-light text-gray-800 dark:text-gray-200 mb-3">Request Review</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 font-light mb-4">
                             Send the project back to the review phase to request changes or improvements.
                         </p>
                         <div className="mb-6">
-                            <label className="block text-sm text-gray-700 font-light mb-2">
+                            <label className="block text-sm text-gray-700 dark:text-gray-300 font-light mb-2">
                                 Comments / Feedback (Optional)
                             </label>
                             <textarea
                                 value={reviewComments}
                                 onChange={(e) => setReviewComments(e.target.value)}
                                 placeholder="Describe what needs to be changed or improved..."
-                                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 resize-none font-light"
+                                className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:border-orange-500 resize-none font-light"
                                 rows={4}
                             />
                         </div>
@@ -1075,7 +1068,7 @@ export default function ProjectWorkspace() {
                                     setReviewComments('');
                                 }}
                                 disabled={requestingReview}
-                                className="flex-1 px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition font-light disabled:opacity-50"
+                                className="flex-1 px-4 py-2 text-sm text-gray-600 dark:text-gray-200 border border-gray-200 dark:border-gray-400 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-800 transition font-light disabled:opacity-50"
                             >
                                 Cancel
                             </button>

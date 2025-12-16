@@ -101,9 +101,9 @@ export default function Login() {
     };
 
     return (
-        <div className="min-h-screen w-full flex bg-white">
+        <div className="min-h-screen w-full flex bg-white dark:bg-black transition-colors duration-200">
             {/* Left Side - Illustration with Particles */}
-            <div className="rounded-3xl hidden lg:flex lg:w-1/2 relative bg-gradient-to-br from-green-50 to-white items-center justify-center p-12 overflow-hidden">
+            <div className="rounded-3xl hidden lg:flex lg:w-1/2 relative bg-gradient-to-br from-green-50 to-white dark:from-green-900/20 dark:to-gray-900 items-center justify-center p-12 overflow-hidden">
                 {/* Background Particles */}
                 <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }}>
                     <Particles
@@ -127,8 +127,8 @@ export default function Login() {
                 >
                     <img src={loginIllustration} alt="Login" className="w-full h-auto" />
                     <div className="mt-8 text-center">
-                        <h2 className="text-2xl font-light text-gray-700 mb-2">Welcome Back</h2>
-                        <p className="text-sm text-gray-500 font-light">
+                        <h2 className="text-2xl font-light text-gray-700 dark:text-gray-200 mb-2">Welcome Back</h2>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 font-light">
                             Continue your journey with Pro&lt;lancer&gt;
                         </p>
                     </div>
@@ -138,17 +138,35 @@ export default function Login() {
             {/* Right Side - Login Form */}
             <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
                 <motion.div
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.5 }}
-                    className="w-full max-w-md"
+                    // initial={{ opacity: 0, x: 20 }}
+                    // animate={{ opacity: 1, x: 0 }}
+                    // transition={{ duration: 0.5 }}
+                    className="w-full max-w-md min-h-[500px]"
                 >
-                    {/* Header */}
+                    {/* Tabs Navigation */}
                     <div className="mb-8">
-                        <h1 className="text-2xl font-light text-gray-700 mb-2">Login</h1>
-                        <p className="text-sm text-gray-500 font-light">
+                        <div className="flex gap-2 p-1 bg-gray-100 dark:bg-gray-900 rounded-xl mb-6 relative">
+                            <Link
+                                to="/login"
+                                className="flex-1 text-center py-2.5 rounded-lg text-sm font-light transition-colors relative z-10"
+                            >
+                                <motion.div
+                                    layoutId="activeTab"
+                                    className="absolute inset-0 bg-white dark:bg-gray-800 rounded-lg shadow-sm"
+                                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                />
+                                <span className="relative z-10 text-gray-900 dark:text-gray-100">Login</span>
+                            </Link>
+                            <Link
+                                to="/signup"
+                                className="flex-1 text-center py-2.5 rounded-lg text-sm font-light transition-colors text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 relative z-10"
+                            >
+                                <span className="relative z-10">Sign Up</span>
+                            </Link>
+                        </div>
+                        {/* <p className="text-sm text-gray-500 dark:text-gray-400 font-light">
                             Enter your credentials to access your account
-                        </p>
+                        </p> */}
                     </div>
 
                     {/* Error Message */}
@@ -156,8 +174,7 @@ export default function Login() {
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            className="mb-6 p-3 bg-red-50 border border-red-100 rounded-lg text-red-600 text-sm font-light"
-                        >
+                            className="mb-6 p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400 text-sm font-light">
                             {error}
                         </motion.div>
                     )}
@@ -169,7 +186,7 @@ export default function Login() {
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="w-full px-4 py-2.5 text-sm rounded-lg border border-gray-200 focus:border-green-600 focus:outline-none transition-all font-light text-gray-700"
+                                className="w-full px-4 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 focus:border-green-600 dark:focus:border-green-500 focus:outline-none transition-all font-light text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-900"
                                 placeholder="your.email@example.com"
                                 disabled={isLoading}
                             />
@@ -182,14 +199,14 @@ export default function Login() {
                                     type={showPassword ? "text" : "password"}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full px-4 py-2.5 text-sm rounded-lg border border-gray-200 focus:border-green-600 focus:outline-none transition-all font-light text-gray-700 pr-10"
+                                    className="w-full px-4 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 focus:border-green-600 dark:focus:border-green-500 focus:outline-none transition-all font-light text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-900 pr-10"
                                     placeholder="••••••••"
                                     disabled={isLoading}
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition"
                                 >
                                     {showPassword ? (
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -206,7 +223,7 @@ export default function Login() {
                             <div className="mt-2 text-right">
                                 <Link
                                     to="/forgot-password"
-                                    className="text-xs text-gray-500 hover:text-green-600 transition font-light"
+                                    className="text-xs text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-500 transition font-light"
                                 >
                                     Forgot password?
                                 </Link>
@@ -224,9 +241,9 @@ export default function Login() {
 
                     {/* Divider */}
                     <div className="my-6 flex items-center">
-                        <div className="flex-1 border-t border-gray-200"></div>
-                        <span className="px-4 text-xs text-gray-400 font-light">or continue with</span>
-                        <div className="flex-1 border-t border-gray-200"></div>
+                        <div className="flex-1 border-t border-gray-200 dark:border-gray-700"></div>
+                        <span className="px-4 text-xs text-gray-400 dark:text-gray-500 font-light">or continue with</span>
+                        <div className="flex-1 border-t border-gray-200 dark:border-gray-700"></div>
                     </div>
 
                     {/* Social Login Buttons */}
@@ -238,7 +255,7 @@ export default function Login() {
                             onClick={handleGoogleLogin}
                             disabled={isLoading}
                             type="button"
-                            className="cursor-pointer w-full flex items-center justify-center gap-3 px-4 py-2.5 text-sm font-light rounded-lg border border-gray-200 hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="cursor-pointer w-full flex items-center justify-center gap-3 px-4 py-2.5 text-sm font-light rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-white dark:bg-gray-900"
                         >
                             <svg className="w-5 h-5" viewBox="0 0 24 24">
                                 <path
@@ -258,7 +275,7 @@ export default function Login() {
                                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                                 />
                             </svg>
-                            <span className="text-gray-700">Continue with Google</span>
+                            <span className="text-gray-700 dark:text-gray-300">Continue with Google</span>
                         </motion.button>
 
                         {/* GitHub Login */}
@@ -281,31 +298,11 @@ export default function Login() {
                         </motion.button>
                     </div>
 
-                    {/* Divider */}
-                    <div className="my-6 flex items-center">
-                        <div className="flex-1 border-t border-gray-100"></div>
-                        <span className="px-4 text-xs text-gray-400 font-light">or</span>
-                        <div className="flex-1 border-t border-gray-100"></div>
-                    </div>
-
-                    {/* Signup Link */}
-                    <div className="text-center">
-                        <p className="text-sm text-gray-500 font-light">
-                            Don't have an account?{' '}
-                            <Link
-                                to="/signup"
-                                className="text-green-600 hover:text-green-700 transition"
-                            >
-                                Sign up
-                            </Link>
-                        </p>
-                    </div>
-
                     {/* Back to Home */}
-                    <div className="text-center mt-4">
+                    <div className="text-center mt-6">
                         <Link
                             to="/"
-                            className="text-xs text-gray-400 hover:text-gray-600 transition font-light"
+                            className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition font-light"
                         >
                             ← Back to Home
                         </Link>

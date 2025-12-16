@@ -19,7 +19,12 @@ const getConversations = async (req, res) => {
             conversations.map(async (conv) => {
                 const unreadCount = await MessageModel.countDocuments({
                     conversationId: conv._id,
-                    senderId: { $ne: userId },
+                    $or: [
+                        // Regular messages not sent by this user
+                        { senderId: { $ne: userId }, messageType: { $ne: 'system' } },
+                        // System messages (no sender, count as unread for both users)
+                        { messageType: 'system' }
+                    ],
                     read: false
                 });
 
@@ -83,11 +88,16 @@ const getConversationById = async (req, res) => {
 
         const total = await MessageModel.countDocuments({ conversationId: id });
 
-        // Mark messages as read
+        // Mark messages as read (including system messages)
         await MessageModel.updateMany(
             {
                 conversationId: id,
-                senderId: { $ne: userId },
+                $or: [
+                    // Regular messages not sent by this user
+                    { senderId: { $ne: userId }, messageType: { $ne: 'system' } },
+                    // System messages
+                    { messageType: 'system' }
+                ],
                 read: false
             },
             {
@@ -197,7 +207,12 @@ const markAsRead = async (req, res) => {
         const result = await MessageModel.updateMany(
             {
                 conversationId,
-                senderId: { $ne: userId },
+                $or: [
+                    // Regular messages not sent by this user
+                    { senderId: { $ne: userId }, messageType: { $ne: 'system' } },
+                    // System messages
+                    { messageType: 'system' }
+                ],
                 read: false
             },
             {

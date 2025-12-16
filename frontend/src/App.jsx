@@ -26,6 +26,7 @@ import FreelancerRoute from './components/FreelancerRoute'
 import GuestRoute from './components/GuestRoute'
 import Navbar from './components/ui/navbar'
 import SearchCommand from './components/ui/SearchCommand'
+import Toast from './components/Toast'
 import { setupAxiosInterceptor } from './services/axiosInstance'
 import './App.css'
 
@@ -41,10 +42,11 @@ function App() {
 
   return (
     <>
-      <div className='overflow-x-hidden'>
+      <div>
 
         {!isAdminPage && <Navbar />}
         {!isChatPage && !isAdminPage && <SearchCommand />}
+        <Toast />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route

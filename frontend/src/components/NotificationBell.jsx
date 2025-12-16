@@ -119,10 +119,10 @@ export default function NotificationBell() {
             {/* Bell Icon */}
             <button
                 onClick={() => setShowNotifications(!showNotifications)}
-                className="relative p-2 hover:bg-gray-100 rounded-lg transition cursor-pointer"
+                className="relative p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition cursor-pointer"
                 title="Notifications"
             >
-                <HiOutlineBell size={20} className="text-gray-600" />
+                <HiOutlineBell size={20} className="text-gray-600 dark:text-gray-300" />
                 {unreadCount > 0 && (
                     <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-light">
                         {unreadCount > 9 ? '9+' : unreadCount}
@@ -137,16 +137,16 @@ export default function NotificationBell() {
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-200 z-50 overflow-hidden"
+                        className="absolute right-0 mt-2 w-96 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 overflow-hidden"
                     >
                         {/* Header */}
-                        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-                            <h3 className="text-sm font-normal text-gray-800">
+                        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+                            <h3 className="text-sm font-normal text-gray-800 dark:text-gray-100">
                                 Notifications
                             </h3>
                             <button
                                 onClick={() => setShowNotifications(false)}
-                                className="p-1 hover:bg-gray-100 rounded transition cursor-pointer"
+                                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition cursor-pointer"
                             >
                                 <HiOutlineX size={16} className="text-gray-400" />
                             </button>
@@ -156,8 +156,8 @@ export default function NotificationBell() {
                         <div className="max-h-96 overflow-y-auto">
                             {notifications.length === 0 ? (
                                 <div className="p-8 text-center">
-                                    <HiOutlineBell className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-                                    <p className="text-sm text-gray-500 font-light">
+                                    <HiOutlineBell className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 font-light">
                                         No notifications yet
                                     </p>
                                 </div>
@@ -167,7 +167,7 @@ export default function NotificationBell() {
                                         <button
                                             key={notif._id}
                                             onClick={() => handleNotificationClick(notif)}
-                                            className={`w-full px-4 py-3 hover:bg-gray-50 transition border-b border-gray-50 text-left ${!notif.read ? 'bg-blue-50' : ''
+                                            className={`w-full px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition border-b border-gray-50 dark:border-gray-800 text-left ${!notif.read ? 'bg-blue-50 dark:bg-blue-900/20' : ''
                                                 }`}
                                         >
                                             <div className="flex items-start gap-3">
@@ -178,17 +178,17 @@ export default function NotificationBell() {
 
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-start justify-between gap-2">
-                                                        <p className="text-sm font-medium text-gray-800">
+                                                        <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
                                                             {notif.title}
                                                         </p>
                                                         {!notif.read && (
                                                             <span className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1.5"></span>
                                                         )}
                                                     </div>
-                                                    <p className="text-xs text-gray-600 font-light mt-1 line-clamp-2">
+                                                    <p className="text-xs text-gray-600 dark:text-gray-300 font-light mt-1 line-clamp-2">
                                                         {notif.message}
                                                     </p>
-                                                    <p className="text-xs text-gray-400 font-light mt-1">
+                                                    <p className="text-xs text-gray-400 dark:text-gray-500 font-light mt-1">
                                                         {getTimeSince(notif.createdAt)}
                                                     </p>
                                                 </div>

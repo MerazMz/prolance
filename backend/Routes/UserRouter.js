@@ -9,7 +9,9 @@ const {
     updateProfile,
     addPortfolioItem,
     removePortfolioItem,
-    searchFreelancers
+    searchFreelancers,
+    getActiveProjectsCount,
+    deleteAccount
 } = require('../Controllers/UserController');
 
 // Get current user profile (protected)
@@ -21,6 +23,10 @@ router.put('/profile', ensureAuthenticated, updateProfile);
 // Portfolio management (protected)
 router.post('/portfolio', ensureAuthenticated, addPortfolioItem);
 router.delete('/portfolio/:itemId', ensureAuthenticated, removePortfolioItem);
+
+// Account management (protected)
+router.get('/active-projects-count', ensureAuthenticated, getActiveProjectsCount);
+router.delete('/delete-account', ensureAuthenticated, deleteAccount);
 
 // Public routes
 router.get('/search', searchFreelancers);

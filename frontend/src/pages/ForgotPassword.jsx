@@ -137,9 +137,9 @@ export default function ForgotPassword() {
     };
 
     return (
-        <div className="min-h-screen w-full flex bg-white">
+        <div className="min-h-screen w-full flex bg-white dark:bg-gray-950">
             {/* Left Side - Illustration with Particles */}
-            <div className="hidden rounded-3xl lg:flex lg:w-1/2 relative bg-gradient-to-br from-green-50 to-white items-center justify-center p-12 overflow-hidden">
+            <div className="hidden rounded-3xl lg:flex lg:w-1/2 relative bg-gradient-to-br from-green-50 to-white dark:from-gray-900 dark:to-gray-950 items-center justify-center p-12 overflow-hidden">
                 <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }}>
                     <Particles
                         particleColors={['#b2ffc8', '#b2ffc8']}
@@ -160,12 +160,12 @@ export default function ForgotPassword() {
                     className="relative z-10 text-center"
                 >
                     <div className="mb-8">
-                        <svg className="w-32 h-32 mx-auto text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-32 h-32 mx-auto text-green-600 dark:text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
                     </div>
-                    <h2 className="text-2xl font-light text-gray-700 mb-2">Reset Your Password</h2>
-                    <p className="text-sm text-gray-500 font-light max-w-md">
+                    <h2 className="text-2xl font-light text-gray-700 dark:text-gray-300 mb-2">Reset Your Password</h2>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 font-light max-w-md">
                         We'll send you a verification code to your email address
                     </p>
                 </motion.div>
@@ -180,8 +180,8 @@ export default function ForgotPassword() {
                     className="w-full max-w-md"
                 >
                     <div className="mb-6">
-                        <h1 className="text-2xl font-light text-gray-700 mb-2">Forgot Password</h1>
-                        <p className="text-sm text-gray-500 font-light">
+                        <h1 className="text-2xl font-light text-gray-700 dark:text-gray-200 mb-2">Forgot Password</h1>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 font-light">
                             Enter your email or username to receive a verification code
                         </p>
                     </div>
@@ -191,7 +191,7 @@ export default function ForgotPassword() {
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            className="mb-6 p-3 bg-red-50 border border-red-100 rounded-lg text-red-600 text-sm font-light"
+                            className="mb-6 p-3 bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900 rounded-lg text-red-600 dark:text-red-400 text-sm font-light"
                         >
                             {error}
                         </motion.div>
@@ -202,7 +202,7 @@ export default function ForgotPassword() {
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            className="mb-6 p-3 bg-green-50 border border-green-100 rounded-lg text-green-600 text-sm font-light"
+                            className="mb-6 p-3 bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900 rounded-lg text-green-600 dark:text-green-400 text-sm font-light"
                         >
                             {success}
                         </motion.div>
@@ -214,7 +214,7 @@ export default function ForgotPassword() {
                                 type="text"
                                 value={identifier}
                                 onChange={(e) => setIdentifier(e.target.value)}
-                                className="w-full px-4 py-2.5 text-sm rounded-lg border border-gray-200 focus:border-green-600 focus:outline-none transition-all font-light text-gray-700"
+                                className="w-full px-4 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:border-green-600 dark:focus:border-green-500 focus:outline-none transition-all font-light text-gray-700 dark:text-gray-200"
                                 placeholder="Email or Username"
                                 disabled={isLoading || success}
                             />
@@ -223,7 +223,7 @@ export default function ForgotPassword() {
                         <button
                             type="submit"
                             disabled={isLoading || success || isInCooldown}
-                            className="w-full bg-green-600 text-white font-light py-2.5 text-sm rounded-lg hover:bg-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full bg-green-600 dark:bg-green-700 text-white font-light py-2.5 text-sm rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isLoading ? 'Sending...' : success ? 'Redirecting...' : isInCooldown ? `Wait ${formatTime(cooldownSeconds)}` : 'Send Verification Code'}
                         </button>
@@ -232,7 +232,7 @@ export default function ForgotPassword() {
                     <div className="mt-6 text-center">
                         <Link
                             to="/login"
-                            className="text-sm text-gray-500 hover:text-green-600 transition font-light"
+                            className="text-sm text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-500 transition font-light"
                         >
                             ← Back to Login
                         </Link>

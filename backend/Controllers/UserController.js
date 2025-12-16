@@ -1,4 +1,9 @@
 const UserModel = require('../Models/User');
+const ProjectModel = require('../Models/Project');
+const ContractModel = require('../Models/Contract');
+const ConversationModel = require('../Models/Conversation');
+const MessageModel = require('../Models/Message');
+const ApplicationModel = require('../Models/Application');
 
 // Get current user profile
 const getProfile = async (req, res) => {
@@ -263,6 +268,110 @@ const searchFreelancers = async (req, res) => {
     }
 };
 
+// Get active projects count for account deletion check
+const getActiveProjectsCount = async (req, res) => {
+    try {
+        const userId = req.user._id;
+
+        // Count projects where user is client (any status except 'closed')
+        const activeProjectsAsClient = await ProjectModel.countDocuments({
+            clientId: userId,
+            status: { $ne: 'closed' }
+        });
+
+        // Count projects where user is assigned as freelancer (any status except 'closed')
+        const activeProjectsAsFreelancer = await ProjectModel.countDocuments({
+            assignedFreelancerId: userId,
+            status: { $ne: 'closed' }
+        });
+
+        const totalActiveProjects = activeProjectsAsClient + activeProjectsAsFreelancer;
+
+        res.status(200).json({
+            success: true,
+            activeProjectsCount: totalActiveProjects
+        });
+    } catch (err) {
+        console.error('Error getting active projects count:', err);
+        res.status(500).json({
+            message: 'Internal server error',
+            success: false
+        });
+    }
+};
+
+// Delete user account and all associated data
+const deleteAccount = async (req, res) => {
+    try {
+        const userId = req.user._id;
+
+        // First check if user has active projects
+        const activeProjectsAsClient = await ProjectModel.countDocuments({
+            clientId: userId,
+            status: { $ne: 'closed' }
+        });
+
+        const activeProjectsAsFreelancer = await ProjectModel.countDocuments({
+            assignedFreelancerId: userId,
+            status: { $ne: 'closed' }
+        });
+
+        const totalActiveProjects = activeProjectsAsClient + activeProjectsAsFreelancer;
+
+        if (totalActiveProjects > 0) {
+            return res.status(400).json({
+                message: `Cannot delete account. You have ${totalActiveProjects} active project(s). Please complete or cancel them first.`,
+                success: false,
+                activeProjectsCount: totalActiveProjects
+            });
+        }
+
+        // Delete all user's projects (as client)
+        await ProjectModel.deleteMany({ clientId: userId });
+
+        // Delete all contracts (as both client and freelancer)
+        await ContractModel.deleteMany({
+            $or: [
+                { clientId: userId },
+                { freelancerId: userId }
+            ]
+        });
+
+        // Delete all conversations where user is a participant
+        const conversations = await ConversationModel.find({
+            participants: userId
+        });
+        const conversationIds = conversations.map(conv => conv._id);
+
+        // Delete all messages in those conversations
+        await MessageModel.deleteMany({
+            conversationId: { $in: conversationIds }
+        });
+
+        // Delete the conversations
+        await ConversationModel.deleteMany({
+            participants: userId
+        });
+
+        // Delete all applications (as freelancer)
+        await ApplicationModel.deleteMany({ freelancerId: userId });
+
+        // Finally, delete the user
+        await UserModel.findByIdAndDelete(userId);
+
+        res.status(200).json({
+            message: 'Account deleted successfully',
+            success: true
+        });
+    } catch (err) {
+        console.error('Error deleting account:', err);
+        res.status(500).json({
+            message: 'Failed to delete account. Please try again.',
+            success: false
+        });
+    }
+};
+
 module.exports = {
     getProfile,
     getUserById,
@@ -270,5 +379,7 @@ module.exports = {
     updateProfile,
     addPortfolioItem,
     removePortfolioItem,
-    searchFreelancers
+    searchFreelancers,
+    getActiveProjectsCount,
+    deleteAccount
 };

@@ -44,7 +44,7 @@ export default function Footer() {
     const letters = text.split('');
 
     return (
-        <footer ref={footerRef} className="w-full bg-white py-16 px-8 ">
+        <footer ref={footerRef} className="w-full bg-white dark:bg-black py-16 px-8 transition-colors duration-200">
             <ClickSpark sparkColor="#000000ff" sparkSize={10} sparkRadius={15} sparkCount={8} duration={400} easing="ease-out" extraScale={1.0}>
                 <div className="max-w-7xl mx-auto">
 
@@ -70,28 +70,28 @@ export default function Footer() {
                     </div>
 
                     {/* Bottom Section */}
-                    <div className="pt-8 border-t border-gray-100">
+                    <div className="pt-8 border-t border-gray-100 dark:border-gray-800">
                         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                             {/* Left - Brand */}
                             <Link to="/" className="flex items-center gap-2">
                                 <h2 className="text-lg font-light tracking-wide flex items-center">
-                                    <span className="text-green-600">Pro</span>
-                                    <span className="text-gray-700">&lt;lance&gt;</span>
+                                    <span className="text-green-600 dark:text-green-500">Pro</span>
+                                    <span className="text-gray-700 dark:text-gray-200">&lt;lance&gt;</span>
                                 </h2>
                             </Link>
 
                             {/* Right - Links */}
-                            <div className="flex items-center gap-6 text-sm text-gray-600">
-                                <Link to="/about" className="hover:text-green-600 transition font-light">
+                            <div className="flex items-center gap-6 text-sm text-gray-600 dark:text-gray-400">
+                                <Link to="/about" className="hover:text-green-600 dark:hover:text-green-500 transition font-light">
                                     About Prolance
                                 </Link>
-                                <Link to="/careers" className="hover:text-green-600 transition font-light">
+                                <Link to="/careers" className="hover:text-green-600 dark:hover:text-green-500 transition font-light">
                                     Careers
                                 </Link>
-                                <Link to="/privacy" className="hover:text-green-600 transition font-light">
+                                <Link to="/privacy" className="hover:text-green-600 dark:hover:text-green-500 transition font-light">
                                     Privacy
                                 </Link>
-                                <Link to="/terms" className="hover:text-green-600 transition font-light">
+                                <Link to="/terms" className="hover:text-green-600 dark:hover:text-green-500 transition font-light">
                                     Terms
                                 </Link>
                             </div>

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import axios from 'axios';
 import Select from 'react-select';
@@ -15,6 +16,8 @@ import {
     HiCheck,
     HiX
 } from 'react-icons/hi';
+import { HiOutlineExclamationTriangle } from 'react-icons/hi2';
+import SkillsAutocompleteInput from '../components/ui/SkillsAutocompleteInput';
 
 const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
@@ -64,7 +67,8 @@ export default function Settings() {
         { id: 'skills', name: 'Skills & Professional', icon: HiOutlineBriefcase },
         { id: 'security', name: 'Account Security', icon: HiOutlineLockClosed },
         { id: 'notifications', name: 'Notifications', icon: HiOutlineBell },
-        { id: 'privacy', name: 'Privacy & Visibility', icon: HiOutlineEye }
+        { id: 'privacy', name: 'Privacy & Visibility', icon: HiOutlineEye },
+        { id: 'danger', name: 'Danger Zone', icon: HiOutlineExclamationTriangle }
     ];
 
     useEffect(() => {
@@ -87,14 +91,14 @@ export default function Settings() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-white flex items-center justify-center">
-                <p className="text-gray-500 font-light">Loading settings...</p>
+            <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center">
+                <p className="text-gray-500 dark:text-gray-400 font-light">Loading settings...</p>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-white dark:bg-black">
             <div className="max-w-7xl mx-auto px-8 py-10">
                 <div className="flex gap-8">
                     {/* Left Sidebar */}
@@ -107,8 +111,8 @@ export default function Settings() {
                                         key={section.id}
                                         onClick={() => setActiveSection(section.id)}
                                         className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg transition-all cursor-pointer ${activeSection === section.id
-                                            ? 'bg-green-50 text-green-700 border border-green-100'
-                                            : 'text-gray-600 hover:bg-gray-50 border border-transparent'
+                                            ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-100 dark:border-green-800'
+                                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 border border-transparent'
                                             }`}
                                     >
                                         <Icon size={18} />
@@ -126,6 +130,7 @@ export default function Settings() {
                         {activeSection === 'security' && <SecuritySection />}
                         {activeSection === 'notifications' && <NotificationsSection settings={settings} onUpdate={fetchSettings} />}
                         {activeSection === 'privacy' && <PrivacySection settings={settings} onUpdate={fetchSettings} />}
+                        {activeSection === 'danger' && <DangerZoneSection />}
                     </div>
                 </div>
             </div>
@@ -155,20 +160,20 @@ function EditableField({ label, value, onSave, type = 'text', placeholder, isEdi
     };
 
     return (
-        <div className="py-3 border-b border-gray-100 last:border-0">
+        <div className="py-3 border-b border-gray-100 dark:border-gray-800 last:border-0">
             <div className="flex items-center justify-between">
                 <div className="flex items-center flex-1 gap-3">
-                    <p className="text-sm text-left text-gray-600 font-light w-[140px]">{label}</p>
-                    <span className="text-sm text-gray-600 font-light">:</span>
+                    <p className="text-sm text-left text-gray-600 dark:text-gray-400 font-light w-[140px]">{label}</p>
+                    <span className="text-sm text-gray-600 dark:text-gray-400 font-light">:</span>
                     {!isEditing ? (
-                        <p className="text-sm text-left text-gray-700 font-light">{value || <span className="text-gray-400">Not set</span>}</p>
+                        <p className="text-sm text-left text-gray-700 dark:text-gray-200 font-light">{value || <span className="text-gray-400 dark:text-gray-500">Not set</span>}</p>
                     ) : (
                         <input
                             type={type}
                             value={editValue}
                             onChange={(e) => setEditValue(e.target.value)}
                             placeholder={placeholder}
-                            className="flex-1 px-3 py-2 text-sm rounded-lg border border-gray-200 focus:border-green-600 focus:outline-none transition-all font-light"
+                            className="flex-1 px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 focus:border-green-600 dark:focus:border-green-500 focus:outline-none transition-all font-light bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                             autoFocus
                         />
                     )}
@@ -178,7 +183,7 @@ function EditableField({ label, value, onSave, type = 'text', placeholder, isEdi
                         !disabled && (
                             <button
                                 onClick={() => onEditToggle(true)}
-                                className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition"
+                                className="p-2 text-gray-400 dark:text-gray-500 hover:text-green-600 dark:hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition"
                             >
                                 <HiPencil size={16} />
                             </button>
@@ -188,13 +193,13 @@ function EditableField({ label, value, onSave, type = 'text', placeholder, isEdi
                             <button
                                 onClick={handleSave}
                                 disabled={saving}
-                                className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition disabled:opacity-50"
+                                className="p-2 text-green-600 dark:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition disabled:opacity-50"
                             >
                                 <HiCheck size={16} />
                             </button>
                             <button
                                 onClick={handleCancel}
-                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                                className="p-2 text-red-600 dark:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition"
                             >
                                 <HiX size={16} />
                             </button>
@@ -215,6 +220,7 @@ function ProfileSection({ settings, onUpdate }) {
     const [isSuccess, setIsSuccess] = useState(false);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
     const [countdown, setCountdown] = useState(5);
+    const [showImagePreview, setShowImagePreview] = useState(false);
     const countryOptions = useMemo(() => countryList().getData(), []);
 
     useEffect(() => {
@@ -233,10 +239,22 @@ function ProfileSection({ settings, onUpdate }) {
         }
     }, [showLogoutModal, countdown]);
 
-    const handleLogout = () => {
+
+    const handleLogout = async () => {
+        // Sign out from Firebase first to prevent auto-login
+        try {
+            const { auth } = await import('../config/firebaseConfig');
+            const { signOut } = await import('firebase/auth');
+            await signOut(auth);
+        } catch (error) {
+            console.log('Firebase signout skipped:', error.message);
+        }
+
+        // Clear all data and redirect
         localStorage.clear();
         window.location.href = '/login';
     };
+
 
     const updateField = async (field, value) => {
         try {
@@ -322,40 +340,41 @@ function ProfileSection({ settings, onUpdate }) {
     return (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
             {message && (
-                <div className={`p-3 rounded-lg text-sm font-light ${isSuccess ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                <div className={`p-3 rounded-lg text-sm font-light ${isSuccess ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400' : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'}`}>
                     {message}
                 </div>
             )}
 
             {/* Profile Photo Card */}
-            <div className="p-4 bg-gray-50 border border-gray-100 rounded-lg">
+            <div className="p-4 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-lg">
                 <div className="flex items-center gap-4">
                     {photoPreview ? (
                         <img
                             src={photoPreview}
                             alt="Profile"
                             referrerPolicy="no-referrer"
-                            className="w-16 h-16 rounded-full object-cover border-2 border-white shadow-sm"
+                            onClick={() => setShowImagePreview(true)}
+                            className="w-16 h-16 rounded-full object-cover border-2 border-white dark:border-gray-700 shadow-sm cursor-pointer hover:opacity-90 transition"
                         />
                     ) : (
-                        <div className="w-16 h-16 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center">
-                            <HiOutlineUser size={24} className="text-gray-400" />
+                        <div className="w-16 h-16 rounded-full bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 flex items-center justify-center">
+                            <HiOutlineUser size={24} className="text-gray-400 dark:text-gray-500" />
                         </div>
                     )}
                     <div className="flex-1">
-                        <h3 className="text-sm font-medium text-gray-700">{settings?.profile?.name || 'User'}</h3>
-                        <p className="text-xs text-gray-500 mt-0.5">@{settings?.profile?.username || 'username'}</p>
+                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-200">{settings?.profile?.name || 'User'}</h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">@{settings?.profile?.username || 'username'}</p>
                     </div>
                     <div className="flex gap-2">
                         <input type="file" id="photo-upload" onChange={handlePhotoUpload} accept="image/*" className="hidden" />
-                        <label htmlFor="photo-upload" className={`px-3 py-1.5 text-xs border border-gray-200 bg-white rounded-lg hover:bg-gray-50 transition font-light cursor-pointer inline-block ${photoOperation ? 'opacity-50 pointer-events-none' : ''}`}>
+                        <label htmlFor="photo-upload" className={`px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition font-light cursor-pointer inline-block ${photoOperation ? 'opacity-50 pointer-events-none' : ''}`}>
                             {photoOperation === 'uploading' ? 'Uploading...' : 'Change'}
                         </label>
                         {photoPreview && (
                             <button
                                 onClick={handlePhotoRemove}
                                 disabled={photoOperation !== null}
-                                className="px-3 py-1.5 text-xs border border-red-200 bg-white text-red-600 rounded-lg hover:bg-red-50 transition font-light cursor-pointer disabled:opacity-50"
+                                className="px-3 py-1.5 text-xs border border-red-200 dark:border-red-800 bg-white dark:bg-gray-800 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition font-light cursor-pointer disabled:opacity-50"
                             >
                                 {photoOperation === 'removing' ? 'Removing...' : 'Remove'}
                             </button>
@@ -367,13 +386,13 @@ function ProfileSection({ settings, onUpdate }) {
             {/* Basic Info - 2 Column Grid */}
             <div className="grid grid-cols-2 gap-3">
                 {/* Name Card */}
-                <div className="p-3 bg-white border border-gray-100 rounded-lg">
+                <div className="p-3 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-lg">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center flex-1 gap-3 min-w-0">
-                            <p className="text-sm text-left text-gray-600 font-light w-[140px]">Full Name</p>
-                            <span className="text-sm text-gray-600 font-light">:</span>
+                            <p className="text-sm text-left text-gray-600 dark:text-gray-400 font-light w-[140px]">Full Name</p>
+                            <span className="text-sm text-gray-600 dark:text-gray-400 font-light">:</span>
                             {editingField !== 'name' ? (
-                                <p className="text-sm text-gray-700 font-light truncate">{settings?.profile?.name || <span className="text-gray-400">Not set</span>}</p>
+                                <p className="text-sm text-gray-700 dark:text-gray-200 font-light truncate">{settings?.profile?.name || <span className="text-gray-400 dark:text-gray-500">Not set</span>}</p>
                             ) : (
                                 <input
                                     type="text"
@@ -413,21 +432,21 @@ function ProfileSection({ settings, onUpdate }) {
                 </div>
 
                 {/* Username Card */}
-                <div className="p-3 bg-white border border-gray-100 rounded-lg">
+                <div className="p-3 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-lg">
                     <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-3">
                                 <p className="text-sm text-left text-gray-600 font-light w-[140px]">Username {!settings?.profile?.username && <span className="text-red-500">*</span>}</p>
-                                <span className="text-sm text-gray-600 font-light">:</span>
+                                <span className="text-sm text-gray-600 dark:text-gray-400 font-light">:</span>
                                 {editingField !== 'username' ? (
-                                    <p className="text-sm text-gray-700 font-light truncate">{settings?.profile?.username || <span className="text-red-400">Not set - Required!</span>}</p>
+                                    <p className="text-sm text-gray-700 dark:text-gray-200 font-light truncate">{settings?.profile?.username || <span className="text-red-400">Not set - Required!</span>}</p>
                                 ) : (
                                     <input
                                         type="text"
                                         defaultValue={settings?.profile?.username}
                                         id="username-input"
                                         placeholder="username123"
-                                        className="flex-1 px-2 py-1 text-sm rounded border border-gray-200 focus:border-green-600 focus:outline-none font-light lowercase"
+                                        className="flex-1 px-2 py-1 text-sm rounded border border-gray-200 dark:border-gray-700 focus:border-green-600 dark:focus:border-green-500 focus:outline-none font-light bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 lowercase"
                                         autoFocus
                                         onChange={(e) => {
                                             // Convert to lowercase automatically
@@ -489,12 +508,12 @@ function ProfileSection({ settings, onUpdate }) {
                 </div>
 
                 {/* Email Card - Read Only */}
-                <div className="p-3 bg-gray-50 border border-gray-100 rounded-lg">
+                <div className="p-3 bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-800 rounded-lg">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center flex-1 gap-3 min-w-0">
                             <p className="text-sm text-left text-gray-600 font-light w-[140px]">Email</p>
-                            <span className="text-sm text-gray-600 font-light">:</span>
-                            <p className="text-sm text-gray-700 font-light truncate">{settings?.profile?.email || <span className="text-gray-400">Not set</span>}</p>
+                            <span className="text-sm text-gray-600 dark:text-gray-400 font-light">:</span>
+                            <p className="text-sm text-gray-700 dark:text-gray-200 font-light truncate">{settings?.profile?.email || <span className="text-gray-400">Not set</span>}</p>
                         </div>
                         <div className="p-1 text-gray-300 ml-2">
                             <HiOutlineLockClosed size={14} />
@@ -503,18 +522,18 @@ function ProfileSection({ settings, onUpdate }) {
                 </div>
 
                 {/* Role Card */}
-                <div className="p-3 bg-white border border-gray-100 rounded-lg">
+                <div className="p-3 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-lg">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center flex-1 gap-3 min-w-0">
                             <p className="text-sm text-left text-gray-600 font-light w-[140px]">Account Role</p>
-                            <span className="text-sm text-gray-600 font-light">:</span>
+                            <span className="text-sm text-gray-600 dark:text-gray-400 font-light">:</span>
                             {editingField !== 'role' ? (
-                                <p className="text-sm text-gray-700 font-light capitalize truncate">{settings?.profile?.role || <span className="text-gray-400">Not set</span>}</p>
+                                <p className="text-sm text-gray-700 dark:text-gray-200 font-light capitalize truncate">{settings?.profile?.role || <span className="text-gray-400">Not set</span>}</p>
                             ) : (
                                 <select
                                     defaultValue={settings?.profile?.role}
                                     id="role-input"
-                                    className="flex-1 px-2 py-1 text-sm rounded border border-gray-200 focus:border-green-600 focus:outline-none font-light bg-white cursor-pointer"
+                                    className="flex-1 px-2 py-1 text-sm rounded border border-gray-200 dark:border-gray-700 focus:border-green-600 dark:focus:border-green-500 focus:outline-none font-light bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 cursor-pointer"
                                     autoFocus
                                 >
                                     <option value="freelancer">Freelancer</option>
@@ -552,14 +571,14 @@ function ProfileSection({ settings, onUpdate }) {
                 </div>
 
                 {/* Location Card */}
-                <div className="p-3 bg-white border border-gray-100 rounded-lg">
+                <div className="p-3 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-lg">
                     <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-3">
                                 <p className="text-sm text-left text-gray-600 font-light w-[140px]">Location</p>
-                                <span className="text-sm text-gray-600 font-light">:</span>
+                                <span className="text-sm text-gray-600 dark:text-gray-400 font-light">:</span>
                                 {editingField !== 'location' ? (
-                                    <p className="text-sm text-gray-700 font-light truncate">{settings?.profile?.location || <span className="text-gray-400">Not set</span>}</p>
+                                    <p className="text-sm text-gray-700 dark:text-gray-200 font-light truncate">{settings?.profile?.location || <span className="text-gray-400">Not set</span>}</p>
                                 ) : (
                                     <div className="flex-1">
                                         <Select
@@ -611,19 +630,19 @@ function ProfileSection({ settings, onUpdate }) {
             </div>
 
             {/* Bio - Full Width */}
-            <div className="p-3 bg-white border border-gray-100 rounded-lg">
+            <div className="p-3 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-lg">
                 <div className="flex items-start justify-between">
                     <div className="flex items-start flex-1 gap-3">
                         <p className="text-sm text-left text-gray-600 font-light w-[140px]">Bio</p>
-                        <span className="text-sm text-gray-600 font-light">:</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400 font-light">:</span>
                         {editingField !== 'bio' ? (
-                            <p className="text-sm text-gray-700 font-light flex-1">{settings?.profile?.bio || <span className="text-gray-400">Not set</span>}</p>
+                            <p className="text-sm text-gray-700 dark:text-gray-200 font-light flex-1">{settings?.profile?.bio || <span className="text-gray-400">Not set</span>}</p>
                         ) : (
                             <textarea
                                 defaultValue={settings?.profile?.bio}
                                 id="bio-input"
                                 rows="2"
-                                className="flex-1 px-2 py-1 text-sm rounded border border-gray-200 focus:border-green-600 focus:outline-none font-light resize-none"
+                                className="flex-1 px-2 py-1 text-sm rounded border border-gray-200 dark:border-gray-700 focus:border-green-600 dark:focus:border-green-500 focus:outline-none font-light bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-none"
                                 autoFocus
                             />
                         )}
@@ -657,14 +676,14 @@ function ProfileSection({ settings, onUpdate }) {
             </div>
 
             {/* Timezone - Single Card */}
-            <div className="p-3 bg-white border border-gray-100 rounded-lg">
+            <div className="p-3 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-lg">
                 <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-3">
                             <p className="text-sm text-left text-gray-600 font-light w-[140px]">Timezone</p>
-                            <span className="text-sm text-gray-600 font-light">:</span>
+                            <span className="text-sm text-gray-600 dark:text-gray-400 font-light">:</span>
                             {editingField !== 'timezone' ? (
-                                <p className="text-sm text-gray-700 font-light">{settings?.profile?.timezone || <span className="text-gray-400">Not set</span>}</p>
+                                <p className="text-sm text-gray-700 dark:text-gray-200 font-light">{settings?.profile?.timezone || <span className="text-gray-400">Not set</span>}</p>
                             ) : (
                                 <div className="flex-1">
                                     <TimezoneSelect
@@ -710,20 +729,48 @@ function ProfileSection({ settings, onUpdate }) {
                 </div>
             </div>
 
-            {/* Logout Countdown Modal */}
-            {showLogoutModal && (
-                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+            {/* Image Preview Modal */}
+            {showImagePreview && photoPreview && (
+                <div
+                    className="fixed inset-0 bg-black/80 dark:bg-black/90 flex items-center justify-center z-50 p-4"
+                    onClick={() => setShowImagePreview(false)}
+                >
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="bg-white rounded-lg max-w-md w-full p-8 text-center shadow-2xl"
+                        className="relative max-w-2xl w-full"
+                        onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <HiOutlineLockClosed className="text-green-600" size={32} />
+                        <button
+                            onClick={() => setShowImagePreview(false)}
+                            className="absolute -top-10 right-0 p-2 text-white hover:text-gray-300 transition"
+                        >
+                            <HiX size={24} />
+                        </button>
+                        <img
+                            src={photoPreview}
+                            alt="Profile Preview"
+                            referrerPolicy="no-referrer"
+                            className="w-full h-auto rounded-lg shadow-2xl"
+                        />
+                    </motion.div>
+                </div>
+            )}
+
+            {/* Logout Countdown Modal */}
+            {showLogoutModal && (
+                <div className="fixed inset-0 bg-black/60 dark:bg-black/80 flex items-center justify-center z-50 p-4">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-white dark:bg-gray-900 rounded-lg max-w-md w-full p-8 text-center shadow-2xl"
+                    >
+                        <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <HiOutlineLockClosed className="text-green-600 dark:text-green-500" size={32} />
                         </div>
 
-                        <h3 className="text-xl font-medium text-gray-800 mb-2">Role Updated Successfully!</h3>
-                        <p className="text-sm text-gray-600 font-light mb-6">
+                        <h3 className="text-xl font-medium text-gray-800 dark:text-gray-200 mb-2">Role Updated Successfully!</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 font-light mb-6">
                             Your account role has been changed. You need to log out and log back in for the changes to take effect.
                         </p>
 
@@ -758,7 +805,7 @@ function SkillsSection({ settings, onUpdate }) {
         try {
             const token = localStorage.getItem('authToken');
             const payload = field === 'primarySkills' || field === 'secondarySkills'
-                ? { [field]: value.split(',').map(s => s.trim()).filter(Boolean) }
+                ? { [field]: value } // value is already an array from autocomplete
                 : { [field]: field === 'hourlyCharges' ? Number(value) : value };
 
             await axios.put(`${API_URL}/api/settings/skills`, payload, {
@@ -774,33 +821,165 @@ function SkillsSection({ settings, onUpdate }) {
 
     return (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-            {message && <div className="p-3 rounded-lg text-sm font-light bg-green-50 text-green-700">{message}</div>}
+            {message && <div className="p-3 rounded-lg text-sm font-light bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400">{message}</div>}
 
-            <div className="space-y-0">
-                <EditableField
-                    label="Primary Skills"
-                    value={settings?.skills?.primarySkills?.join(', ')}
-                    onSave={(value) => updateField('primarySkills', value)}
-                    isEditing={editingField === 'primarySkills'}
-                    onEditToggle={(editing) => setEditingField(editing ? 'primarySkills' : null)}
-                    placeholder="React, Node.js, TypeScript"
-                />
-                <EditableField
-                    label="Secondary Skills"
-                    value={settings?.skills?.secondarySkills?.join(', ')}
-                    onSave={(value) => updateField('secondarySkills', value)}
-                    isEditing={editingField === 'secondarySkills'}
-                    onEditToggle={(editing) => setEditingField(editing ? 'secondarySkills' : null)}
-                    placeholder="Python, AWS, Docker"
-                />
-                <EditableField
-                    label="Experience Level"
-                    value={settings?.skills?.experienceLevel}
-                    onSave={(value) => updateField('experienceLevel', value)}
-                    isEditing={editingField === 'experienceLevel'}
-                    onEditToggle={(editing) => setEditingField(editing ? 'experienceLevel' : null)}
-                    placeholder="beginner, intermediate, expert"
-                />
+            <div className="space-y-6">
+                {/* Primary Skills */}
+                <div className="py-3 border-b border-gray-100 dark:border-gray-800">
+                    <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-start gap-3 flex-1">
+                            <p className="text-sm text-left text-gray-600 dark:text-gray-400 font-light w-[140px] pt-2">Primary Skills</p>
+                            <span className="text-sm text-gray-600 dark:text-gray-400 font-light pt-2">:</span>
+                            <div className="flex-1">
+                                {editingField !== 'primarySkills' ? (
+                                    <div className="flex flex-wrap gap-2 pt-1">
+                                        {settings?.skills?.primarySkills?.length > 0 ? (
+                                            settings.skills.primarySkills.map((skill) => (
+                                                <span
+                                                    key={skill}
+                                                    className="inline-flex px-3 py-1 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 rounded-lg text-sm font-light"
+                                                >
+                                                    {skill}
+                                                </span>
+                                            ))
+                                        ) : (
+                                            <span className="text-sm text-gray-400 dark:text-gray-500 font-light">Not set</span>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <SkillsAutocompleteInput
+                                        selectedSkills={settings?.skills?.primarySkills || []}
+                                        onChange={(skills) => updateField('primarySkills', skills)}
+                                        placeholder="Type to search skills..."
+                                        maxSkills={10}
+                                    />
+                                )}
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2 ml-4">
+                            {editingField !== 'primarySkills' ? (
+                                <button
+                                    onClick={() => setEditingField('primarySkills')}
+                                    className="p-1 text-gray-400 hover:text-green-600 dark:hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition cursor-pointer"
+                                >
+                                    <HiPencil size={14} />
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => setEditingField(null)}
+                                    className="p-1 text-green-600 dark:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition cursor-pointer"
+                                >
+                                    <HiCheck size={14} />
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Secondary Skills */}
+                <div className="py-3 border-b border-gray-100 dark:border-gray-800">
+                    <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-start gap-3 flex-1">
+                            <p className="text-sm text-left text-gray-600 dark:text-gray-400 font-light w-[140px] pt-2">Secondary Skills</p>
+                            <span className="text-sm text-gray-600 dark:text-gray-400 font-light pt-2">:</span>
+                            <div className="flex-1">
+                                {editingField !== 'secondarySkills' ? (
+                                    <div className="flex flex-wrap gap-2 pt-1">
+                                        {settings?.skills?.secondarySkills?.length > 0 ? (
+                                            settings.skills.secondarySkills.map((skill) => (
+                                                <span
+                                                    key={skill}
+                                                    className="inline-flex px-3 py-1 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400 rounded-lg text-sm font-light"
+                                                >
+                                                    {skill}
+                                                </span>
+                                            ))
+                                        ) : (
+                                            <span className="text-sm text-gray-400 dark:text-gray-500 font-light">Not set</span>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <SkillsAutocompleteInput
+                                        selectedSkills={settings?.skills?.secondarySkills || []}
+                                        onChange={(skills) => updateField('secondarySkills', skills)}
+                                        placeholder="Type to search skills..."
+                                        maxSkills={10}
+                                    />
+                                )}
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2 ml-4">
+                            {editingField !== 'secondarySkills' ? (
+                                <button
+                                    onClick={() => setEditingField('secondarySkills')}
+                                    className="p-1 text-gray-400 hover:text-green-600 dark:hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition cursor-pointer"
+                                >
+                                    <HiPencil size={14} />
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => setEditingField(null)}
+                                    className="p-1 text-green-600 dark:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition cursor-pointer"
+                                >
+                                    <HiCheck size={14} />
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Experience Level */}
+                <div className="py-3 border-b border-gray-100 dark:border-gray-800">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center flex-1 gap-3 min-w-0">
+                            <p className="text-sm text-left text-gray-600 dark:text-gray-400 font-light w-[140px]">Experience Level</p>
+                            <span className="text-sm text-gray-600 dark:text-gray-400 font-light">:</span>
+                            {editingField !== 'experienceLevel' ? (
+                                <p className="text-sm text-gray-700 dark:text-gray-200 font-light capitalize truncate">
+                                    {settings?.skills?.experienceLevel || <span className="text-gray-400 dark:text-gray-500">Not set</span>}
+                                </p>
+                            ) : (
+                                <select
+                                    defaultValue={settings?.skills?.experienceLevel}
+                                    id="experienceLevel-input"
+                                    className="flex-1 px-2 py-1 text-sm rounded border border-gray-200 dark:border-gray-700 focus:border-green-600 dark:focus:border-green-500 focus:outline-none font-light bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 cursor-pointer capitalize"
+                                    autoFocus
+                                >
+                                    <option value="">Select level</option>
+                                    <option value="newbie">Newbie</option>
+                                    <option value="intermediate">Intermediate</option>
+                                    <option value="professional">Professional</option>
+                                </select>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-1 ml-2">
+                            {editingField !== 'experienceLevel' ? (
+                                <button onClick={() => setEditingField('experienceLevel')} className="p-1 text-gray-400 hover:text-green-600 dark:hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition cursor-pointer">
+                                    <HiPencil size={14} />
+                                </button>
+                            ) : (
+                                <>
+                                    <button
+                                        onClick={() => {
+                                            updateField('experienceLevel', document.getElementById('experienceLevel-input').value);
+                                            setEditingField(null);
+                                        }}
+                                        className="p-1 text-green-600 dark:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition cursor-pointer"
+                                    >
+                                        <HiCheck size={14} />
+                                    </button>
+                                    <button
+                                        onClick={() => setEditingField(null)}
+                                        className="p-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition cursor-pointer"
+                                    >
+                                        <HiX size={14} />
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
                 <EditableField
                     label="Hourly Charges (₹)"
                     value={settings?.skills?.hourlyCharges}
@@ -847,17 +1026,17 @@ function SecuritySection() {
 
     return (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-            {message && <div className="p-3 rounded-lg text-sm font-light bg-red-50 text-red-700">{message}</div>}
+            {message && <div className="p-3 rounded-lg text-sm font-light bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400">{message}</div>}
 
-            <div className="p-4 border border-gray-100 rounded-lg">
-                <h3 className="text-sm font-light text-gray-700 mb-4">Change Password</h3>
+            <div className="p-4 border border-gray-100 dark:border-gray-800 rounded-lg dark:bg-black">
+                <h3 className="text-sm font-light text-gray-700 mb-4 dark:text-gray-100">Change Password</h3>
                 <form onSubmit={handlePasswordChange} className="space-y-3">
                     <input
                         type="password"
                         value={passwordData.currentPassword}
                         onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
                         placeholder="Current password"
-                        className="w-full px-4 py-2.5 text-sm rounded-lg border border-gray-200 focus:border-green-600 focus:outline-none font-light"
+                        className="w-full px-4 py-2.5 text-sm rounded-lg border border-gray-200 focus:border-green-600 focus:outline-none font-light dark:border-gray-700 dark:bg-gray-800"
                         required
                     />
                     <input
@@ -865,7 +1044,7 @@ function SecuritySection() {
                         value={passwordData.newPassword}
                         onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
                         placeholder="New password"
-                        className="w-full px-4 py-2.5 text-sm rounded-lg border border-gray-200 focus:border-green-600 focus:outline-none font-light"
+                        className="w-full px-4 py-2.5 text-sm rounded-lg border border-gray-200 focus:border-green-600 focus:outline-none font-light dark:border-gray-700 dark:bg-gray-800"
                         required
                     />
                     <input
@@ -873,7 +1052,7 @@ function SecuritySection() {
                         value={passwordData.confirmPassword}
                         onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
                         placeholder="Confirm new password"
-                        className="w-full px-4 py-2.5 text-sm rounded-lg border border-gray-200 focus:border-green-600 focus:outline-none font-light"
+                        className="w-full px-4 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 focus:border-green-600 dark:focus:border-green-500 focus:outline-none font-light bg-white dark:bg-black text-gray-900 dark:text-gray-100 dark:bg-gray-800"
                         required
                     />
                     <button
@@ -909,12 +1088,12 @@ function NotificationsSection({ settings, onUpdate }) {
 
     return (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-            {message && <div className="p-3 rounded-lg text-sm font-light bg-green-50 text-green-700">{message}</div>}
+            {message && <div className="p-3 rounded-lg text-sm font-light bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400">{message}</div>}
 
-            <div className="flex items-center justify-between p-4 border border-gray-100 rounded-lg">
+            <div className="flex items-center justify-between p-4 border border-gray-100 dark:border-gray-800 rounded-lg dark:bg-gray-900">
                 <div>
-                    <h3 className="text-sm font-light text-gray-700">In-App Notifications</h3>
-                    <p className="text-xs text-gray-400 mt-1 font-light">Receive notifications within the platform</p>
+                    <h3 className="text-left text-sm font-light text-gray-700 dark:text-gray-100">In-App Notifications</h3>
+                    <p className="text-left text-xs text-gray-400 mt-1 font-light">Receive notifications within the platform</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -927,10 +1106,10 @@ function NotificationsSection({ settings, onUpdate }) {
                 </label>
             </div>
 
-            <div className="flex items-center justify-between p-4 border border-gray-100 rounded-lg">
+            <div className="flex items-center justify-between p-4 border border-gray-100 dark:border-gray-800 rounded-lg dark:bg-gray-900">
                 <div>
-                    <h3 className="text-sm font-light text-gray-700">Project Updates</h3>
-                    <p className="text-xs text-gray-400 mt-1 font-light">Get notified about project status changes</p>
+                    <h3 className="text-left text-sm font-light text-gray-700 dark:text-gray-100">Project Updates</h3>
+                    <p className="text-left text-xs text-gray-400 mt-1 font-light">Get notified about project status changes</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -980,12 +1159,12 @@ function PrivacySection({ settings, onUpdate }) {
 
     return (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-            {message && <div className="p-3 rounded-lg text-sm font-light bg-green-50 text-green-700">{message}</div>}
+            {message && <div className="p-3 rounded-lg text-sm font-light bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400">{message}</div>}
 
-            <div className="flex items-center justify-between p-4 border border-gray-100 rounded-lg">
+            <div className="flex items-center justify-between p-4 border border-gray-100 dark:border-gray-800 rounded-lg dark:bg-gray-900">
                 <div>
-                    <h3 className="text-sm font-light text-gray-700">Public Profile</h3>
-                    <p className="text-xs text-gray-400 mt-1 font-light">Make your profile visible to everyone</p>
+                    <h3 className="text-left text-sm font-light text-gray-700 dark:text-gray-100">Public Profile</h3>
+                    <p className="text-left text-xs text-gray-400 mt-1 font-light">Make your profile visible to everyone</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -998,12 +1177,12 @@ function PrivacySection({ settings, onUpdate }) {
                 </label>
             </div>
 
-            <div className="p-4 border border-gray-100 rounded-lg">
-                <h3 className="text-sm font-light text-gray-700 mb-3">Who Can Message Me</h3>
+            <div className="p-4 border border-gray-100 dark:border-gray-800 rounded-lg dark:bg-gray-900">
+                <h3 className="text-left text-sm font-light text-gray-700 mb-3 dark:text-gray-100">Who Can Message Me</h3>
                 <select
                     value={settings?.privacy?.whoCanMessage || 'everyone'}
                     onChange={(e) => handleSelectChange(e.target.value)}
-                    className="w-full px-4 py-2.5 text-sm rounded-lg border border-gray-200 focus:border-green-600 focus:outline-none font-light bg-white cursor-pointer"
+                    className="w-full h-10 px-4 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 focus:border-green-600 dark:focus:border-green-500 focus:outline-none font-light bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 cursor-pointer"
                 >
                     <option value="everyone">Everyone</option>
                     <option value="connections">Only connections</option>
@@ -1011,10 +1190,10 @@ function PrivacySection({ settings, onUpdate }) {
                 </select>
             </div>
 
-            <div className="flex items-center justify-between p-4 border border-gray-100 rounded-lg">
+            <div className="flex items-center justify-between p-4 border border-gray-100 dark:border-gray-800 rounded-lg dark:bg-gray-900">
                 <div>
-                    <h3 className="text-sm font-light text-gray-700">Show Work History</h3>
-                    <p className="text-xs text-gray-400 mt-1 font-light">Display your completed projects</p>
+                    <h3 className="text-left text-sm font-light text-gray-700 dark:text-gray-100">Show Work History</h3>
+                    <p className="text-left text-xs text-gray-400 mt-1 font-light">Display your completed projects</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -1026,6 +1205,205 @@ function PrivacySection({ settings, onUpdate }) {
                     <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
                 </label>
             </div>
+        </motion.div>
+    );
+}
+
+// Danger Zone Section
+function DangerZoneSection() {
+    const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
+    const [checkingProjects, setCheckingProjects] = useState(false);
+    const [canDelete, setCanDelete] = useState(null);
+    const [activeProjectsCount, setActiveProjectsCount] = useState(0);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [confirmText, setConfirmText] = useState('');
+    const [message, setMessage] = useState('');
+    const [isSuccess, setIsSuccess] = useState(false);
+
+    // Check for active projects
+    const checkActiveProjects = async () => {
+        setCheckingProjects(true);
+        setMessage(''); // Clear any previous messages
+        try {
+            const token = localStorage.getItem('authToken');
+            const response = await axios.get(`${API_URL}/api/users/active-projects-count`, {
+                headers: { Authorization: token }
+            });
+
+            const count = response.data.activeProjectsCount || 0;
+            setActiveProjectsCount(count);
+            setCanDelete(count === 0);
+        } catch (error) {
+            console.error('Error checking projects:', error);
+            setMessage('Failed to check active projects. Please refresh the page.');
+            setIsSuccess(false);
+            setCanDelete(null); // Set to null to indicate error state
+        } finally {
+            setCheckingProjects(false);
+        }
+    };
+
+    useEffect(() => {
+        checkActiveProjects();
+    }, []);
+
+    const handleDeleteAccount = async () => {
+        if (confirmText !== 'DELETE') {
+            setMessage('Please type DELETE to confirm');
+            setIsSuccess(false);
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('authToken');
+
+            // CRITICAL: Sign out from Firebase FIRST to prevent auto-login
+            // The AuthContext has a listener that auto-syncs Firebase users with backend
+            // If we don't sign out from Firebase, it will restore the auth after clearing localStorage
+            try {
+                const { auth } = await import('../config/firebaseConfig');
+                const { signOut } = await import('firebase/auth');
+                await signOut(auth);
+            } catch (firebaseError) {
+                // Ignore Firebase errors (user might not be using Firebase auth)
+                console.log('Firebase signout skipped:', firebaseError.message);
+            }
+
+            // Now delete the account from backend
+            await axios.delete(`${API_URL}/api/users/delete-account`, {
+                headers: { Authorization: token }
+            });
+
+            // Clear all local storage
+            localStorage.clear();
+            setMessage('Account deleted successfully');
+            setIsSuccess(true);
+
+            setTimeout(() => {
+                window.location.href = '/login'; // Hard redirect to ensure clean state
+            }, 2000);
+        } catch (error) {
+            setMessage(error.response?.data?.message || 'Failed to delete account');
+            setIsSuccess(false);
+            setLoading(false);
+            setShowConfirmModal(false);
+        }
+    };
+
+    return (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+            <div>
+                <h2 className="text-xl font-light text-gray-900 dark:text-gray-100 mb-2">Danger Zone</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400 font-light">
+                    Irreversible and destructive actions
+                </p>
+            </div>
+
+            {message && (
+                <div className={`p-3 rounded-lg text-sm font-light ${isSuccess ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400' : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'}`}>
+                    {message}
+                </div>
+            )}
+
+            <div className="border-2 border-red-200 dark:border-red-900 bg-red-50/50 dark:bg-red-900/10 rounded-lg p-6">
+                <div className="flex items-start gap-4">
+                    <div className="flex-shrink-0 w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+                        <HiOutlineExclamationTriangle className="text-red-600 dark:text-red-400" size={20} />
+                    </div>
+                    <div className="flex-1">
+                        <h3 className="text-base font-medium text-gray-900 dark:text-gray-100 mb-2">Delete Account</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 font-light mb-4">
+                            Once you delete your account, there is no going back. All your data will be permanently removed.
+                        </p>
+
+                        {checkingProjects ? (
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Checking active projects...</p>
+                        ) : canDelete === false ? (
+                            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-4">
+                                <p className="text-sm text-yellow-800 dark:text-yellow-400 font-medium">
+                                    Cannot delete account
+                                </p>
+                                <p className="text-sm text-yellow-700 dark:text-yellow-500 font-light mt-1">
+                                    You have {activeProjectsCount} active or in-progress {activeProjectsCount === 1 ? 'project' : 'projects'}.
+                                    Please complete or cancel them before deleting your account.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-4">
+                                <p className="text-sm text-green-700 dark:text-green-400 font-light">
+                                    ✓ No active projects found. You can delete your account.
+                                </p>
+                            </div>
+                        )}
+
+                        <button
+                            onClick={() => setShowConfirmModal(true)}
+                            disabled={!canDelete || checkingProjects || loading}
+                            className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition font-light disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                        >
+                            Delete My Account
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Confirmation Modal */}
+            {showConfirmModal && (
+                <div className="fixed inset-0 bg-black/60 dark:bg-black/80 flex items-center justify-center z-50 p-4">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-white dark:bg-gray-900 rounded-lg max-w-md w-full p-6 shadow-2xl"
+                    >
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+                                <HiOutlineExclamationTriangle className="text-red-600 dark:text-red-400" size={24} />
+                            </div>
+                            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Confirm Account Deletion</h3>
+                        </div>
+
+                        <p className="text-sm text-gray-600 dark:text-gray-400 font-light mb-4">
+                            This action cannot be undone. This will permanently delete your account and remove all your data from our servers.
+                        </p>
+
+                        <div className="mb-4">
+                            <label className="block text-sm text-gray-700 dark:text-gray-300 font-light mb-2">
+                                Type <span className="font-medium text-red-600 dark:text-red-400">DELETE</span> to confirm:
+                            </label>
+                            <input
+                                type="text"
+                                value={confirmText}
+                                onChange={(e) => setConfirmText(e.target.value)}
+                                className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:border-red-500 dark:focus:border-red-500 focus:outline-none font-light bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                                placeholder="DELETE"
+                                autoFocus
+                            />
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => {
+                                    setShowConfirmModal(false);
+                                    setConfirmText('');
+                                }}
+                                disabled={loading}
+                                className="flex-1 px-4 py-2 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition font-light cursor-pointer"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleDeleteAccount}
+                                disabled={loading || confirmText !== 'DELETE'}
+                                className="flex-1 px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition font-light disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                            >
+                                {loading ? 'Deleting...' : 'Delete Account'}
+                            </button>
+                        </div>
+                    </motion.div>
+                </div>
+            )}
         </motion.div>
     );
 }

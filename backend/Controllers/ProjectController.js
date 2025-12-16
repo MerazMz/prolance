@@ -216,9 +216,24 @@ const getMyProjects = async (req, res) => {
             .populate('assignedFreelancerId', 'name avatar')
             .sort({ createdAt: -1 });
 
+        // Add pending application count to each project
+        const ApplicationModel = require('../Models/Application');
+        const projectsWithPendingCount = await Promise.all(
+            projects.map(async (project) => {
+                const projectObj = project.toObject();
+                // Count only pending applications for this project
+                const pendingCount = await ApplicationModel.countDocuments({
+                    projectId: project._id,
+                    status: 'pending'
+                });
+                projectObj.pendingApplicationCount = pendingCount;
+                return projectObj;
+            })
+        );
+
         res.status(200).json({
             success: true,
-            projects
+            projects: projectsWithPendingCount
         });
     } catch (err) {
         res.status(500).json({

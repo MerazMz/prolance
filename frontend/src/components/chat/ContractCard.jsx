@@ -172,10 +172,10 @@ ${contract.contractDetails.paymentTerms}`;
 
     const getStatusColor = (status) => {
         switch (status) {
-            case 'pending': return 'bg-yellow-50 text-yellow-700 border-yellow-200';
-            case 'accepted': return 'bg-green-50 text-green-700 border-green-200';
-            case 'rejected': return 'bg-red-50 text-red-700 border-red-200';
-            default: return 'bg-gray-50 text-gray-700 border-gray-200';
+            case 'pending': return 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800';
+            case 'accepted': return 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800';
+            case 'rejected': return 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800';
+            default: return 'bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-400 border-gray-200 dark:border-gray-700';
         }
     };
 
@@ -183,15 +183,15 @@ ${contract.contractDetails.paymentTerms}`;
         <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="my-4 p-5 bg-gradient-to-br from-green-50 to-white border-2 border-green-200 rounded-lg shadow-sm"
+            className="my-4 p-5 bg-gradient-to-br from-green-50 to-white dark:from-green-900/10 dark:to-gray-800 border-2 border-green-200 dark:border-green-800 rounded-lg shadow-sm"
         >
             {/* Header */}
             <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-2">
-                    <HiOutlineDocumentText size={24} className="text-green-600" />
+                    <HiOutlineDocumentText size={24} className="text-green-600 dark:text-green-500" />
                     <div>
-                        <h3 className="text-base font-medium text-gray-800">Work Contract Proposal</h3>
-                        <p className="text-xs text-gray-500 font-light mt-0.5">
+                        <h3 className="text-base font-medium text-gray-800 dark:text-gray-200">Work Contract Proposal</h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 font-light mt-0.5">
                             Proposed by {contract.freelancerId.name}
                         </p>
                     </div>
@@ -199,8 +199,12 @@ ${contract.contractDetails.paymentTerms}`;
                 <div className="flex items-center gap-2">
                     <button
                         onClick={handleDownload}
-                        className="p-1.5 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition"
-                        title="Download Contract PDF"
+                        disabled={contract.status !== 'accepted'}
+                        className={`p-1.5 rounded-lg transition ${contract.status === 'accepted'
+                                ? 'text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 cursor-pointer'
+                                : 'text-gray-300 dark:text-gray-600 bg-gray-50 dark:bg-gray-800 cursor-not-allowed'
+                            }`}
+                        title={contract.status === 'accepted' ? 'Download Contract PDF' : 'Contract must be accepted to download PDF'}
                     >
                         <HiOutlineDownload size={20} />
                     </button>
@@ -213,22 +217,22 @@ ${contract.contractDetails.paymentTerms}`;
             {/* Contract Details */}
             <div className="space-y-3 mb-4">
                 <div>
-                    <p className="text-xs text-gray-500 font-light mb-1">Project Title</p>
-                    <p className="text-sm font-normal text-gray-800">{contract.contractDetails.title}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 font-light mb-1">Project Title</p>
+                    <p className="text-sm font-normal text-gray-800 dark:text-gray-200">{contract.contractDetails.title}</p>
                 </div>
 
                 <div>
-                    <p className="text-xs text-gray-500 font-light mb-1">Scope of Work</p>
-                    <p className="text-sm text-gray-700 font-light line-clamp-3">{contract.contractDetails.scope}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 font-light mb-1">Scope of Work</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 font-light line-clamp-3">{contract.contractDetails.scope}</p>
                 </div>
 
                 {contract.contractDetails.deliverables?.length > 0 && (
                     <div>
-                        <p className="text-xs text-gray-500 font-light mb-1">Deliverables</p>
-                        <ul className="text-sm text-gray-700 font-light space-y-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 font-light mb-1">Deliverables</p>
+                        <ul className="text-sm text-gray-700 dark:text-gray-300 font-light space-y-1">
                             {contract.contractDetails.deliverables.map((item, idx) => (
                                 <li key={idx} className="flex items-start gap-2">
-                                    <span className="text-green-600 mt-0.5">•</span>
+                                    <span className="text-green-600 dark:text-green-500 mt-0.5">•</span>
                                     <span>{item}</span>
                                 </li>
                             ))}
@@ -238,38 +242,38 @@ ${contract.contractDetails.paymentTerms}`;
 
                 <div className="grid grid-cols-2 gap-3">
                     <div>
-                        <p className="text-xs text-gray-500 font-light mb-1">Project Amount</p>
-                        <p className="text-sm font-normal text-gray-800">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 font-light mb-1">Project Amount</p>
+                        <p className="text-sm font-normal text-gray-800 dark:text-gray-200">
                             ₹{contract.contractDetails.finalAmount.toLocaleString()}
                         </p>
                     </div>
                     <div>
-                        <p className="text-xs text-gray-500 font-light mb-1">Duration</p>
-                        <p className="text-sm font-normal text-gray-800">{contract.contractDetails.duration}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 font-light mb-1">Duration</p>
+                        <p className="text-sm font-normal text-gray-800 dark:text-gray-200">{contract.contractDetails.duration}</p>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                     <div>
-                        <p className="text-xs text-gray-500 font-light mb-1">Start Date</p>
-                        <p className="text-sm font-normal text-gray-800">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 font-light mb-1">Start Date</p>
+                        <p className="text-sm font-normal text-gray-800 dark:text-gray-200">
                             {new Date(contract.contractDetails.startDate).toLocaleDateString()}
                         </p>
                     </div>
                     <div>
-                        <p className="text-xs text-gray-500 font-light mb-1">Payment Terms</p>
-                        <p className="text-sm font-normal text-gray-800">{contract.contractDetails.paymentTerms}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 font-light mb-1">Payment Terms</p>
+                        <p className="text-sm font-normal text-gray-800 dark:text-gray-200">{contract.contractDetails.paymentTerms}</p>
                     </div>
                 </div>
             </div>
 
             {/* Actions */}
             {contract.status === 'pending' && isClient && (
-                <div className="flex gap-2 pt-3 border-t border-green-200">
+                <div className="flex gap-2 pt-3 border-t border-green-200 dark:border-green-800">
                     <button
                         onClick={() => handleAction('accepted')}
                         disabled={loading}
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm text-white bg-green-600 rounded-lg hover:bg-green-700 transition font-light cursor-pointer disabled:opacity-50"
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm text-white bg-green-600 dark:bg-green-500 rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition font-light cursor-pointer disabled:opacity-50"
                     >
                         <HiOutlineCheck size={16} />
                         Accept Contract
@@ -277,7 +281,7 @@ ${contract.contractDetails.paymentTerms}`;
                     <button
                         onClick={() => handleAction('rejected')}
                         disabled={loading}
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition font-light cursor-pointer disabled:opacity-50"
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition font-light cursor-pointer disabled:opacity-50"
                     >
                         <HiOutlineBan size={16} />
                         Reject
@@ -286,21 +290,21 @@ ${contract.contractDetails.paymentTerms}`;
             )}
 
             {contract.status === 'accepted' && (
-                <div className="flex items-center gap-2 pt-3 border-t border-green-200 text-sm text-green-700 font-light">
+                <div className="flex items-center gap-2 pt-3 border-t border-green-200 dark:border-green-800 text-sm text-green-700 dark:text-green-400 font-light">
                     <HiOutlineCheck size={16} />
                     <span>Contract accepted • Project assigned to {contract.freelancerId.name}</span>
                 </div>
             )}
 
             {contract.status === 'rejected' && contract.clientNotes && (
-                <div className="pt-3 border-t border-green-200">
-                    <p className="text-xs text-gray-500 font-light mb-1">Client Notes</p>
-                    <p className="text-sm text-gray-700 font-light">{contract.clientNotes}</p>
+                <div className="pt-3 border-t border-green-200 dark:border-green-800">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 font-light mb-1">Client Notes</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 font-light">{contract.clientNotes}</p>
                 </div>
             )}
 
             {contract.status === 'pending' && isFreelancer && (
-                <div className="flex items-center gap-2 pt-3 border-t border-green-200 text-sm text-yellow-700 font-light">
+                <div className="flex items-center gap-2 pt-3 border-t border-green-200 dark:border-green-800 text-sm text-yellow-700 dark:text-yellow-400 font-light">
                     <HiOutlineClock size={16} />
                     <span>Waiting for client's response</span>
                 </div>

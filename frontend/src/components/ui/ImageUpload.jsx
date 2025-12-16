@@ -201,16 +201,16 @@ export default function ImageUpload({ value, onChange, label = 'Upload Image' })
     if (showCrop) {
         return (
             <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
-                <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-auto">
+                <div className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-auto">
                     <div className="p-6">
                         {/* Header */}
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-light text-gray-700">Crop Image</h3>
+                            <h3 className="text-lg font-light text-gray-700 dark:text-gray-200">Crop Image</h3>
                             <button
                                 type="button"
                                 onClick={handleCancelCrop}
                                 disabled={uploading}
-                                className="p-2 text-gray-400 hover:text-gray-600 transition"
+                                className="dark:text-gray-200 dark:hover:text-gray-400 p-2 text-gray-400 hover:text-gray-600 transition"
                             >
                                 <HiOutlineX size={20} />
                             </button>
@@ -218,10 +218,10 @@ export default function ImageUpload({ value, onChange, label = 'Upload Image' })
 
                         {/* Crop Area */}
                         <div className="mb-6">
-                            <p className="text-sm text-gray-600 font-light mb-3">
+                            <p className="text-sm dark:text-gray-200 text-gray-600 font-light mb-3">
                                 Adjust the crop area (Instagram square format 1:1)
                             </p>
-                            <div className="flex items-center justify-center bg-gray-50 rounded-lg p-4">
+                            <div className="flex items-center justify-center bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                                 <ReactCrop
                                     crop={crop}
                                     onChange={(c) => setCrop(c)}
@@ -248,7 +248,7 @@ export default function ImageUpload({ value, onChange, label = 'Upload Image' })
                                 type="button"
                                 onClick={handleCancelCrop}
                                 disabled={uploading}
-                                className="px-6 py-2.5 border border-gray-200 text-gray-600 text-sm rounded-lg hover:bg-gray-50 transition font-light"
+                                className="px-6 py-2.5 border border-gray-200  text-gray-600 dark:text-gray-200 text-sm rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition font-light"
                             >
                                 Cancel
                             </button>
@@ -289,12 +289,12 @@ export default function ImageUpload({ value, onChange, label = 'Upload Image' })
                     <img
                         src={value}
                         alt="Upload"
-                        className="w-full h-48 object-cover rounded-xl border border-gray-200"
+                        className="w-full h-48 object-cover rounded-xl border border-gray-200 dark:border-gray-700"
                     />
                     <button
                         type="button"
                         onClick={handleRemove}
-                        className="absolute top-3 right-3 p-2 bg-white text-red-600 rounded-full shadow-md hover:bg-red-50 transition opacity-0 group-hover:opacity-100"
+                        className="absolute top-3 right-3 p-2 bg-white dark:bg-gray-900 text-red-600 dark:text-red-500 rounded-full shadow-md hover:bg-red-50 dark:hover:bg-red-900/30 transition opacity-0 group-hover:opacity-100"
                     >
                         <HiOutlineX size={16} />
                     </button>
@@ -306,11 +306,11 @@ export default function ImageUpload({ value, onChange, label = 'Upload Image' })
                     onDragOver={handleDragOver}
                     onDrop={handleDrop}
                     className={`relative transition-all ${isDragging
-                            ? 'border-green-500 bg-green-50 scale-[1.02]'
-                            : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-green-500 dark:border-green-500 bg-green-50 dark:bg-green-900/20 scale-[1.02]'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                         }`}
                 >
-                    <label className="block w-full h-48 border-2 border-dashed rounded-xl cursor-pointer transition-all">
+                    <label className="block w-full h-48 border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 rounded-xl cursor-pointer transition-all">
                         <input
                             type="file"
                             accept="image/*"
@@ -320,17 +320,17 @@ export default function ImageUpload({ value, onChange, label = 'Upload Image' })
                         <div className="h-full flex flex-col items-center justify-center p-6">
                             {isDragging ? (
                                 <>
-                                    <HiOutlineCloudUpload size={48} className="text-green-600 mb-3 animate-bounce" />
-                                    <p className="text-sm font-medium text-green-600">Drop your image here</p>
+                                    <HiOutlineCloudUpload size={48} className="text-green-600 dark:text-green-500 mb-3 animate-bounce" />
+                                    <p className="text-sm font-medium text-green-600 dark:text-green-500">Drop your image here</p>
                                 </>
                             ) : (
                                 <>
-                                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3">
-                                        <HiOutlinePhotograph size={32} className="text-gray-400" />
+                                    <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-3">
+                                        <HiOutlinePhotograph size={32} className="text-gray-400 dark:text-gray-500" />
                                     </div>
-                                    <p className="text-sm font-medium text-gray-700 mb-1">{label}</p>
-                                    <p className="text-xs text-gray-400 mb-3">or drag and drop</p>
-                                    <div className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-xs text-gray-500">
+                                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{label}</p>
+                                    <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">or drag and drop</p>
+                                    <div className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg text-xs text-gray-500 dark:text-gray-400">
                                         <HiOutlineUpload size={14} />
                                         PNG, JPG up to 5MB
                                     </div>
@@ -341,7 +341,7 @@ export default function ImageUpload({ value, onChange, label = 'Upload Image' })
                 </div>
             )}
             {error && (
-                <p className="text-xs text-red-500 mt-2 font-light">{error}</p>
+                <p className="text-xs text-red-500 dark:text-red-400 mt-2 font-light">{error}</p>
             )}
         </div>
     );

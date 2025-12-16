@@ -44,9 +44,8 @@ ConversationSchema.pre('save', function (next) {
 // Index for faster queries
 ConversationSchema.index({ participants: 1, lastMessageAt: -1 });
 ConversationSchema.index({ projectId: 1 });
-ConversationSchema.index({ applicationId: 1 });
 
-// Ensure unique conversation per application
+// Ensure unique conversation per application (this also creates an index)
 ConversationSchema.index({ applicationId: 1 }, { unique: true });
 
 const ConversationModel = mongoose.model('conversations', ConversationSchema);

@@ -71,7 +71,7 @@ export default function MessageInput({ conversationId }) {
                         onChange={(e) => handleTyping(e.target.value)}
                         onKeyDown={handleKeyDown}
                         placeholder="Type a message..."
-                        className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:border-green-500 focus:outline-none resize-none bg-gray-50"
+                        className="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl focus:border-green-500 dark:focus:border-green-500 focus:outline-none resize-none bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500"
                         rows={1}
                         style={{
                             maxHeight: '120px',
@@ -83,7 +83,7 @@ export default function MessageInput({ conversationId }) {
                 <button
                     type="submit"
                     disabled={!message.trim() || sending}
-                    className="p-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition disabled:bg-gray-300 disabled:cursor-not-allowed shadow-sm"
+                    className="p-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed shadow-sm"
                     title="Send message"
                 >
                     <HiOutlinePaperAirplane size={18} />

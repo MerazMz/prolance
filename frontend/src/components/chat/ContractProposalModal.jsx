@@ -105,20 +105,20 @@ export default function ContractProposalModal({ conversation, application, onClo
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-60 p-4">
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-hidden"
+                className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-hidden"
             >
                 {/* Header */}
-                <div className="border-b border-gray-100 px-6 py-4 flex items-center justify-between">
-                    <h2 className="text-lg font-normal text-gray-800">Propose Work Contract</h2>
+                <div className="border-b border-gray-100 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
+                    <h2 className="text-lg font-normal text-gray-800 dark:text-gray-200">Propose Work Contract</h2>
                     <button
                         onClick={onClose}
-                        className="p-1.5 hover:bg-gray-100 rounded-lg transition cursor-pointer"
+                        className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition cursor-pointer"
                     >
-                        <HiOutlineX size={20} className="text-gray-400" />
+                        <HiOutlineX size={20} className="text-gray-400 dark:text-gray-500" />
                     </button>
                 </div>
 
@@ -126,7 +126,7 @@ export default function ContractProposalModal({ conversation, application, onClo
                 {fetchingApp ? (
                     <div className="p-12 text-center">
                         <div className="inline-block w-8 h-8 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
-                        <p className="text-sm text-gray-500 mt-3 font-light">Loading application details...</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-3 font-light">Loading application details...</p>
                     </div>
                 ) : (
                     /* Form */
@@ -134,24 +134,24 @@ export default function ContractProposalModal({ conversation, application, onClo
                         <div className="space-y-4">
                             {/* Project Title */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Project Title</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Project Title</label>
                                 <input
                                     type="text"
                                     value={formData.title}
                                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent font-light"
+                                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent font-light bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                                     required
                                 />
                             </div>
 
                             {/* Scope of Work */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Scope of Work</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Scope of Work</label>
                                 <textarea
                                     value={formData.scope}
                                     onChange={(e) => setFormData({ ...formData, scope: e.target.value })}
                                     rows={4}
-                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent font-light"
+                                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent font-light bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                                     required
                                 />
                             </div>
@@ -159,11 +159,11 @@ export default function ContractProposalModal({ conversation, application, onClo
                             {/* Deliverables */}
                             <div>
                                 <div className="flex items-center justify-between mb-2">
-                                    <label className="block text-sm font-medium text-gray-700">Deliverables</label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Deliverables</label>
                                     <button
                                         type="button"
                                         onClick={addDeliverable}
-                                        className="flex items-center gap-1 text-xs text-green-600 hover:text-green-700 cursor-pointer"
+                                        className="flex items-center gap-1 text-xs text-green-600 dark:text-green-500 hover:text-green-700 dark:hover:text-green-400 cursor-pointer"
                                     >
                                         <HiOutlinePlus size={14} />
                                         Add
@@ -176,13 +176,13 @@ export default function ContractProposalModal({ conversation, application, onClo
                                             value={deliverable}
                                             onChange={(e) => handleDeliverableChange(index, e.target.value)}
                                             placeholder={`Deliverable ${index + 1}`}
-                                            className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent font-light"
+                                            className="flex-1 px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent font-light bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500"
                                         />
                                         {formData.deliverables.length > 1 && (
                                             <button
                                                 type="button"
                                                 onClick={() => removeDeliverable(index)}
-                                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg cursor-pointer"
+                                                className="p-2 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg cursor-pointer"
                                             >
                                                 <HiOutlineTrash size={16} />
                                             </button>
@@ -193,40 +193,40 @@ export default function ContractProposalModal({ conversation, application, onClo
 
                             {/* Fixed Amount */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Project Amount (₹)</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Project Amount (₹)</label>
                                 <input
                                     type="number"
                                     value={formData.finalAmount}
                                     onChange={(e) => setFormData({ ...formData, finalAmount: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent font-light"
+                                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent font-light bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                                     placeholder="Enter fixed project amount"
                                     min="0"
                                     step="100"
                                     required
                                 />
-                                <p className="text-xs text-gray-500 mt-1 font-light">This is the total fixed amount that will be paid for this project</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-light">This is the total fixed amount that will be paid for this project</p>
                             </div>
 
                             {/* Duration & Start Date */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Duration</label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Duration</label>
                                     <input
                                         type="text"
                                         value={formData.duration}
                                         onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
                                         placeholder="e.g., 2 weeks, 1 month"
-                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent font-light"
+                                        className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent font-light bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500"
                                         required
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Start Date</label>
                                     <input
                                         type="date"
                                         value={formData.startDate}
                                         onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent font-light"
+                                        className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent font-light bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                                         required
                                     />
                                 </div>
@@ -234,11 +234,11 @@ export default function ContractProposalModal({ conversation, application, onClo
 
                             {/* Payment Terms */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Payment Terms</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Payment Terms</label>
                                 <select
                                     value={formData.paymentTerms}
                                     onChange={(e) => setFormData({ ...formData, paymentTerms: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent font-light"
+                                    className="w-full h-10 px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent font-light bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                                 >
                                     <option value="Milestone-based">Milestone-based</option>
                                     <option value="50% upfront, 50% on completion">50% upfront, 50% on completion</option>
@@ -250,18 +250,18 @@ export default function ContractProposalModal({ conversation, application, onClo
                         </div>
 
                         {/* Actions */}
-                        <div className="flex gap-3 mt-6 pt-6 border-t border-gray-100">
+                        <div className="flex gap-3 mt-6 pt-6 border-t border-gray-100 dark:border-gray-700">
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="flex-1 px-4 py-2.5 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition font-light cursor-pointer"
+                                className="flex-1 px-4 py-2.5 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition font-light cursor-pointer"
                             >
                                 Cancel
                             </button>
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="flex-1 px-4 py-2.5 text-sm text-white bg-green-600 rounded-lg hover:bg-green-700 transition font-light cursor-pointer disabled:opacity-50"
+                                className="flex-1 px-4 py-2.5 text-sm text-white bg-green-600 rounded-lg hover:bg-green-700 transition font-light cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {loading ? 'Proposing...' : 'Propose Contract'}
                             </button>

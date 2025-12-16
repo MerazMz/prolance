@@ -1,5 +1,7 @@
 node_modules/
 migrations/
+scripts/
+tests/
 .env
 *.log
 .DS_Store
