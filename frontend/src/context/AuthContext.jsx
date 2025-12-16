@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import authService from '../services/authService';
 import firebaseAuthService from '../services/firebaseAuthService';
 import RoleSelectionModal from '../components/RoleSelectionModal';
+import { setLogoutCallback } from '../services/axiosInstance';
 
 const AuthContext = createContext(null);
 
@@ -84,6 +85,11 @@ export const AuthProvider = ({ children }) => {
                 unsubscribe();
             }
         };
+    }, []);
+
+    // Register logout callback with axios interceptor
+    useEffect(() => {
+        setLogoutCallback(logout);
     }, []);
 
     const login = async (email, password) => {

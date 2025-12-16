@@ -17,7 +17,7 @@ const PaymentHistory = () => {
     const fetchPayments = async () => {
         try {
             setLoading(true);
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('authToken');
 
             let url = `${import.meta.env.VITE_API_URL}/api/payments/history?`;
             if (filter !== 'all') {

@@ -52,7 +52,6 @@ export const authService = {
 
             // Also set loggedInUser for compatibility
             localStorage.setItem('loggedInUser', JSON.stringify(userData));
-            localStorage.setItem('token', jwtToken);
 
             return response.data;
         } catch (error) {
@@ -74,6 +73,9 @@ export const authService = {
     logout: () => {
         tokenManager.removeToken();
         userManager.removeUser();
+        // Also remove legacy items if they exist
+        localStorage.removeItem('token');
+        localStorage.removeItem('loggedInUser');
     },
 
     // Check if user is authenticated

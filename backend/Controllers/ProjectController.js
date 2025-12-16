@@ -406,14 +406,61 @@ const updateWorkStatus = async (req, res) => {
 
         await project.save();
 
-        // Emit Socket.io event with phase history
-        const io = req.app.get('io');
-        if (io) {
-            io.to(`project:${id}`).emit('work-status-updated', {
-                projectId: id,
-                workStatus,
-                phaseHistory: project.phaseHistory
+        // Create system message in chat to show status update
+        const ConversationModel = require('../Models/Conversation');
+        const MessageModel = require('../Models/Message');
+
+        // Find conversation for this project
+        const conversation = await ConversationModel.findOne({ projectId: id });
+
+        if (conversation) {
+            const phaseLabels = {
+                'planning': 'Planning Phase',
+                'designing': 'Design Phase',
+                'development': 'Development Phase',
+                'testing': 'Testing Phase',
+                'review': 'Review Phase',
+                'completed': 'Completed'
+            };
+
+            const label = phaseLabels[workStatus] || workStatus;
+
+            const systemMessageContent = isRollback
+                ? `Status rolled back to: ${label}`
+                : `Project Status Update: Now in ${label}`;
+
+            const systemMessage = new MessageModel({
+                conversationId: conversation._id,
+                content: systemMessageContent,
+                messageType: 'system'
             });
+
+            await systemMessage.save();
+
+            // Broadcast system message to chat via socket
+            const io = req.app.get('io');
+            if (io) {
+                io.to(`project:${id}`).emit('work-status-updated', {
+                    projectId: id,
+                    workStatus,
+                    phaseHistory: project.phaseHistory
+                });
+
+                io.to(`conversation:${conversation._id}`).emit('new-message', {
+                    message: systemMessage,
+                    conversationId: conversation._id
+                });
+            }
+        } else {
+            // Still emit the project event even if no conversation found
+            const io = req.app.get('io');
+            if (io) {
+                io.to(`project:${id}`).emit('work-status-updated', {
+                    projectId: id,
+                    workStatus,
+                    phaseHistory: project.phaseHistory
+                });
+            }
         }
 
         res.status(200).json({

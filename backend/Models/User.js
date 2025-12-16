@@ -202,7 +202,7 @@ const UserSchema = new Schema({
     notifications: [{
         type: {
             type: String,
-            enum: ['project_completed', 'project_accepted', 'review_requested', 'application_received', 'application_accepted', 'message_received', 'payment_received'],
+            enum: ['project_completed', 'project_accepted', 'review_requested', 'application_received', 'application_accepted', 'contract_accepted', 'contract_rejected', 'message_received', 'payment_received'],
             required: true
         },
         title: {

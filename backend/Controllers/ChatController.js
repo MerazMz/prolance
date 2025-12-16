@@ -10,7 +10,7 @@ const getConversations = async (req, res) => {
         const conversations = await ConversationModel.find({
             participants: userId
         })
-            .populate('participants', 'name avatar')
+            .populate('participants', 'name avatar username')
             .populate('projectId', 'title thumbnail')
             .sort({ lastMessageAt: -1 });
 
@@ -51,7 +51,7 @@ const getConversationById = async (req, res) => {
         const { page = 1, limit = 50 } = req.query;
 
         const conversation = await ConversationModel.findById(id)
-            .populate('participants', 'name avatar')
+            .populate('participants', 'name avatar username')
             .populate('projectId', 'title category budget');
 
         if (!conversation) {
