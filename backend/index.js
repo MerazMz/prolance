@@ -24,16 +24,9 @@ const NotificationRouter = require('./Routes/NotificationRouter')
 const AIRouter = require('./Routes/AIRouter')
 const MessageModel = require('./Models/Message')
 const ConversationModel = require('./Models/Conversation')
-const { startOTPCleanupService } = require('./services/otpCleanupService')
 
 require('./Models/db')
 const PORT = process.env.PORT || 8080;
-
-// Start OTP cleanup service (clears expired OTPs every 5 minutes)
-if (!process.env.VERCEL) {
-    // Only run cleanup service in non-serverless environments
-    startOTPCleanupService();
-}
 
 app.get('/ping', (req, res) => {
     res.send('PONG');

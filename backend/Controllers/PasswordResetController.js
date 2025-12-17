@@ -1,11 +1,7 @@
 const UserModel = require('../Models/User');
 const { sendOTPEmail } = require('../services/emailService');
+const { generateOTP, storeOTP } = require('../services/otpService');
 const bcrypt = require('bcrypt');
-
-// Generate 6-digit OTP
-const generateOTP = () => {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-};
 
 // Request OTP - accepts username or email
 const forgotPassword = async (req, res) => {
@@ -36,12 +32,9 @@ const forgotPassword = async (req, res) => {
 
         // Generate OTP
         const otp = generateOTP();
-        const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-        // Update user with OTP
-        user.resetOTP = otp;
-        user.resetOTPExpires = otpExpires;
-        await user.save();
+        // Store OTP in Redis with 10-minute TTL (auto-expires)
+        await storeOTP(user.email, otp, 600); // 600 seconds = 10 minutes
 
         // Send OTP email
         try {
@@ -95,29 +88,35 @@ const verifyOTP = async (req, res) => {
             });
         }
 
-        // Check if OTP exists
-        if (!user.resetOTP) {
+        // Get OTP from Redis
+        const { getOTP } = require('../services/otpService');
+        const storedOTP = await getOTP(user.email);
+
+        console.log(`[PasswordReset] Verifying OTP for user: ${user.email}`);
+        console.log(`[PasswordReset] Received OTP from request: "${otp}"`);
+        console.log(`[PasswordReset] Retrieved OTP from Redis: "${storedOTP}"`);
+
+        // Check if OTP exists (Redis auto-deletes expired OTPs)
+        if (!storedOTP) {
             return res.status(400).json({
                 message: 'No OTP request found. Please request a new OTP.',
                 success: false
             });
         }
 
-        // Check if OTP is expired
-        if (user.resetOTPExpires < Date.now()) {
-            return res.status(400).json({
-                message: 'OTP has expired. Please request a new one.',
-                success: false
-            });
-        }
+        // Verify OTP using bcrypt comparison (since OTP is stored as a hash)
+        const storedOTPHash = String(storedOTP).trim();
+        const inputOTPStr = String(otp).trim();
 
-        // Verify OTP
-        if (user.resetOTP !== otp) {
+        if (!bcrypt.compareSync(inputOTPStr, storedOTPHash)) {
+            // console.log(`[PasswordReset] OTP mismatch: Input OTP does not match stored hash`);
             return res.status(400).json({
                 message: 'Invalid OTP. Please try again.',
                 success: false
             });
         }
+
+        // console.log(`[PasswordReset] OTP verified successfully for ${user.email}`);
 
         // OTP is valid
         res.status(200).json({
@@ -168,17 +167,13 @@ const resetPassword = async (req, res) => {
             });
         }
 
-        // Verify OTP again
-        if (!user.resetOTP || user.resetOTP !== otp) {
-            return res.status(400).json({
-                message: 'Invalid OTP',
-                success: false
-            });
-        }
+        // Verify OTP using Redis service (auto-deletes on success)
+        const { verifyOTP } = require('../services/otpService');
+        const isValid = await verifyOTP(user.email, otp);
 
-        if (user.resetOTPExpires < Date.now()) {
+        if (!isValid) {
             return res.status(400).json({
-                message: 'OTP has expired',
+                message: 'Invalid or expired OTP',
                 success: false
             });
         }
@@ -186,10 +181,8 @@ const resetPassword = async (req, res) => {
         // Hash new password
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-        // Update password and clear OTP
+        // Update password (OTP already deleted by verifyOTP)
         user.password = hashedPassword;
-        user.resetOTP = '';
-        user.resetOTPExpires = null;
         await user.save();
 
         res.status(200).json({

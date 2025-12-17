@@ -21,12 +21,14 @@ import SkillsAutocompleteInput from '../components/ui/SkillsAutocompleteInput';
 
 const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
-// Custom styles for react-select
-const customSelectStyles = {
+// Custom styles for react-select with dark mode support
+const getCustomSelectStyles = (isDark) => ({
     control: (provided, state) => ({
         ...provided,
-        backgroundColor: 'white',
-        borderColor: state.isFocused ? 'rgb(22, 163, 74)' : 'rgb(229, 231, 235)',
+        backgroundColor: isDark ? 'rgb(31, 41, 55)' : 'white',
+        borderColor: state.isFocused
+            ? (isDark ? 'rgb(34, 197, 94)' : 'rgb(22, 163, 74)')
+            : (isDark ? 'rgb(55, 65, 81)' : 'rgb(229, 231, 235)'),
         borderWidth: '1px',
         borderRadius: '0.5rem',
         padding: '0.375rem 0.5rem',
@@ -36,26 +38,62 @@ const customSelectStyles = {
         minHeight: 'auto',
         transition: 'all 200ms',
         '&:hover': {
-            borderColor: state.isFocused ? 'rgb(22, 163, 74)' : 'rgb(229, 231, 235)',
+            borderColor: state.isFocused
+                ? (isDark ? 'rgb(34, 197, 94)' : 'rgb(22, 163, 74)')
+                : (isDark ? 'rgb(55, 65, 81)' : 'rgb(229, 231, 235)'),
         }
     }),
     valueContainer: (provided) => ({ ...provided, padding: '0' }),
-    input: (provided) => ({ ...provided, margin: '0', padding: '0', fontSize: '0.875rem', fontWeight: '300' }),
-    placeholder: (provided) => ({ ...provided, fontSize: '0.875rem', fontWeight: '300', color: 'rgb(156, 163, 175)' }),
-    singleValue: (provided) => ({ ...provided, fontSize: '0.875rem', fontWeight: '300' }),
-    menu: (provided) => ({ ...provided, borderRadius: '0.5rem', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }),
+    input: (provided) => ({
+        ...provided,
+        margin: '0',
+        padding: '0',
+        fontSize: '0.875rem',
+        fontWeight: '300',
+        color: isDark ? 'rgb(243, 244, 246)' : 'rgb(31, 41, 55)'
+    }),
+    placeholder: (provided) => ({
+        ...provided,
+        fontSize: '0.875rem',
+        fontWeight: '300',
+        color: isDark ? 'rgb(107, 114, 128)' : 'rgb(156, 163, 175)'
+    }),
+    singleValue: (provided) => ({
+        ...provided,
+        fontSize: '0.875rem',
+        fontWeight: '300',
+        color: isDark ? 'rgb(243, 244, 246)' : 'rgb(31, 41, 55)'
+    }),
+    menu: (provided) => ({
+        ...provided,
+        borderRadius: '0.5rem',
+        overflow: 'hidden',
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+        backgroundColor: isDark ? 'rgb(31, 41, 55)' : 'white',
+        border: isDark ? '1px solid rgb(55, 65, 81)' : 'none'
+    }),
     menuList: (provided) => ({ ...provided, padding: '0' }),
     option: (provided, state) => ({
         ...provided,
         fontSize: '0.875rem',
         fontWeight: '300',
-        backgroundColor: state.isSelected ? 'rgb(220, 252, 231)' : state.isFocused ? 'rgb(243, 244, 246)' : 'white',
-        color: state.isSelected ? 'rgb(21, 128, 61)' : 'rgb(31, 41, 55)',
+        backgroundColor: state.isSelected
+            ? (isDark ? 'rgb(21, 128, 61)' : 'rgb(220, 252, 231)')
+            : state.isFocused
+                ? (isDark ? 'rgb(55, 65, 81)' : 'rgb(243, 244, 246)')
+                : (isDark ? 'rgb(31, 41, 55)' : 'white'),
+        color: state.isSelected
+            ? (isDark ? 'rgb(220, 252, 231)' : 'rgb(21, 128, 61)')
+            : (isDark ? 'rgb(243, 244, 246)' : 'rgb(31, 41, 55)'),
         cursor: 'pointer'
     }),
-    dropdownIndicator: (provided) => ({ ...provided, padding: '0 4px', color: 'rgb(156, 163, 175)' }),
+    dropdownIndicator: (provided) => ({
+        ...provided,
+        padding: '0 4px',
+        color: isDark ? 'rgb(107, 114, 128)' : 'rgb(156, 163, 175)'
+    }),
     indicatorSeparator: () => ({ display: 'none' }),
-};
+});
 
 export default function Settings() {
     const [activeSection, setActiveSection] = useState('profile');
@@ -222,6 +260,9 @@ function ProfileSection({ settings, onUpdate }) {
     const [countdown, setCountdown] = useState(5);
     const [showImagePreview, setShowImagePreview] = useState(false);
     const countryOptions = useMemo(() => countryList().getData(), []);
+
+    // Detect dark mode
+    const isDarkMode = document.documentElement.classList.contains('dark');
 
     useEffect(() => {
         if (settings?.profile?.avatar) {
@@ -588,7 +629,7 @@ function ProfileSection({ settings, onUpdate }) {
                                                 // Store the selected country in a temporary state
                                                 document.getElementById('location-select-value').value = selectedOption?.label || '';
                                             }}
-                                            styles={customSelectStyles}
+                                            styles={getCustomSelectStyles(isDarkMode)}
                                             placeholder="Select country..."
                                             isClearable
                                             isSearchable
@@ -692,7 +733,7 @@ function ProfileSection({ settings, onUpdate }) {
                                             // Store the timezone value (e.g., "America/New_York")
                                             document.getElementById('timezone-select-value').value = typeof tz === 'string' ? tz : tz.value;
                                         }}
-                                        styles={customSelectStyles}
+                                        styles={getCustomSelectStyles(isDarkMode)}
                                         placeholder="Select timezone..."
                                     />
                                 </div>
@@ -808,6 +849,9 @@ function SkillsSection({ settings, onUpdate }) {
                 ? { [field]: value } // value is already an array from autocomplete
                 : { [field]: field === 'hourlyCharges' ? Number(value) : value };
 
+            console.log('Updating field:', field, 'with value:', value);
+            console.log('Payload:', payload);
+
             await axios.put(`${API_URL}/api/settings/skills`, payload, {
                 headers: { Authorization: token }
             });
@@ -815,7 +859,9 @@ function SkillsSection({ settings, onUpdate }) {
             setTimeout(() => setMessage(''), 2000);
             onUpdate();
         } catch (error) {
-            setMessage('Failed to update');
+            console.error('Update error:', error);
+            console.error('Error response:', error.response?.data);
+            setMessage(error.response?.data?.message || 'Failed to update');
         }
     };
 
@@ -946,9 +992,9 @@ function SkillsSection({ settings, onUpdate }) {
                                     autoFocus
                                 >
                                     <option value="">Select level</option>
-                                    <option value="newbie">Newbie</option>
+                                    <option value="beginner">Beginner</option>
                                     <option value="intermediate">Intermediate</option>
-                                    <option value="professional">Professional</option>
+                                    <option value="expert">Expert</option>
                                 </select>
                             )}
                         </div>

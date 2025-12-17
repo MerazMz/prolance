@@ -119,15 +119,15 @@ const UserSchema = new Schema({
             default: true
         }
     },
-    // Payment settings
-    withdrawalMethods: {
-        type: [{
-            type: String,
-            method: String,
-            details: String
-        }],
-        default: []
-    },
+    // // Payment settings
+    // withdrawalMethods: {
+    //     type: [{
+    //         type: String,
+    //         method: String,
+    //         details: String
+    //     }],
+    //     default: []
+    // },
     paymentMethods: {
         type: [{
             type: String,
@@ -190,14 +190,14 @@ const UserSchema = new Schema({
         type: Number,
         default: 0
     },
-    resetOTP: {
-        type: String,
-        default: ''
-    },
-    resetOTPExpires: {
-        type: Date,
-        default: null
-    },
+    // resetOTP: {
+    //     type: String,
+    //     default: ''
+    // },
+    // resetOTPExpires: {
+    //     type: Date,
+    //     default: null
+    // },
     // In-app notifications
     notifications: [{
         type: {
