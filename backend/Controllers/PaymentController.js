@@ -15,7 +15,7 @@ const razorpay = new Razorpay({
 const createOrder = async (req, res) => {
     try {
         const userId = req.user._id;
-        const { projectId, amount } = req.body;
+        const { projectId, amount, contractId } = req.body;
 
         // Validate inputs
         if (!projectId || !amount) {
@@ -45,8 +45,11 @@ const createOrder = async (req, res) => {
             });
         }
 
-        // Verify project is in completed status
-        if (project.status !== 'completed') {
+        // For escrow payments, allow payment when project is accepted or in-progress
+        // For regular payments, require completed status
+        const isEscrowPayment = contractId ? true : false;
+
+        if (!isEscrowPayment && project.status !== 'completed') {
             return res.status(400).json({
                 message: 'Project must be completed before payment',
                 success: false
@@ -77,9 +80,11 @@ const createOrder = async (req, res) => {
             amount: amount,
             currency: 'INR',
             status: 'created',
+            escrowStatus: isEscrowPayment ? 'held' : 'released', // Set to 'held' for escrow payments
             projectId: projectId,
             clientId: userId,
             freelancerId: project.assignedFreelancerId._id,
+            contractId: contractId || null,
             receipt: receipt,
             notes: orderOptions.notes,
             email: project.clientId.email,
@@ -184,94 +189,204 @@ const verifyPayment = async (req, res) => {
 
         await payment.save();
 
+        // Check if this is an escrow payment
+        const isEscrowPayment = payment.escrowStatus === 'held';
 
-        // Update project status to closed
-        const project = await ProjectModel.findById(payment.projectId)
-            .populate('clientId', 'name')
-            .populate('assignedFreelancerId', 'name');
+        if (isEscrowPayment) {
+            // Escrow Payment Flow - Do NOT release funds yet
 
-        if (project) {
-            project.status = 'closed';
-            await project.save();
+            // Update contract with escrow funding details AND set status to accepted
+            if (payment.contractId) {
+                const contract = await ContractModel.findById(payment.contractId)
+                    .populate('projectId')
+                    .populate('freelancerId', 'name')
+                    .populate('clientId', 'name');
 
-            // Update freelancer's earnings and completed projects count
-            await UserModel.findByIdAndUpdate(
-                project.assignedFreelancerId._id,
-                {
-                    $inc: {
-                        totalEarnings: payment.amount,
-                        completedProjects: 1
+                if (contract) {
+                    // NOW set the contract to accepted (payment is verified)
+                    contract.status = 'accepted';
+                    contract.escrowFunded = true;
+                    contract.escrowPaymentId = payment._id;
+                    contract.escrowFundedAt = new Date();
+                    await contract.save();
+
+                    // Update project status to in-progress
+                    if (contract.projectId) {
+                        contract.projectId.status = 'in-progress';
+                        contract.projectId.acceptedProposalId = contract.applicationId;
+                        contract.projectId.assignedFreelancerId = contract.freelancerId._id;
+                        await contract.projectId.save();
+                    }
+
+                    // Emit contract-accepted event
+                    const io = req.app.get('io');
+                    if (io && contract.conversationId) {
+                        io.to(`conversation:${contract.conversationId}`).emit('contract-updated', {
+                            contract,
+                            conversationId: contract.conversationId
+                        });
                     }
                 }
-            );
+            }
 
-            // Update client's total spent and completed projects count
-            await UserModel.findByIdAndUpdate(
-                project.clientId._id,
-                {
-                    $inc: {
-                        totalSpent: payment.amount,
-                        completedProjects: 1
-                    }
-                }
-            );
+            // Fetch project with populated client info for notifications
+            const project = await ProjectModel.findById(payment.projectId)
+                .populate('clientId', 'name')
+                .populate('assignedFreelancerId', 'name');
 
-            // Create notification for freelancer
-            const freelancerNotification = {
-                type: 'payment_received',
-                title: 'Payment Received! 💰',
-                message: `Congratulations! Payment of ₹${payment.amount.toLocaleString()} received for project "${project.title}". Project has been successfully completed.`,
-                projectId: project._id,
-                read: false,
-                createdAt: new Date()
-            };
-
-            // Create notification for client
-            const clientNotification = {
-                type: 'project_completed',
-                title: 'Payment Successful! ✅',
-                message: `Payment of ₹${payment.amount.toLocaleString()} sent successfully for project "${project.title}". Project has been closed.`,
-                projectId: project._id,
-                read: false,
-                createdAt: new Date()
-            };
-
-            // Send notifications to both users
-            await UserModel.findByIdAndUpdate(
-                project.assignedFreelancerId._id,
-                { $push: { notifications: freelancerNotification } }
-            );
-
-            await UserModel.findByIdAndUpdate(
-                project.clientId._id,
-                { $push: { notifications: clientNotification } }
-            );
-
-            // Emit Socket.io events
-            const io = req.app.get('io');
-            if (io) {
-                io.to(`project:${project._id}`).emit('payment-completed', {
+            if (project) {
+                // Create notification for freelancer about escrow funding
+                const freelancerNotification = {
+                    type: 'escrow_funded',
+                    title: 'Project Funded! 💰',
+                    message: `Great news! The client has deposited ₹${payment.amount.toLocaleString()} in escrow for "${project.title}". You can now start working confidently knowing payment is secured.`,
                     projectId: project._id,
-                    paymentId: payment._id,
-                    status: 'closed',
-                    amount: payment.amount
-                });
-                io.to(`user:${project.assignedFreelancerId._id}`).emit('new-notification', freelancerNotification);
-                io.to(`user:${project.clientId._id}`).emit('new-notification', clientNotification);
-            }
-        }
+                    read: false,
+                    createdAt: new Date()
+                };
 
-        res.status(200).json({
-            success: true,
-            message: 'Payment verified successfully',
-            payment: {
-                id: payment._id,
-                status: payment.status,
-                amount: payment.amount,
-                method: payment.paymentMethod,
-                verifiedAt: payment.verifiedAt
+                await UserModel.findByIdAndUpdate(
+                    project.assignedFreelancerId._id,
+                    { $push: { notifications: freelancerNotification } }
+                );
+
+                // Create notification for client about escrow hold
+                const clientNotification = {
+                    type: 'escrow_payment_held',
+                    title: 'Payment Held in Escrow',
+                    message: `Your payment of ₹${payment.amount.toLocaleString()} for "${project.title}" is now held securely in escrow. It will be released to the freelancer once you approve the completed work.`,
+                    projectId: project._id,
+                    read: false,
+                    createdAt: new Date()
+                };
+
+                await UserModel.findByIdAndUpdate(
+                    project.clientId._id,
+                    { $push: { notifications: clientNotification } }
+                );
+
+                // Emit Socket.io events for real-time updates
+                const io = req.app.get('io');
+                if (io) {
+                    // Notify freelancer about escrow funding
+                    io.to(`user:${project.assignedFreelancerId._id}`).emit('new-notification', freelancerNotification);
+
+                    // Notify client about escrow hold
+                    io.to(`user:${project.clientId._id}`).emit('new-notification', clientNotification);
+
+                    // Emit escrow-funded event to project room and contract
+                    io.to(`project:${project._id}`).emit('escrow-funded', {
+                        projectId: project._id,
+                        contractId: payment.contractId, // Use payment.contractId as contract might not be found
+                        amount: payment.amount,
+                        escrowStatus: 'held'
+                    });
+                }
             }
-        });
+
+            res.status(200).json({
+                success: true,
+                message: 'Payment verified and held in escrow',
+                payment: {
+                    id: payment._id,
+                    status: payment.status,
+                    escrowStatus: payment.escrowStatus,
+                    amount: payment.amount,
+                    method: payment.paymentMethod,
+                    verifiedAt: payment.verifiedAt
+                }
+            });
+
+        } else {
+            // Regular Payment Flow - Release immediately (backward compatibility)
+            // Update project status to closed
+            const project = await ProjectModel.findById(payment.projectId)
+                .populate('clientId', 'name')
+                .populate('assignedFreelancerId', 'name');
+
+            if (project) {
+                project.status = 'closed';
+                await project.save();
+
+                // Update freelancer's earnings and completed projects count
+                await UserModel.findByIdAndUpdate(
+                    project.assignedFreelancerId._id,
+                    {
+                        $inc: {
+                            totalEarnings: payment.amount,
+                            completedProjects: 1
+                        }
+                    }
+                );
+
+                // Update client's total spent and completed projects count
+                await UserModel.findByIdAndUpdate(
+                    project.clientId._id,
+                    {
+                        $inc: {
+                            totalSpent: payment.amount,
+                            completedProjects: 1
+                        }
+                    }
+                );
+
+                // Create notification for freelancer
+                const freelancerNotification = {
+                    type: 'payment_received',
+                    title: 'Payment Received! 💰',
+                    message: `Congratulations! Payment of ₹${payment.amount.toLocaleString()} received for project "${project.title}". Project has been successfully completed.`,
+                    projectId: project._id,
+                    read: false,
+                    createdAt: new Date()
+                };
+
+                // Create notification for client
+                const clientNotification = {
+                    type: 'project_completed',
+                    title: 'Payment Successful! ✅',
+                    message: `Payment of ₹${payment.amount.toLocaleString()} sent successfully for project "${project.title}". Project has been closed.`,
+                    projectId: project._id,
+                    read: false,
+                    createdAt: new Date()
+                };
+
+                // Send notifications to both users
+                await UserModel.findByIdAndUpdate(
+                    project.assignedFreelancerId._id,
+                    { $push: { notifications: freelancerNotification } }
+                );
+
+                await UserModel.findByIdAndUpdate(
+                    project.clientId._id,
+                    { $push: { notifications: clientNotification } }
+                );
+
+                // Emit Socket.io events
+                const io = req.app.get('io');
+                if (io) {
+                    io.to(`project:${project._id}`).emit('payment-completed', {
+                        projectId: project._id,
+                        paymentId: payment._id,
+                        status: 'closed',
+                        amount: payment.amount
+                    });
+                    io.to(`user:${project.assignedFreelancerId._id}`).emit('new-notification', freelancerNotification);
+                    io.to(`user:${project.clientId._id}`).emit('new-notification', clientNotification);
+                }
+            }
+
+            res.status(200).json({
+                success: true,
+                message: 'Payment verified successfully',
+                payment: {
+                    id: payment._id,
+                    status: payment.status,
+                    amount: payment.amount,
+                    method: payment.paymentMethod,
+                    verifiedAt: payment.verifiedAt
+                }
+            });
+        }
     } catch (err) {
         console.error('Error verifying payment:', err);
         res.status(500).json({
@@ -457,10 +572,150 @@ const getPaymentByProject = async (req, res) => {
     }
 };
 
+// Release escrow payment (called when client approves completed work)
+const releaseEscrowPayment = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { paymentId } = req.params;
+
+        // Find payment record
+        const payment = await PaymentModel.findById(paymentId)
+            .populate('projectId')
+            .populate('clientId', 'name')
+            .populate('freelancerId', 'name');
+
+        if (!payment) {
+            return res.status(404).json({
+                message: 'Payment not found',
+                success: false
+            });
+        }
+
+        // Verify user is the client who made the payment
+        if (payment.clientId._id.toString() !== userId.toString()) {
+            return res.status(403).json({
+                message: 'Only the client can release escrow payment',
+                success: false
+            });
+        }
+
+        // Verify payment is in escrow
+        if (payment.escrowStatus !== 'held') {
+            return res.status(400).json({
+                message: 'Payment is not in escrow status',
+                success: false
+            });
+        }
+
+        // Verify project is completed
+        if (payment.projectId.status !== 'completed') {
+            return res.status(400).json({
+                message: 'Project must be in completed status before releasing payment',
+                success: false
+            });
+        }
+
+        // Release escrow payment
+        payment.escrowStatus = 'released';
+        payment.releasedAt = new Date();
+        payment.releasedBy = userId;
+        await payment.save();
+
+        // Update project status to closed
+        payment.projectId.status = 'closed';
+        await payment.projectId.save();
+
+        // Update freelancer's earnings and completed projects count
+        await UserModel.findByIdAndUpdate(
+            payment.freelancerId._id,
+            {
+                $inc: {
+                    totalEarnings: payment.amount,
+                    completedProjects: 1
+                }
+            }
+        );
+
+        // Update client's total spent and completed projects count
+        await UserModel.findByIdAndUpdate(
+            payment.clientId._id,
+            {
+                $inc: {
+                    totalSpent: payment.amount,
+                    completedProjects: 1
+                }
+            }
+        );
+
+        // Create notification for freelancer
+        const freelancerNotification = {
+            type: 'escrow_released',
+            title: 'Payment Released! 🎉',
+            message: `Congratulations! Payment of ₹${payment.amount.toLocaleString()} has been released from escrow for project "${payment.projectId.title}". The funds have been added to your earnings.`,
+            projectId: payment.projectId._id,
+            read: false,
+            createdAt: new Date()
+        };
+
+        // Create notification for client
+        const clientNotification = {
+            type: 'project_closed',
+            title: 'Project Completed Successfully! ✅',
+            message: `Payment of ₹${payment.amount.toLocaleString()} has been released to ${payment.freelancerId.name} for project "${payment.projectId.title}". The project has been closed.`,
+            projectId: payment.projectId._id,
+            read: false,
+            createdAt: new Date()
+        };
+
+        // Send notifications to both users
+        await UserModel.findByIdAndUpdate(
+            payment.freelancerId._id,
+            { $push: { notifications: freelancerNotification } }
+        );
+
+        await UserModel.findByIdAndUpdate(
+            payment.clientId._id,
+            { $push: { notifications: clientNotification } }
+        );
+
+        // Emit Socket.io events
+        const io = req.app.get('io');
+        if (io) {
+            io.to(`project:${payment.projectId._id}`).emit('escrow-released', {
+                projectId: payment.projectId._id,
+                paymentId: payment._id,
+                status: 'closed',
+                amount: payment.amount
+            });
+            io.to(`user:${payment.freelancerId._id}`).emit('new-notification', freelancerNotification);
+            io.to(`user:${payment.clientId._id}`).emit('new-notification', clientNotification);
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Escrow payment released successfully',
+            payment: {
+                id: payment._id,
+                escrowStatus: payment.escrowStatus,
+                releasedAt: payment.releasedAt,
+                amount: payment.amount
+            }
+        });
+    } catch (err) {
+        console.error('Error releasing escrow payment:', err);
+        res.status(500).json({
+            message: 'Failed to release escrow payment',
+            success: false,
+            error: err.message
+        });
+    }
+};
+
 module.exports = {
     createOrder,
     verifyPayment,
     handleWebhook,
     getPaymentHistory,
-    getPaymentByProject
+    getPaymentByProject,
+    releaseEscrowPayment
 };

@@ -31,6 +31,22 @@ const PaymentSchema = new mongoose.Schema({
         default: 'created'
     },
 
+    // Escrow tracking
+    escrowStatus: {
+        type: String,
+        enum: ['held', 'released', 'refunded'],
+        default: 'released' // Default to 'released' for backward compatibility with existing payments
+    },
+    releasedAt: {
+        type: Date,
+        default: null
+    },
+    releasedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'users',
+        default: null
+    },
+
     // Project and user references
     projectId: {
         type: mongoose.Schema.Types.ObjectId,

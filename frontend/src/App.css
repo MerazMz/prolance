@@ -4,9 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 #root {
-  max-width: 1920px;
-  margin: 0 auto;
-  padding: 2rem;
+  width: 100%;
   text-align: center;
   overflow-x: hidden;
 }

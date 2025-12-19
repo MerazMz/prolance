@@ -297,7 +297,7 @@ PORT=8080
 FRONTEND_URL=http://localhost:5173
 
 # Database
-MONGO_CONN=mongodb+srv://username:password@cluster.mongodb.net/prolance
+MONGO_CONN=your_mongodb_connection_string
 
 # Authentication
 JWT_SECRET=your_super_secret_jwt_key_change_in_production

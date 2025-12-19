@@ -248,7 +248,7 @@ export default function ImageUpload({ value, onChange, label = 'Upload Image' })
                                 type="button"
                                 onClick={handleCancelCrop}
                                 disabled={uploading}
-                                className="px-6 py-2.5 border border-gray-200  text-gray-600 dark:text-gray-200 text-sm rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition font-light"
+                                className="px-6 py-2.5 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-200 text-sm rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition font-light"
                             >
                                 Cancel
                             </button>

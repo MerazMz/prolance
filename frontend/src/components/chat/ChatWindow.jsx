@@ -69,8 +69,8 @@ export default function ChatWindow({ conversation, onBack }) {
     }, [conversation._id]);
 
     useEffect(() => {
-        // Scroll to bottom when messages change
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        // Scroll to bottom when messages change - only scroll within container
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }, [messages]);
 
     const fetchMessages = async () => {
@@ -229,25 +229,39 @@ export default function ChatWindow({ conversation, onBack }) {
                 {/* Propose Contract Button - Freelancers only */}
                 {isFreelancer && conversation.applicationId && (() => {
                     const hasAcceptedContract = contracts.some(c => c.status === 'accepted');
+                    const hasPendingContract = contracts.some(c => c.status === 'pending');
+                    const isDisabled = hasAcceptedContract || hasPendingContract;
+
+                    let buttonText = 'Propose Contract';
+                    let buttonTitle = 'Propose a new contract';
+
+                    if (hasAcceptedContract) {
+                        buttonText = 'Accepted';
+                        buttonTitle = 'Contract already accepted';
+                    } else if (hasPendingContract) {
+                        buttonText = 'Pending';
+                        buttonTitle = 'Waiting for client response';
+                    }
+
                     return (
                         <button
                             onClick={() => setShowContractModal(true)}
-                            disabled={hasAcceptedContract}
-                            className={`flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg transition ${hasAcceptedContract
+                            disabled={isDisabled}
+                            className={`flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg transition ${isDisabled
                                 ? 'text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-800 cursor-not-allowed'
                                 : 'text-green-700 dark:text-green-600 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30'
                                 }`}
-                            title={hasAcceptedContract ? "Contract already accepted" : "Propose a new contract"}
+                            title={buttonTitle}
                         >
                             <HiOutlineDocumentText size={14} />
-                            {hasAcceptedContract ? 'Accepted' : 'Propose Contract'}
+                            {buttonText}
                         </button>
                     );
                 })()}
             </div>
 
             {/* Messages Area - Fixed height, scrollable */}
-            <div className="flex-1 overflow-y-auto px-6 py-4 bg-gray-50 dark:bg-black">
+            <div className="flex-1 overflow-y-auto px-6 py-4 bg-gray-50 dark:bg-black overscroll-contain">
                 {/* Messages */}
                 <div className="space-y-3">
                     {groupMessagesByDate().map((item, index) => {

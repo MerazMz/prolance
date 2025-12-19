@@ -13,17 +13,13 @@ export const useTheme = () => {
 
 export const ThemeProvider = ({ children }) => {
     const [theme, setTheme] = useState(() => {
-        // Check localStorage first, then system preference, default to 'light'
+        // Check localStorage first, default to 'light' (no system preference)
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme) {
             return savedTheme;
         }
 
-        // Check system preference
-        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            return 'dark';
-        }
-
+        // Default to light mode for all new users
         return 'light';
     });
 
@@ -60,9 +56,16 @@ export const ThemeProvider = ({ children }) => {
         setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
     };
 
+    // Set theme with sound effect (for dropdown selection)
+    const setThemeWithSound = (newTheme) => {
+        playThemeSwitchSound();
+        setTheme(newTheme);
+    };
+
     const value = {
         theme,
         setTheme,
+        setThemeWithSound,
         toggleTheme
     };
 

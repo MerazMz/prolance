@@ -6,12 +6,14 @@ const {
     verifyPayment,
     handleWebhook,
     getPaymentHistory,
-    getPaymentByProject
+    getPaymentByProject,
+    releaseEscrowPayment
 } = require('../Controllers/PaymentController');
 
 // Protected routes (require authentication)
 router.post('/create-order', ensureAuthenticated, createOrder);
 router.post('/verify', ensureAuthenticated, verifyPayment);
+router.post('/release-escrow/:paymentId', ensureAuthenticated, releaseEscrowPayment);
 router.get('/history', ensureAuthenticated, getPaymentHistory);
 router.get('/project/:projectId', ensureAuthenticated, getPaymentByProject);
 

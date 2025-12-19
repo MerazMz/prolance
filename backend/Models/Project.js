@@ -161,6 +161,11 @@ const ProjectSchema = new Schema({
         fileUrl: String,
         fileName: String,
         fileSize: Number,
+        deliverableType: {
+            type: String,
+            enum: ['demo', 'final'],
+            default: 'final'
+        },
         uploadedAt: {
             type: Date,
             default: Date.now

@@ -1,17 +1,33 @@
 import { motion } from 'motion/react';
 import { HiOutlineDocumentText, HiOutlineCheck, HiOutlineBan, HiOutlineClock, HiOutlineDownload } from 'react-icons/hi';
 import axios from 'axios';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { jsPDF } from 'jspdf';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_Rqm0GwJb97hPsJ';
 
 export default function ContractCard({ contract, onUpdate }) {
     const { user } = useAuth();
     const [loading, setLoading] = useState(false);
+    const [processingPayment, setProcessingPayment] = useState(false);
     const isClient = contract.clientId._id === user?.userId;
     const isFreelancer = contract.freelancerId._id === user?.userId;
+
+    // Load Razorpay script
+    useEffect(() => {
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.async = true;
+        document.body.appendChild(script);
+        return () => {
+            document.body.removeChild(script);
+        };
+    }, []);
+
+    const navigate = useNavigate();
 
     const handleAction = async (status) => {
         setLoading(true);
@@ -23,11 +39,105 @@ export default function ContractCard({ contract, onUpdate }) {
                 { headers: { Authorization: token } }
             );
 
-            onUpdate && onUpdate(response.data.contract);
+            // Check if payment is required
+            if (response.data.requiresPayment && response.data.paymentDetails) {
+                // Payment required - navigate to payment page
+                navigate(`/payment/${response.data.paymentDetails.projectId}`, {
+                    state: {
+                        amount: response.data.paymentDetails.amount,
+                        contractId: response.data.paymentDetails.contractId,
+                        contractTitle: contract.contractDetails.title,
+                        freelancerName: contract.freelancerId?.name
+                    }
+                });
+            } else {
+                // No payment required or contract rejected
+                onUpdate && onUpdate(response.data.contract);
+            }
         } catch (err) {
             console.error('Error updating contract:', err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handlePaymentFlow = async (paymentDetails, updatedContract) => {
+        setProcessingPayment(true);
+        try {
+            const token = localStorage.getItem('authToken');
+
+            // Create Razorpay order
+            const orderResponse = await axios.post(
+                `${API_BASE_URL}/api/payments/create-order`,
+                {
+                    projectId: paymentDetails.projectId,
+                    amount: paymentDetails.amount,
+                    contractId: paymentDetails.contractId
+                },
+                { headers: { Authorization: token } }
+            );
+
+            const { order, keyId } = orderResponse.data;
+
+            // Open Razorpay checkout
+            const options = {
+                key: keyId || RAZORPAY_KEY_ID,
+                amount: order.amount,
+                currency: order.currency,
+                name: 'Prolance',
+                description: `Escrow payment for ${contract.contractDetails.title}`,
+                order_id: order.id,
+                handler: async function (razorpayResponse) {
+                    await verifyPayment(razorpayResponse, paymentDetails.projectId, updatedContract);
+                },
+                prefill: {
+                    name: user?.name || '',
+                    email: user?.email || '',
+                    contact: user?.phone || ''
+                },
+                theme: {
+                    color: '#16a34a'
+                },
+                modal: {
+                    ondismiss: function () {
+                        setProcessingPayment(false);
+                        console.log('Payment cancelled');
+                    }
+                }
+            };
+
+            const razorpay = new window.Razorpay(options);
+            razorpay.open();
+        } catch (err) {
+            console.error('Payment initiation error:', err);
+            setProcessingPayment(false);
+        }
+    };
+
+    const verifyPayment = async (razorpayResponse, projectId, updatedContract) => {
+        try {
+            const token = localStorage.getItem('authToken');
+            const verifyResponse = await axios.post(
+                `${API_BASE_URL}/api/payments/verify`,
+                {
+                    razorpay_order_id: razorpayResponse.razorpay_order_id,
+                    razorpay_payment_id: razorpayResponse.razorpay_payment_id,
+                    razorpay_signature: razorpayResponse.razorpay_signature,
+                    projectId: projectId
+                },
+                { headers: { Authorization: token } }
+            );
+
+            if (verifyResponse.data.success) {
+                // Payment successful - update contract with escrow funding
+                updatedContract.escrowFunded = true;
+                updatedContract.escrowFundedAt = new Date();
+                onUpdate && onUpdate(updatedContract);
+            }
+        } catch (err) {
+            console.error('Payment verification error:', err);
+        } finally {
+            setProcessingPayment(false);
         }
     };
 
@@ -201,8 +311,8 @@ ${contract.contractDetails.paymentTerms}`;
                         onClick={handleDownload}
                         disabled={contract.status !== 'accepted'}
                         className={`p-1.5 rounded-lg transition ${contract.status === 'accepted'
-                                ? 'text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 cursor-pointer'
-                                : 'text-gray-300 dark:text-gray-600 bg-gray-50 dark:bg-gray-800 cursor-not-allowed'
+                            ? 'text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 cursor-pointer'
+                            : 'text-gray-300 dark:text-gray-600 bg-gray-50 dark:bg-gray-800 cursor-not-allowed'
                             }`}
                         title={contract.status === 'accepted' ? 'Download Contract PDF' : 'Contract must be accepted to download PDF'}
                     >
@@ -293,6 +403,62 @@ ${contract.contractDetails.paymentTerms}`;
                 <div className="flex items-center gap-2 pt-3 border-t border-green-200 dark:border-green-800 text-sm text-green-700 dark:text-green-400 font-light">
                     <HiOutlineCheck size={16} />
                     <span>Contract accepted • Project assigned to {contract.freelancerId.name}</span>
+                </div>
+            )}
+
+            {/* Escrow Funding Status */}
+            {contract.status === 'accepted' && contract.escrowFunded && (
+                <div className="mt-3 pt-3 border-t border-green-200 dark:border-green-800">
+                    {/* Check if payment is released */}
+                    {contract.paymentReleased || contract.escrowStatus === 'released' ? (
+                        <div className="flex items-center gap-2 p-3 bg-gradient-to-r from-green-100 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/20 border border-green-300 dark:border-green-700 rounded-lg">
+                            <div className="w-10 h-10 bg-green-600 dark:bg-green-700 rounded-full flex items-center justify-center flex-shrink-0">
+                                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                            <div className="flex-1">
+                                <p className="text-sm font-semibold text-green-800 dark:text-green-300">
+                                    {isClient ? '✓ Payment Released Successfully' : '✓ Payment Received Successfully'}
+                                </p>
+                                <p className="text-xs text-green-600 dark:text-green-400 font-light mt-0.5">
+                                    {isClient
+                                        ? `₹${contract.contractDetails.finalAmount.toLocaleString()} has been released to ${contract.freelancerId.name}. Project completed!`
+                                        : `₹${contract.contractDetails.finalAmount.toLocaleString()} has been credited to your account. Congratulations!`
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                            <div className="w-8 h-8 bg-green-600 dark:bg-green-700 rounded-full flex items-center justify-center flex-shrink-0">
+                                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                            <div className="flex-1">
+                                <p className="text-sm font-medium text-green-800 dark:text-green-300">
+                                    {isFreelancer ? '✓ Project Funded - Payment in Escrow' : '✓ Payment Held in Escrow'}
+                                </p>
+                                <p className="text-xs text-green-600 dark:text-green-400 font-light mt-0.5">
+                                    {isFreelancer
+                                        ? `Client has deposited ₹${contract.contractDetails.finalAmount.toLocaleString()} in escrow. Funds will be released upon project completion and approval.`
+                                        : `₹${contract.contractDetails.finalAmount.toLocaleString()} held securely. Will be released to freelancer upon your approval of completed work.`
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Processing Payment Indicator */}
+            {processingPayment && (
+                <div className="mt-3 pt-3 border-t border-green-200 dark:border-green-800">
+                    <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                        <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                        <p className="text-sm text-blue-700 dark:text-blue-400 font-light">Processing payment...</p>
+                    </div>
                 </div>
             )}
 

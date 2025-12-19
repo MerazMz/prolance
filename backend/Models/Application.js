@@ -40,6 +40,24 @@ const ApplicationSchema = new Schema({
     clientNotes: {
         type: String,
         default: ''
+    },
+    // AI Scoring Fields
+    aiScore: {
+        type: Number,
+        min: 0,
+        max: 100,
+        default: null
+    },
+    aiAnalysis: {
+        relevance: { type: Number, min: 0, max: 100 },
+        professionalism: { type: Number, min: 0, max: 100 },
+        clarity: { type: Number, min: 0, max: 100 },
+        experience: { type: Number, min: 0, max: 100 },
+        summary: { type: String }
+    },
+    scoredAt: {
+        type: Date,
+        default: null
     }
 }, {
     timestamps: true

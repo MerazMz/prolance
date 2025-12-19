@@ -621,9 +621,24 @@ const updateMilestone = async (req, res) => {
 // Add deliverable
 const addDeliverable = async (req, res) => {
     try {
-        const userId = req.user._id;
         const { id } = req.params;
-        const { title, description, fileUrl, fileName, fileSize } = req.body;
+        const userId = req.user._id;
+        const { title, description, fileUrl, fileName, fileSize, deliverableType } = req.body;
+
+        if (!title || !fileUrl) {
+            return res.status(400).json({
+                message: 'Title and file URL are required',
+                success: false
+            });
+        }
+
+        // Validate deliverableType if provided
+        if (deliverableType && !['demo', 'final'].includes(deliverableType)) {
+            return res.status(400).json({
+                message: 'Invalid deliverable type. Must be "demo" or "final"',
+                success: false
+            });
+        }
 
         const project = await ProjectModel.findById(id);
 
@@ -634,8 +649,8 @@ const addDeliverable = async (req, res) => {
             });
         }
 
-        if (!project.assignedFreelancerId ||
-            project.assignedFreelancerId.toString() !== userId.toString()) {
+        // Only assigned freelancer can add deliverables
+        if (project.assignedFreelancerId.toString() !== userId.toString()) {
             return res.status(403).json({
                 message: 'Only assigned freelancer can add deliverables',
                 success: false
@@ -647,7 +662,9 @@ const addDeliverable = async (req, res) => {
             description,
             fileUrl,
             fileName,
-            fileSize
+            fileSize,
+            deliverableType: deliverableType || 'final', // Default to 'final' for backward compatibility
+            uploadedAt: new Date()
         };
 
         project.deliverables.push(deliverable);
@@ -880,7 +897,25 @@ const submitWork = async (req, res) => {
         // Validate that there's at least one deliverable
         if (!project.deliverables || project.deliverables.length === 0) {
             return res.status(400).json({
-                message: 'Please add at least one deliverable before submitting work',
+                message: 'Please add at least one demo and one final deliverable before submitting work',
+                success: false
+            });
+        }
+
+        // Validate that both demo and final deliverables exist
+        const hasDemoDeliverable = project.deliverables.some(d => d.deliverableType === 'demo');
+        const hasFinalDeliverable = project.deliverables.some(d => d.deliverableType === 'final');
+
+        if (!hasDemoDeliverable) {
+            return res.status(400).json({
+                message: 'Please upload at least one DEMO deliverable (preview for client review) before submitting work',
+                success: false
+            });
+        }
+
+        if (!hasFinalDeliverable) {
+            return res.status(400).json({
+                message: 'Please upload at least one FINAL deliverable (complete work for after payment) before submitting work',
                 success: false
             });
         }
@@ -909,11 +944,13 @@ const submitWork = async (req, res) => {
         // Emit Socket.io event
         const io = req.app.get('io');
         if (io) {
+            console.log(`Emitting work-submitted event to project:${id}`);
             io.to(`project:${id}`).emit('work-submitted', {
-                projectId: id,
+                projectId: id.toString(),
                 status: 'completed'
             });
             // Send notification to client
+            console.log(`Sending notification to user:${project.clientId}`);
             io.to(`user:${project.clientId}`).emit('new-notification', clientNotification);
         }
 

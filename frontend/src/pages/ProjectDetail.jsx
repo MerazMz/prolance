@@ -28,19 +28,52 @@ export default function ProjectDetail() {
     const [selectedImage, setSelectedImage] = useState(0);
     const [showApplicationModal, setShowApplicationModal] = useState(false);
     const [applicationSuccess, setApplicationSuccess] = useState(false);
+    const [hasApplied, setHasApplied] = useState(false);
+    const [isAssigned, setIsAssigned] = useState(false);
 
     useEffect(() => {
         fetchProject();
-    }, [id]);
+        if (isAuthenticated) {
+            checkApplicationStatus();
+        }
+    }, [id, isAuthenticated]);
 
     const fetchProject = async () => {
         try {
             const response = await axios.get(`${API_BASE_URL}/api/projects/${id}`);
             setProject(response.data.project);
+
+            // Check if current user is assigned
+            const currentUser = authService.getCurrentUser();
+            if (currentUser && response.data.project.assignedFreelancerId) {
+                setIsAssigned(
+                    currentUser.userId === response.data.project.assignedFreelancerId._id ||
+                    currentUser.userId === response.data.project.assignedFreelancerId
+                );
+            }
+
             setLoading(false);
         } catch (err) {
             setError('Project not found');
             setLoading(false);
+        }
+    };
+
+    const checkApplicationStatus = async () => {
+        try {
+            const token = localStorage.getItem('authToken');
+            const response = await axios.get(
+                `${API_BASE_URL}/api/applications/my`,
+                { headers: { Authorization: token } }
+            );
+
+            // Check if user has already applied to this project
+            const applied = response.data.applications?.some(
+                app => (app.projectId._id === id || app.projectId === id)
+            );
+            setHasApplied(applied);
+        } catch (err) {
+            console.error('Error checking application status:', err);
         }
     };
 
@@ -102,6 +135,15 @@ export default function ProjectDetail() {
     return (
         <div className="min-h-screen bg-white dark:bg-gray-950">
             <div className="max-w-5xl mx-auto px-8 py-10">
+                {/* Back Button */}
+                <button
+                    onClick={() => navigate(-1)}
+                    className="mb-6 flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-500 transition-colors font-light group"
+                >
+                    <HiOutlineArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
+                    <span>Back</span>
+                </button>
+
                 {/* Breadcrumb */}
                 <motion.div
                     initial={{ opacity: 0 }}
@@ -114,15 +156,6 @@ export default function ProjectDetail() {
                     <HiOutlineChevronRight size={14} />
                     <span className="text-gray-700 dark:text-gray-300">{project.title}</span>
                 </motion.div>
-
-                {/* Back Button */}
-                <button
-                    onClick={() => navigate(-1)}
-                    className="absolute -mt-11 -ml-35 mb-4 flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-500 transition-colors font-light group"
-                >
-                    <HiOutlineArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
-                    <span>Back</span>
-                </button>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Main Content */}
@@ -290,6 +323,18 @@ export default function ProjectDetail() {
                                 <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-sm text-green-700 dark:text-green-400 font-light mb-3">
                                     ✓ Application submitted successfully! The client will review your application.
                                 </div>
+                            ) : isAssigned ? (
+                                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-sm text-blue-700 dark:text-blue-400 font-light mb-3">
+                                    ✓ You are assigned to this project
+                                </div>
+                            ) : hasApplied ? (
+                                <button
+                                    disabled={true}
+                                    className="w-full px-4 py-3 text-sm rounded-lg transition font-light mb-3 cursor-not-allowed bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
+                                    title="You have already applied for this project"
+                                >
+                                    Already Applied
+                                </button>
                             ) : (
                                 <button
                                     disabled={isOwner || !isAuthenticated}
