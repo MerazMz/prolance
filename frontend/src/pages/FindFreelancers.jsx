@@ -22,6 +22,7 @@ export default function FindFreelancers() {
     const [showFilters, setShowFilters] = useState(false);
     const { user } = useAuth();
     const filterDropdownRef = useRef(null);
+    const searchTimeoutRef = useRef(null);
 
     const popularSkills = [
         'All Skills',
@@ -40,6 +41,26 @@ export default function FindFreelancers() {
     useEffect(() => {
         fetchFreelancers();
     }, [selectedSkill, minRate, maxRate]);
+
+    // Real-time search with debouncing - triggers automatically when searchTerm changes
+    useEffect(() => {
+        // Clear previous timeout
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+        }
+
+        // Set new timeout for debounced search (500ms delay)
+        searchTimeoutRef.current = setTimeout(() => {
+            fetchFreelancers();
+        }, 500);
+
+        // Cleanup timeout on unmount or searchTerm change
+        return () => {
+            if (searchTimeoutRef.current) {
+                clearTimeout(searchTimeoutRef.current);
+            }
+        };
+    }, [searchTerm]);
 
     // Close filter dropdown when clicking outside
     useEffect(() => {

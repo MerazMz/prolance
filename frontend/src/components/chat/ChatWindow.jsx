@@ -1,13 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { HiOutlineChevronLeft, HiOutlineDocumentText, HiOutlinePaperClip } from 'react-icons/hi';
+import { HiOutlineChevronLeft, HiOutlineDocumentText, HiOutlinePaperClip, HiOutlineSparkles } from 'react-icons/hi';
 import { CiCircleInfo } from "react-icons/ci";
 import axios from 'axios';
 import socketService from '../../services/socketService';
 import MessageInput from './MessageInput';
 import ContractProposalModal from './ContractProposalModal';
 import ContractCard from './ContractCard';
+import SmartReplyBar from './SmartReplyBar';
+import ConversationSummary from './ConversationSummary';
+import ProfilePreviewModal from './ProfilePreviewModal';
 import { useAuth } from '../../context/AuthContext';
+import { generateSmartReplies, summarizeConversation } from '../../services/aiChatService';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
@@ -19,8 +23,18 @@ export default function ChatWindow({ conversation, onBack }) {
     const [loading, setLoading] = useState(true);
     const [otherUserTyping, setOtherUserTyping] = useState(false);
     const [showContractModal, setShowContractModal] = useState(false);
+    // AI Features State
+    const [showAIMenu, setShowAIMenu] = useState(false);
+    const [smartRepliesEnabled, setSmartRepliesEnabled] = useState(false);
+    const [smartReplies, setSmartReplies] = useState([]);
+    const [loadingReplies, setLoadingReplies] = useState(false);
+    const [showSummary, setShowSummary] = useState(false);
+    const [loadingSummary, setLoadingSummary] = useState(false);
+    const [conversationSummary, setConversationSummary] = useState(null);
+    const [showProfilePreview, setShowProfilePreview] = useState(false);
     const messagesEndRef = useRef(null);
     const typingTimeoutRef = useRef(null);
+    const aiMenuRef = useRef(null);
 
     const otherUser = conversation.participants.find(p => p._id !== user?.userId);
     const isFreelancer = conversation.applicationId && user?.userId === conversation.participants.find(p => p._id !== conversation.projectId?.clientId)?._id;
@@ -71,6 +85,15 @@ export default function ChatWindow({ conversation, onBack }) {
     useEffect(() => {
         // Scroll to bottom when messages change
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+
+        // Generate smart replies when enabled and new message arrives
+        if (smartRepliesEnabled && messages.length > 0) {
+            const lastMessage = messages[messages.length - 1];
+            // Only generate if the last message is not from current user
+            if (lastMessage.senderId?._id !== user?.userId) {
+                handleGenerateSmartReplies();
+            }
+        }
     }, [messages]);
 
     const fetchMessages = async () => {
@@ -176,6 +199,85 @@ export default function ChatWindow({ conversation, onBack }) {
         return groups;
     };
 
+    // AI Feature Handlers
+    const handleGenerateSmartReplies = async () => {
+        setLoadingReplies(true);
+        try {
+            const formattedMessages = messages.map(msg => ({
+                content: msg.content,
+                isMine: msg.senderId?._id === user?.userId
+            }));
+
+            const userRole = user?.role || 'freelancer';
+            const result = await generateSmartReplies(formattedMessages, userRole);
+
+            if (result.success && result.replies) {
+                setSmartReplies(result.replies);
+            }
+        } catch (error) {
+            console.error('Failed to generate smart replies:', error);
+            setSmartReplies([]);
+        } finally {
+            setLoadingReplies(false);
+        }
+    };
+
+    const handleSelectReply = (reply) => {
+        // Insert reply into message input by dispatching a custom event
+        const event = new CustomEvent('insertSmartReply', { detail: reply });
+        window.dispatchEvent(event);
+    };
+
+    const handleSummarizeConversation = async () => {
+        setShowSummary(true);
+        setLoadingSummary(true);
+        try {
+            const formattedMessages = messages.map(msg => ({
+                content: msg.content,
+                isMine: msg.senderId?._id === user?.userId
+            }));
+
+            const result = await summarizeConversation(formattedMessages);
+
+            if (result.success && result.summary) {
+                setConversationSummary(result.summary);
+            }
+        } catch (error) {
+            console.error('Failed to summarize conversation:', error);
+            setConversationSummary(null);
+        } finally {
+            setLoadingSummary(false);
+        }
+    };
+
+    const toggleSmartReplies = () => {
+        const newState = !smartRepliesEnabled;
+        setSmartRepliesEnabled(newState);
+        if (newState && messages.length > 0) {
+            handleGenerateSmartReplies();
+        } else {
+            setSmartReplies([]);
+        }
+        setShowAIMenu(false);
+    };
+
+    // Close AI menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (aiMenuRef.current && !aiMenuRef.current.contains(event.target)) {
+                setShowAIMenu(false);
+            }
+        };
+
+        if (showAIMenu) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showAIMenu]);
+
     if (loading) {
         return (
             <div className="h-full flex items-center justify-center">
@@ -194,7 +296,13 @@ export default function ChatWindow({ conversation, onBack }) {
                 >
                     <HiOutlineChevronLeft size={20} className="text-gray-600 dark:text-gray-400" />
                 </button>
-                <Link to={`/user/${otherUser.username}`}>
+
+                {/* Clickable Avatar - Opens Profile Preview */}
+                <div
+                    onClick={() => setShowProfilePreview(true)}
+                    className="cursor-pointer hover:opacity-80 transition"
+                    title="View profile"
+                >
                     {otherUser?.avatar ? (
                         <img
                             src={otherUser.avatar}
@@ -207,13 +315,50 @@ export default function ChatWindow({ conversation, onBack }) {
                             {otherUser?.name?.charAt(0).toUpperCase()}
                         </div>
                     )}
-                </Link>
+                </div>
 
+                {/* User Name and Project - flex-1 to push icons to right */}
                 <div className="flex-1 min-w-0">
                     <h2 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{otherUser?.name}</h2>
                     <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                         {conversation.projectId?.title}
                     </p>
+                </div>
+
+                {/* Right Side Icons */}
+                {/* AI Assist Menu */}
+                <div className="relative" ref={aiMenuRef}>
+                    <button
+                        onClick={() => setShowAIMenu(!showAIMenu)}
+                        className="p-2 rounded-lg transition text-purple-600 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-900/20"
+                        title="AI Assist"
+                    >
+                        <HiOutlineSparkles size={20} />
+                    </button>
+
+                    {/* Dropdown Menu */}
+                    {showAIMenu && (
+                        <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden z-10">
+                            <button
+                                onClick={toggleSmartReplies}
+                                className="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition flex items-center justify-between"
+                            >
+                                <span className="text-gray-700 dark:text-gray-300">Smart Replies</span>
+                                <div className={`w-10 h-5 rounded-full transition ${smartRepliesEnabled ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
+                                    <div className={`w-4 h-4 mt-0.5 bg-white rounded-full shadow transition-transform ${smartRepliesEnabled ? 'ml-5' : 'ml-0.5'}`}></div>
+                                </div>
+                            </button>
+                            <button
+                                onClick={() => {
+                                    handleSummarizeConversation();
+                                    setShowAIMenu(false);
+                                }}
+                                className="w-full px-4 py-3 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition border-t border-gray-100 dark:border-gray-700"
+                            >
+                                <span className="text-gray-700 dark:text-gray-300">Summarize Conversation</span>
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {contracts.length > 0 && (
@@ -325,8 +470,19 @@ export default function ChatWindow({ conversation, onBack }) {
                 </div>
             </div>
 
-            {/* Message Input - Clean & Fixed at bottom */}
-            <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+            {/* Message Input Container - Relative positioned for SmartReplyBar */}
+            <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 relative">
+                {/* Smart Reply Bar - Absolutely positioned above input */}
+                {smartRepliesEnabled && (
+                    <SmartReplyBar
+                        replies={smartReplies}
+                        loading={loadingReplies}
+                        onSelectReply={handleSelectReply}
+                        onRefresh={handleGenerateSmartReplies}
+                        onDismiss={() => setSmartRepliesEnabled(false)}
+                    />
+                )}
+
                 <MessageInput conversationId={conversation._id} />
             </div>
 
@@ -385,6 +541,23 @@ export default function ChatWindow({ conversation, onBack }) {
                         setShowContractsModal(true);
                         setShowContractModal(false);
                     }}
+                />
+            )}
+
+            {/* Conversation Summary Modal */}
+            {showSummary && (
+                <ConversationSummary
+                    summary={conversationSummary}
+                    loading={loadingSummary}
+                    onClose={() => setShowSummary(false)}
+                />
+            )}
+
+            {/* Profile Preview Modal */}
+            {showProfilePreview && (
+                <ProfilePreviewModal
+                    user={otherUser}
+                    onClose={() => setShowProfilePreview(false)}
                 />
             )}
         </div>

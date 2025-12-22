@@ -22,6 +22,7 @@ const AdminRouter = require('./Routes/AdminRouter')
 const PaymentRouter = require('./Routes/PaymentRouter')
 const NotificationRouter = require('./Routes/NotificationRouter')
 const AIRouter = require('./Routes/AIRouter')
+const RatingRouter = require('./Routes/RatingRouter')
 const MessageModel = require('./Models/Message')
 const ConversationModel = require('./Models/Conversation')
 const { startOTPCleanupService } = require('./services/otpCleanupService')
@@ -83,6 +84,7 @@ app.use('/api/admin', AdminRouter)
 app.use('/api/payments', PaymentRouter)
 app.use('/api/notifications', NotificationRouter)
 app.use('/api/ai', AIRouter)
+app.use('/api/ratings', RatingRouter)
 
 
 // Create HTTP server and Socket.IO
