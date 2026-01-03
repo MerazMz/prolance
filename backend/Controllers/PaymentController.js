@@ -49,6 +49,34 @@ const createOrder = async (req, res) => {
         // For regular payments, require completed status
         const isEscrowPayment = contractId ? true : false;
 
+        // Determine freelancer ID based on payment type
+        let freelancerId;
+
+        if (isEscrowPayment && contractId) {
+            // For escrow payments, get freelancer from contract
+            const contract = await ContractModel.findById(contractId)
+                .populate('freelancerId', 'name email');
+
+            if (!contract) {
+                return res.status(404).json({
+                    message: 'Contract not found',
+                    success: false
+                });
+            }
+
+            freelancerId = contract.freelancerId._id;
+        } else {
+            // For regular payments, require assigned freelancer in project
+            if (!project.assignedFreelancerId) {
+                return res.status(400).json({
+                    message: 'Cannot create payment - project has no assigned freelancer',
+                    success: false
+                });
+            }
+
+            freelancerId = project.assignedFreelancerId._id;
+        }
+
         if (!isEscrowPayment && project.status !== 'completed') {
             return res.status(400).json({
                 message: 'Project must be completed before payment',
@@ -68,7 +96,7 @@ const createOrder = async (req, res) => {
                 projectId: projectId,
                 projectTitle: project.title,
                 clientId: userId.toString(),
-                freelancerId: project.assignedFreelancerId._id.toString()
+                freelancerId: freelancerId.toString()
             }
         };
 
@@ -83,7 +111,7 @@ const createOrder = async (req, res) => {
             escrowStatus: isEscrowPayment ? 'held' : 'released', // Set to 'held' for escrow payments
             projectId: projectId,
             clientId: userId,
-            freelancerId: project.assignedFreelancerId._id,
+            freelancerId: freelancerId,
             contractId: contractId || null,
             receipt: receipt,
             notes: orderOptions.notes,
@@ -194,6 +222,42 @@ const verifyPayment = async (req, res) => {
 
         if (isEscrowPayment) {
             // Escrow Payment Flow - Do NOT release funds yet
+
+            // CRITICAL: Validate payment status before accepting contract
+            // Check for edge cases: failed, refunded, disputed payments
+            if (payment.status === 'failed') {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Cannot accept contract - payment has failed',
+                    error: payment.errorDescription || 'Payment failed'
+                });
+            }
+
+            if (payment.status === 'refunded' || payment.escrowStatus === 'refunded') {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Cannot accept contract - payment has been refunded',
+                    error: 'Payment was refunded'
+                });
+            }
+
+            // Ensure payment is actually captured or authorized
+            if (payment.status !== 'captured' && payment.status !== 'authorized') {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Cannot accept contract - payment not completed',
+                    error: `Payment status is ${payment.status}`
+                });
+            }
+
+            // Additional check: ensure payment is verified
+            if (!payment.verified) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Cannot accept contract - payment not verified',
+                    error: 'Payment verification pending'
+                });
+            }
 
             // Update contract with escrow funding details AND set status to accepted
             if (payment.contractId) {
@@ -604,6 +668,42 @@ const releaseEscrowPayment = async (req, res) => {
             return res.status(400).json({
                 message: 'Payment is not in escrow status',
                 success: false
+            });
+        }
+
+        // CRITICAL: Validate payment status before releasing escrow
+        // Check for edge cases: failed, refunded, disputed payments
+        if (payment.status === 'failed') {
+            return res.status(400).json({
+                message: 'Cannot release escrow - payment has failed',
+                success: false,
+                error: payment.errorDescription || 'Payment failed'
+            });
+        }
+
+        if (payment.status === 'refunded') {
+            return res.status(400).json({
+                message: 'Cannot release escrow - payment has been refunded',
+                success: false,
+                error: 'Payment was already refunded'
+            });
+        }
+
+        // Ensure payment is captured (not just authorized)
+        if (payment.status !== 'captured') {
+            return res.status(400).json({
+                message: 'Cannot release escrow - payment not captured',
+                success: false,
+                error: `Payment status is ${payment.status}. Only captured payments can be released.`
+            });
+        }
+
+        // Ensure payment is verified
+        if (!payment.verified) {
+            return res.status(400).json({
+                message: 'Cannot release escrow - payment not verified',
+                success: false,
+                error: 'Payment verification pending or failed'
             });
         }
 
