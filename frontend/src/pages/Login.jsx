@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { useAuth } from '../context/AuthContext';
 import Particles from '../components/ui/background';
 import loginIllustration from '../assets/login_illustration_1764590330755.png';
+import SEOHelmet from '../components/SEOHelmet';
 
 export default function Login() {
     const [email, setEmail] = useState('');
@@ -102,6 +103,13 @@ export default function Login() {
 
     return (
         <div className="min-h-screen w-full flex bg-white dark:bg-black transition-colors duration-200">
+            <SEOHelmet
+                title="Login to Prolance"
+                description="Login to your Prolance account to access your dashboard, manage projects, and connect with freelancers or clients."
+                keywords="login, sign in, prolance login, freelance login"
+                canonicalUrl="https://prolance.meraz.me/login"
+                noindex={true}
+            />
             {/* Left Side - Illustration with Particles */}
             <div className="rounded-3xl hidden lg:flex lg:w-1/2 relative bg-gradient-to-br from-green-50 to-white dark:from-green-900/20 dark:to-gray-900 items-center justify-center p-12 overflow-hidden">
                 {/* Background Particles */}

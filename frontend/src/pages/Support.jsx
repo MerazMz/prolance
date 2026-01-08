@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import SplineScene from "../components/ui/spline";
+import SEOHelmet from "../components/SEOHelmet";
 
 
 export default function Support() {
@@ -14,6 +15,12 @@ export default function Support() {
 
     return (
         <div className="min-h-screen bg-white relative overflow-hidden dark:bg-black">
+            <SEOHelmet
+                title="Support - Get Help | Prolance"
+                description="Get help and support for your Prolance account. Contact us for assistance with projects, payments, or any other questions."
+                keywords="support, help, contact, prolance support, customer service"
+                canonicalUrl="https://prolance.meraz.me/support"
+            />
             {/* Spline 3D Background */}
             <div className="absolute inset-0 z-0 -mt-50 transition-all duration-1000 ease-in-out">
                 <SplineScene />

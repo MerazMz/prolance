@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { useAuth } from '../context/AuthContext';
 import Particles from '../components/ui/background';
 import signupIllustration from '../assets/signup_illustration_1764590349002.png';
+import SEOHelmet from '../components/SEOHelmet';
 
 export default function Signup() {
     const [name, setName] = useState('');
@@ -103,6 +104,13 @@ export default function Signup() {
 
     return (
         <div className="min-h-screen w-full flex bg-white dark:bg-black transition-colors duration-200">
+            <SEOHelmet
+                title="Sign Up - Join Prolance"
+                description="Create your Prolance account to start working as a freelancer or hiring top talent. Join thousands of professionals on our platform."
+                keywords="signup, register, join prolance, create account, freelance signup"
+                canonicalUrl="https://prolance.meraz.me/signup"
+                noindex={true}
+            />
             {/* Left Side - Illustration with Particles */}
             <div className="hidden rounded-3xl lg:flex lg:w-1/2 relative bg-gradient-to-br from-green-50 to-white dark:from-green-900/20 dark:to-gray-900 items-center justify-center p-12 overflow-hidden">
                 {/* Background Particles */}
@@ -244,8 +252,8 @@ export default function Signup() {
                                             <div
                                                 key={level}
                                                 className={`h-1 flex-1 rounded-full transition-all duration-300 ${level <= passwordStrength.strength
-                                                        ? passwordStrength.color
-                                                        : 'bg-gray-200 dark:bg-gray-700'
+                                                    ? passwordStrength.color
+                                                    : 'bg-gray-200 dark:bg-gray-700'
                                                     }`}
                                             />
                                         ))}
@@ -253,9 +261,9 @@ export default function Signup() {
                                     {/* Strength Label */}
                                     <p className="text-xs font-light text-gray-500 dark:text-gray-400">
                                         Password strength: <span className={`font-normal ${passwordStrength.strength === 1 ? 'text-red-600 dark:text-red-400' :
-                                                passwordStrength.strength === 2 ? 'text-orange-600 dark:text-orange-400' :
-                                                    passwordStrength.strength === 3 ? 'text-yellow-600 dark:text-yellow-500' :
-                                                        'text-green-600 dark:text-green-400'
+                                            passwordStrength.strength === 2 ? 'text-orange-600 dark:text-orange-400' :
+                                                passwordStrength.strength === 3 ? 'text-yellow-600 dark:text-yellow-500' :
+                                                    'text-green-600 dark:text-green-400'
                                             }`}>{passwordStrength.label}</span>
                                     </p>
                                 </div>
