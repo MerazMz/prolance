@@ -79,6 +79,20 @@ const ContractSchema = new mongoose.Schema({
         ref: 'payments',
         default: null
     },
+    // Escrow funding tracking
+    escrowFunded: {
+        type: Boolean,
+        default: false
+    },
+    escrowPaymentId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'payments',
+        default: null
+    },
+    escrowFundedAt: {
+        type: Date,
+        default: null
+    },
     status: {
         type: String,
         enum: ['pending', 'accepted', 'rejected', 'cancelled'],

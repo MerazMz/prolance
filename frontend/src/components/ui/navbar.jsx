@@ -221,7 +221,7 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 w-full px-4 md:px-8 py-3 flex items-center justify-between bg-white dark:bg-black border-b border-gray-100 dark:border-gray-800 z-40 rounded-full outline-1 outline-gray-100 dark:outline-gray-800 transition-colors duration-200">
+    <nav className="sticky top-0 mt-4 w-full max-w-7xl mx-auto px-4 md:px-8 py-3 flex items-center justify-between bg-white dark:bg-black border-b border-gray-100 dark:border-gray-800 z-40 rounded-full outline-1 outline-gray-100 dark:outline-gray-800 transition-colors duration-200">
 
       {/* LEFT: LOGO */}
       <Link to="/" className="flex items-center gap-2 cursor-pointer">
@@ -292,7 +292,7 @@ export default function Navbar() {
         {isAuthenticated && (
           <Link
             to="/my-projects"
-            className={`flex items-center gap-1.5 hover:text-green-600 transition cursor-pointer ${isActive('/my-projects') ? 'text-green-600' : ''
+            className={`flex items-center gap-1.5 hover:text-green-600 transition cursor-pointer ${isActive('/my-projects') || isActive('/project-workspace') ? 'text-green-600' : ''
               }`}
           >
             <HiOutlineFolderOpen size={16} />
@@ -625,7 +625,7 @@ export default function Navbar() {
               <Link
                 to="/my-projects"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg transition ${isActive('/my-projects') ? 'bg-green-50 text-green-600' : 'text-gray-600 hover:bg-gray-50'
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg transition ${isActive('/my-projects') || isActive('/project-workspace') ? 'bg-green-50 text-green-600' : 'text-gray-600 hover:bg-gray-50'
                   }`}
               >
                 <HiOutlineFolderOpen size={18} />

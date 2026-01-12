@@ -3,6 +3,7 @@ migrations/
 scripts/
 tests/
 .env
+!.env.example
 *.log
 .DS_Store
 .vscode/

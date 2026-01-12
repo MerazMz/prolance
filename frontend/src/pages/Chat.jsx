@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 import { HiOutlineChat, HiOutlineSearch, HiOutlineX } from 'react-icons/hi';
 import axios from 'axios';
@@ -19,6 +19,7 @@ export default function Chat() {
     const [showSearch, setShowSearch] = useState(false);
     const [sidebarWidth, setSidebarWidth] = useState(320); // Default 320px (md:w-80)
     const [isResizing, setIsResizing] = useState(false);
+    const containerRef = useRef(null);
 
     useEffect(() => {
         // Connect socket
@@ -179,9 +180,12 @@ export default function Chat() {
     };
 
     const handleMouseMove = (e) => {
-        if (!isResizing) return;
+        if (!isResizing || !containerRef.current) return;
 
-        const newWidth = e.clientX;
+        // Get the container's left position to calculate relative mouse position
+        const containerRect = containerRef.current.getBoundingClientRect();
+        const newWidth = e.clientX - containerRect.left;
+
         // Constrain width between 240px and 600px
         if (newWidth >= 240 && newWidth <= 600) {
             setSidebarWidth(newWidth);
@@ -226,12 +230,12 @@ export default function Chat() {
     }
 
     return (
-        <div className="flex flex-col bg-gray-50 dark:bg-black" style={{ height: 'calc(100vh - 90px)' }}>
-            {/* Fixed height container - no scrolling */}
-            <div className="flex-1 flex overflow-hidden max-w-[1600px] mx-auto w-full border border-gray-200 dark:border-gray-700 rounded-lg">
+        <div className="flex flex-col bg-gray-50 dark:bg-black overflow-hidden" style={{ height: 'calc(100vh - 90px)' }}>
+            {/* Fixed height container - aligned with navbar */}
+            <div ref={containerRef} className="flex-1 flex overflow-hidden w-full max-w-7xl mx-auto outline-1 dark:outline-gray-900 outline-gray-200  rounded-2xl">
                 {/* Conversations List Sidebar */}
                 <div
-                    className={`${showMobileChat ? 'hidden md:flex' : 'flex'} border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-black flex-col relative`}
+                    className={`${showMobileChat ? 'hidden md:flex' : 'flex'} border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-black flex-col relative overflow-hidden`}
                     style={{ width: `${sidebarWidth}px` }}
                 >
                     {/* Sidebar Header */}
@@ -303,7 +307,7 @@ export default function Chat() {
                     </div>
 
                     {/* Conversations List */}
-                    <div className="flex-1 overflow-y-auto">
+                    <div className="flex-1 overflow-y-auto overscroll-contain">
                         <ConversationsList
                             conversations={conversations}
                             selectedConversation={selectedConversation}

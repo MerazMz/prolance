@@ -14,6 +14,7 @@ import {
 } from 'react-icons/hi';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import SEOHelmet from '../components/SEOHelmet';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
@@ -261,6 +262,12 @@ export default function BrowseProjects() {
 
     return (
         <div className="min-h-screen bg-white dark:bg-black transition-colors duration-200">
+            <SEOHelmet
+                title="Browse Projects - Find Freelance Work | Prolance"
+                description="Discover and apply for freelance projects on Prolance. Browse thousands of opportunities across programming, design, writing, video editing, and more."
+                keywords="freelance projects, find work, freelance jobs, remote jobs, programming projects, design projects, freelance opportunities"
+                canonicalUrl="https://prolance.meraz.me/projects"
+            />
             <div className="max-w-6xl mx-auto px-8 py-10">
                 {/* Header */}
                 <motion.div

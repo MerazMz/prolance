@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import AnimatedCounter from '@/components/ui/animatedCounter';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import axios from 'axios';
@@ -245,19 +246,27 @@ export default function MyProjects() {
                     {/* Stats Grid */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                         <div className="border border-gray-100 dark:border-gray-800 rounded-lg p-4">
-                            <p className="text-2xl font-light text-gray-700 dark:text-gray-200">{stats.total}</p>
+                            <p className="text-2xl font-light text-gray-700 dark:text-gray-200">
+                                <AnimatedCounter value={stats.total} duration={1800}/>
+                            </p>
                             <p className="text-xs text-gray-500 dark:text-gray-400 font-light">Total Projects</p>
                         </div>
                         <div className="border border-gray-100 dark:border-gray-800 rounded-lg p-4">
-                            <p className="text-2xl font-light text-green-600 dark:text-green-500">{stats.open}</p>
+                            <p className="text-2xl font-light text-green-600 dark:text-green-500">
+                                <AnimatedCounter value={stats.open} duration={1800}/>
+                            </p>
                             <p className="text-xs text-gray-500 dark:text-gray-400 font-light">Open</p>
                         </div>
                         <div className="border border-gray-100 dark:border-gray-800 rounded-lg p-4">
-                            <p className="text-2xl font-light text-gray-700 dark:text-gray-200">{stats.totalProposals}</p>
+                            <p className="text-2xl font-light text-gray-700 dark:text-gray-200">
+                                <AnimatedCounter value={stats.totalProposals} duration={1800}/>
+                            </p>
                             <p className="text-xs text-gray-500 dark:text-gray-400 font-light">Total Proposals</p>
                         </div>
                         <div className="border border-gray-100 dark:border-gray-800 rounded-lg p-4">
-                            <p className="text-2xl font-light text-gray-700 dark:text-gray-200">{stats.totalViews}</p>
+                            <p className="text-2xl font-light text-gray-700 dark:text-gray-200">
+                                <AnimatedCounter value={stats.totalViews} duration={1800} />
+                            </p>
                             <p className="text-xs text-gray-500 dark:text-gray-400 font-light">Total Views</p>
                         </div>
                     </div>
@@ -434,8 +443,8 @@ export default function MyProjects() {
                                                         <HiOutlineEye size={18} />
                                                     )}
                                                 </Link>
-                                                {/* Show edit button only for client's own projects */}
-                                                {project.clientId?._id === user?.userId && (
+                                                {/* Show edit button only for client's own projects that are not closed */}
+                                                {project.clientId?._id === user?.userId && !['completed', 'cancelled', 'closed'].includes(project.status) && (
                                                     <Link
                                                         to={`/post-project/${project._id}`}
                                                         className="p-2 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition cursor-pointer"
@@ -601,12 +610,59 @@ export default function MyProjects() {
                                                                     )}
                                                                 </div>
                                                             </div>
-                                                            <span className={`px-2 py-0.5 text-xs rounded border font-light ${app.status === 'pending' ? 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800' :
-                                                                app.status === 'accepted' ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800' :
-                                                                    'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800'
-                                                                }`}>
-                                                                {app.status}
-                                                            </span>
+                                                            <div className="flex items-center gap-2">
+                                                                {/* AI Score Badge */}
+                                                                {app.aiScore !== null && app.aiScore !== undefined ? (
+                                                                    <div className="relative group/score">
+                                                                        <span className={`px-2 py-0.5 text-xs rounded border font-medium cursor-help ${app.aiScore >= 70
+                                                                                ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800'
+                                                                                : app.aiScore >= 40
+                                                                                    ? 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800'
+                                                                                    : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800'
+                                                                            }`}>
+                                                                            🤖 {app.aiScore}
+                                                                        </span>
+                                                                        {/* Score Breakdown Tooltip */}
+                                                                        <div className="absolute right-0 top-full mt-2 w-64 p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg opacity-0 invisible group-hover/score:opacity-100 group-hover/score:visible transition-all z-50">
+                                                                            <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">AI Analysis</p>
+                                                                            <div className="space-y-1.5">
+                                                                                <div className="flex justify-between text-xs">
+                                                                                    <span className="text-gray-500 dark:text-gray-400">Relevance</span>
+                                                                                    <span className="font-medium text-gray-700 dark:text-gray-300">{app.aiAnalysis?.relevance || '-'}</span>
+                                                                                </div>
+                                                                                <div className="flex justify-between text-xs">
+                                                                                    <span className="text-gray-500 dark:text-gray-400">Professionalism</span>
+                                                                                    <span className="font-medium text-gray-700 dark:text-gray-300">{app.aiAnalysis?.professionalism || '-'}</span>
+                                                                                </div>
+                                                                                <div className="flex justify-between text-xs">
+                                                                                    <span className="text-gray-500 dark:text-gray-400">Clarity</span>
+                                                                                    <span className="font-medium text-gray-700 dark:text-gray-300">{app.aiAnalysis?.clarity || '-'}</span>
+                                                                                </div>
+                                                                                <div className="flex justify-between text-xs">
+                                                                                    <span className="text-gray-500 dark:text-gray-400">Experience</span>
+                                                                                    <span className="font-medium text-gray-700 dark:text-gray-300">{app.aiAnalysis?.experience || '-'}</span>
+                                                                                </div>
+                                                                            </div>
+                                                                            {app.aiAnalysis?.summary && (
+                                                                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 pt-2 border-t border-gray-100 dark:border-gray-700 italic">
+                                                                                    "{app.aiAnalysis.summary}"
+                                                                                </p>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                ) : (
+                                                                    <span className="px-2 py-0.5 text-xs rounded border font-light bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-500 border-gray-200 dark:border-gray-700">
+                                                                        🤖 Scoring...
+                                                                    </span>
+                                                                )}
+                                                                {/* Status Badge */}
+                                                                <span className={`px-2 py-0.5 text-xs rounded border font-light ${app.status === 'pending' ? 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800' :
+                                                                    app.status === 'accepted' ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800' :
+                                                                        'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800'
+                                                                    }`}>
+                                                                    {app.status}
+                                                                </span>
+                                                            </div>
                                                         </div>
 
                                                         {/* Cover Letter with Expand/Collapse */}

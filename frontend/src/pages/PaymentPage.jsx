@@ -22,7 +22,11 @@ const PaymentPage = () => {
     const [processing, setProcessing] = useState(false);
     const [error, setError] = useState('');
 
+    // Get payment details from state
     const amount = location.state?.amount || null;
+    const contractId = location.state?.contractId || null;
+    const contractTitle = location.state?.contractTitle || null;
+    const freelancerName = location.state?.freelancerName || null;
 
     useEffect(() => {
         fetchProjectDetails();
@@ -69,7 +73,11 @@ const PaymentPage = () => {
 
             const orderResponse = await axios.post(
                 `${import.meta.env.VITE_API_BASE_URL}/api/payments/create-order`,
-                { projectId: projectId, amount: amount },
+                {
+                    projectId: projectId,
+                    amount: amount,
+                    contractId: contractId // Pass contractId for escrow payment
+                },
                 { headers: { Authorization: token } }
             );
 
@@ -109,6 +117,8 @@ const PaymentPage = () => {
         }
     };
 
+    const [paymentSuccess, setPaymentSuccess] = useState(false);
+
     const verifyPayment = async (paymentResponse) => {
         try {
             const token = localStorage.getItem('authToken');
@@ -124,16 +134,84 @@ const PaymentPage = () => {
             );
 
             if (verifyResponse.data.success) {
-                navigate(`/project-workspace/${projectId}`, {
-                    state: { paymentSuccess: true }
-                });
+                // Show success screen first
+                setPaymentSuccess(true);
+                setProcessing(false);
+
+                // Redirect after 3 seconds
+                setTimeout(() => {
+                    if (contractId) {
+                        navigate('/chat', {
+                            state: { paymentSuccess: true }
+                        });
+                    } else {
+                        navigate(`/project-workspace/${projectId}`, {
+                            state: { paymentSuccess: true }
+                        });
+                    }
+                }, 3000);
             }
         } catch (err) {
             console.error('Verification error:', err);
-            setError('Payment verification failed');
+            setError('Payment verification failed. Please contact support if amount was deducted.');
             setProcessing(false);
         }
     };
+
+    // Payment Success Screen
+    if (paymentSuccess) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white dark:from-black dark:to-gray-900 flex items-center justify-center px-4">
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-lg p-8 max-w-md w-full text-center"
+                >
+                    {/* Success Animation */}
+                    <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+                        className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6"
+                    >
+                        <HiOutlineCheckCircle className="w-12 h-12 text-green-600 dark:text-green-400" />
+                    </motion.div>
+
+                    <h1 className="text-2xl font-medium text-gray-800 dark:text-gray-200 mb-2">
+                        Payment Successful! 🎉
+                    </h1>
+                    <p className="text-gray-600 dark:text-gray-400 font-light mb-4">
+                        ₹{amount?.toLocaleString('en-IN')} has been deposited to escrow
+                    </p>
+
+                    {contractTitle && (
+                        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-6">
+                            <p className="text-sm text-green-800 dark:text-green-300 font-light">
+                                Contract "<span className="font-medium">{contractTitle}</span>" is now active!
+                            </p>
+                            {freelancerName && (
+                                <p className="text-xs text-green-600 dark:text-green-400 font-light mt-1">
+                                    {freelancerName} can now start working on your project.
+                                </p>
+                            )}
+                        </div>
+                    )}
+
+                    <p className="text-xs text-gray-500 dark:text-gray-400 font-light">
+                        Redirecting you back...
+                    </p>
+                    <div className="mt-3 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1 overflow-hidden">
+                        <motion.div
+                            initial={{ width: '0%' }}
+                            animate={{ width: '100%' }}
+                            transition={{ duration: 3 }}
+                            className="h-full bg-green-600 dark:bg-green-500"
+                        />
+                    </div>
+                </motion.div>
+            </div>
+        );
+    }
 
     if (loading) {
         return (
@@ -195,6 +273,19 @@ const PaymentPage = () => {
                                 <p className="text-sm text-left text-gray-600 dark:text-gray-400 font-light line-clamp-2">
                                     {project?.description}
                                 </p>
+                                {/* Show contract details if coming from contract acceptance */}
+                                {contractTitle && (
+                                    <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                                        <p className="text-xs text-left text-gray-500 dark:text-gray-400 font-light">
+                                            Contract: <span className="text-gray-700 dark:text-gray-300">{contractTitle}</span>
+                                        </p>
+                                        {freelancerName && (
+                                            <p className="text-xs text-left text-gray-500 dark:text-gray-400 font-light mt-1">
+                                                Freelancer: <span className="text-gray-700 dark:text-gray-300">{freelancerName}</span>
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

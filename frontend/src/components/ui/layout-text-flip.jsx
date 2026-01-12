@@ -70,7 +70,11 @@ export const LayoutTextFlip = ({
         <div className="flex flex-col md:flex-row items-center gap-3 md:gap-6 ">
           <motion.span
             layoutId="subtext"
+<<<<<<< HEAD
             className="text-xl md:text-2xl lg:text-4xl font-bold tracking-tight drop-shadow-lg text-gray-900 dark:text-white">
+=======
+            className="text-xl md:text-2xl lg:text-4xl font-bold tracking-tight drop-shadow-lg dark:text-white text-black">
+>>>>>>> 0923ce0736c0ba3808d4fcf1042139b46447c4c9
             {text}
           </motion.span>
           <motion.span

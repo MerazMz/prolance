@@ -7,12 +7,35 @@ import Footer from '../components/ui/footer'
 import ClickSpark from '../components/ClickSpark'
 import { GlobeDemo } from '../components/ui/globeProps'
 import ScrollVelocity from '../components/ui/scroll-velocity'
+import SEOHelmet from '../components/SEOHelmet'
 
 import '../App.css'
 
 function Home() {
+    const structuredData = {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "@id": "https://prolance.meraz.me/#webpage",
+        "url": "https://prolance.meraz.me/",
+        "name": "Prolance - Connect Freelancers with Clients Worldwide",
+        "description": "Join Prolance, the premier freelance marketplace connecting talented freelancers with clients worldwide. Find projects, hire experts, and grow your business.",
+        "isPartOf": {
+            "@type": "WebSite",
+            "@id": "https://prolance.meraz.me/#website"
+        }
+    };
+
     return (
         <>
+            <SEOHelmet
+                title="Prolance - Connect Freelancers with Clients Worldwide"
+                description="Join Prolance, the premier freelance marketplace connecting talented freelancers with clients worldwide. Find projects, hire experts, and grow your business."
+                keywords="freelance, marketplace, freelancers, hire freelancers, remote work, projects, gig economy, freelance jobs, talent, clients, freelance platform"
+                ogType="website"
+                canonicalUrl="https://prolance.meraz.me/"
+                structuredData={structuredData}
+            />
+
 
             {/* Hero Section with Particles Background - Responsive */}
             <div className="w-full h-[400px] md:h-[600px] absolute">

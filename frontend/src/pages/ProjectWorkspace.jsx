@@ -24,6 +24,7 @@ import TimelineContent from '@mui/lab/TimelineContent';
 import TimelineDot from '@mui/lab/TimelineDot';
 import TimelineOppositeContent from '@mui/lab/TimelineOppositeContent';
 import { Checkbox } from '../components/ui/Checkbox';
+import { showToast } from '../components/Toast';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
@@ -62,12 +63,21 @@ export default function ProjectWorkspace() {
     // Payment
     const [paymentDetails, setPaymentDetails] = useState(null);
 
+    // Contract for escrow status
+    const [contract, setContract] = useState(null);
+
     // Form states
-    const [deliverableForm, setDeliverableForm] = useState({ title: '', description: '', fileUrl: '' });
+    const [deliverableForm, setDeliverableForm] = useState({
+        title: '',
+        description: '',
+        fileUrl: '',
+        deliverableType: 'demo' // Default to demo for escrow
+    });
 
     useEffect(() => {
         fetchWorkspace();
         fetchPaymentDetails();
+        fetchContract();
 
         // Join project room for real-time updates
         if (socketService.isSocketConnected()) {
@@ -92,8 +102,52 @@ export default function ProjectWorkspace() {
             });
         };
 
+        const handleEscrowFunded = () => {
+            // Refetch contract to get updated escrow status
+            fetchContract();
+            fetchPaymentDetails();
+        };
+
+        const handleWorkSubmitted = (data) => {
+            console.log('Work submitted event received:', data);
+            console.log('Current project ID:', id);
+            console.log('Comparison:', data.projectId, '===', id, '?', data.projectId === id || data.projectId.toString() === id.toString());
+            if (data.projectId === id || data.projectId.toString() === id.toString()) {
+                console.log('Project ID matches, refreshing workspace...');
+                // Refresh project data to show updated status
+                fetchWorkspace();
+            } else {
+                console.log('Project ID does NOT match!');
+            }
+        };
+
+        const handleProjectAccepted = (data) => {
+            console.log('Project accepted event received:', data);
+            if (data.projectId === id) {
+                console.log('Project ID matches, refreshing all data...');
+                // Refresh all data when project is accepted and payment released
+                fetchWorkspace();
+                fetchPaymentDetails();
+            }
+        };
+
+        const handleEscrowReleased = (data) => {
+            console.log('Escrow released event received:', data);
+            if (data.projectId === id || data.projectId.toString() === id.toString()) {
+                // Refresh payment details and project status
+                fetchPaymentDetails();
+                fetchWorkspace();
+                // Show toast notification
+                showToast('Payment has been released! 🎉 Check your earnings.', 'success');
+            }
+        };
+
         socketService.on('work-status-updated', handleWorkStatusUpdate);
         socketService.on('deliverable-added', handleDeliverableAdded);
+        socketService.on('escrow-funded', handleEscrowFunded);
+        socketService.on('work-submitted', handleWorkSubmitted);
+        socketService.on('project-accepted', handleProjectAccepted);
+        socketService.on('escrow-released', handleEscrowReleased);
 
         return () => {
             if (socketService.isSocketConnected()) {
@@ -101,21 +155,29 @@ export default function ProjectWorkspace() {
             }
             socketService.off('work-status-updated', handleWorkStatusUpdate);
             socketService.off('deliverable-added', handleDeliverableAdded);
+            socketService.off('escrow-funded', handleEscrowFunded);
+            socketService.off('work-submitted', handleWorkSubmitted);
+            socketService.off('project-accepted', handleProjectAccepted);
+            socketService.off('escrow-released', handleEscrowReleased);
         };
     }, [id]);
 
     const fetchWorkspace = async () => {
         try {
+            console.log('Fetching workspace data for project:', id);
             const token = localStorage.getItem('authToken');
             const response = await axios.get(
                 `${API_BASE_URL}/api/projects/${id}/workspace`,
                 { headers: { Authorization: token } }
             );
 
+            console.log('Workspace data received:', response.data);
+            console.log('Project status:', response.data.project?.status);
             setProject(response.data.project);
             setUserRole(response.data.userRole);
             setLoading(false);
         } catch (err) {
+            console.error('Error fetching workspace:', err);
             setError(err.response?.data?.message || 'Failed to load workspace');
             setLoading(false);
         }
@@ -235,6 +297,29 @@ export default function ProjectWorkspace() {
     const handleSubmitWork = async () => {
         setSubmitting(true);
         try {
+            // Validate deliverables
+            if (!project.deliverables || project.deliverables.length === 0) {
+                setError('Please add at least one demo and one final deliverable before submitting work');
+                setSubmitting(false);
+                return;
+            }
+
+            // Check for both demo and final deliverables
+            const hasDemoDeliverable = project.deliverables.some(d => d.deliverableType === 'demo');
+            const hasFinalDeliverable = project.deliverables.some(d => d.deliverableType === 'final');
+
+            if (!hasDemoDeliverable) {
+                setError('Please upload at least one DEMO deliverable (preview for client review) before submitting work');
+                setSubmitting(false);
+                return;
+            }
+
+            if (!hasFinalDeliverable) {
+                setError('Please upload at least one FINAL deliverable (complete work for after payment) before submitting work');
+                setSubmitting(false);
+                return;
+            }
+
             const token = localStorage.getItem('authToken');
             await axios.post(
                 `${API_BASE_URL}/api/projects/${id}/submit-work`,
@@ -275,51 +360,37 @@ export default function ProjectWorkspace() {
     };
 
     const handleAcceptProject = async () => {
+        setAcceptingProject(true);
         try {
             const token = localStorage.getItem('authToken');
 
-            // First try to accept - if payment is required, backend will tell us
+            // Check if there's an escrow payment to release
+            if (!paymentDetails || paymentDetails.escrowStatus !== 'held') {
+                setError('No escrow payment found. Please contact support.');
+                setAcceptingProject(false);
+                setShowAcceptModal(false);
+                return;
+            }
+
+            // Release the escrow payment
             const response = await axios.post(
-                `${API_BASE_URL}/api/projects/${id}/accept-project`,
+                `${API_BASE_URL}/api/payments/release-escrow/${paymentDetails._id}`,
                 {},
                 { headers: { Authorization: token } }
             );
 
-            // If successful, refresh workspace
-            setShowAcceptModal(false);
-            fetchWorkspace();
-        } catch (err) {
-            // Check if payment is required
-            if (err.response?.data?.requiresPayment) {
-                // Navigate to payment page
-                // Get the contract to find the final amount
-                try {
-                    const contractResponse = await axios.get(
-                        `${API_BASE_URL}/api/contracts/my`,
-                        { headers: { Authorization: localStorage.getItem('authToken') } }
-                    );
-
-                    // Find the contract for this project
-                    const projectContract = contractResponse.data.contracts?.find(
-                        c => c.projectId._id === id || c.projectId === id
-                    );
-
-                    const amount = projectContract?.contractDetails?.finalAmount || 0;
-
-                    setShowAcceptModal(false);
-                    navigate(`/payment/${id}`, {
-                        state: { amount }
-                    });
-                } catch (contractErr) {
-                    console.error('Error fetching contract:', contractErr);
-                    setError('Failed to load payment information');
-                    setShowAcceptModal(false);
-                }
-            } else {
-                console.error('Error accepting project:', err);
-                setError(err.response?.data?.message || 'Failed to accept project');
+            if (response.data.success) {
+                // Refresh workspace and payment details
+                fetchWorkspace();
+                fetchPaymentDetails();
                 setShowAcceptModal(false);
             }
+        } catch (err) {
+            console.error('Error releasing escrow payment:', err);
+            setError(err.response?.data?.message || 'Failed to release payment');
+            setShowAcceptModal(false);
+        } finally {
+            setAcceptingProject(false);
         }
     };
 
@@ -368,7 +439,12 @@ export default function ProjectWorkspace() {
             }
 
             setShowDeliverableModal(false);
-            setDeliverableForm({ title: '', description: '', fileUrl: '' });
+            setDeliverableForm({
+                title: '',
+                description: '',
+                fileUrl: '',
+                deliverableType: 'demo'
+            });
             // Clear error if it was about missing deliverables
             if (error.includes('deliverable')) {
                 setError('');
@@ -394,6 +470,27 @@ export default function ProjectWorkspace() {
             if (err.response?.status !== 404) {
                 console.error('Error fetching payment details:', err);
             }
+        }
+    };
+
+    const fetchContract = async () => {
+        try {
+            const token = localStorage.getItem('authToken');
+            const response = await axios.get(
+                `${API_BASE_URL}/api/contracts/my`,
+                { headers: { Authorization: token } }
+            );
+
+            // Find the accepted contract for this project
+            const projectContract = response.data.contracts?.find(
+                c => (c.projectId._id === id || c.projectId === id) && c.status === 'accepted'
+            );
+
+            if (projectContract) {
+                setContract(projectContract);
+            }
+        } catch (err) {
+            console.error('Error fetching contract:', err);
         }
     };
 
@@ -449,6 +546,15 @@ export default function ProjectWorkspace() {
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-black">
             <div className="max-w-7xl mx-auto px-6 py-8">
+                {/* Back Button */}
+                <button
+                    onClick={() => navigate(-1)}
+                    className="mb-6 flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-500 transition-colors font-light group"
+                >
+                    <HiOutlineArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
+                    <span>Back</span>
+                </button>
+
                 {/* Breadcrumb */}
                 <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-6 font-light">
                     <Link to="/my-projects" className="hover:text-green-600 transition">
@@ -459,21 +565,58 @@ export default function ProjectWorkspace() {
                 </div>
 
                 {/* Header */}
-                <div className="flex items-center justify-between mb-8">
-                    <div>
-                        <h1 className="text-3xl font-light text-gray-800 dark:text-gray-200 mb-2">{project.title}</h1>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 font-light">
-                            {isFreelancer ? `Client: ${project.clientId?.name}` : `Freelancer: ${project.assignedFreelancerId?.name}`}
-                        </p>
-                    </div>
-                    <button
-                        onClick={() => navigate(-1)}
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 rounded-lg transition font-light"
-                    >
-                        <HiOutlineArrowLeft size={16} />
-                        Back
-                    </button>
+                <div className="mb-8">
+                    <h1 className="text-3xl font-light text-gray-800 dark:text-gray-200 mb-2">{project.title}</h1>
+                    <p className=" text-sm text-gray-500 dark:text-gray-400 font-light">
+                        {isFreelancer ? `Client: ${project.clientId?.name}` : `Freelancer: ${project.assignedFreelancerId?.name}`}
+                    </p>
                 </div>
+
+                {/* Escrow Funding Status Banner - Freelancer View */}
+                {isFreelancer && contract && contract.escrowFunded && paymentDetails && paymentDetails.escrowStatus === 'held' && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mb-6"
+                    >
+                        <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/10 border-2 border-green-200 dark:border-green-800 rounded-lg flex items-center gap-3">
+                            <div className="w-10 h-10 bg-green-600 dark:bg-green-700 rounded-full flex items-center justify-center flex-shrink-0">
+                                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-sm font-semibold text-green-800 dark:text-green-300">✓ Project Funded - Payment in Escrow</h3>
+                                <p className="text-xs text-green-700 dark:text-green-400 font-light mt-0.5">
+                                    Client has deposited ₹{contract.contractDetails?.finalAmount?.toLocaleString()} in escrow. The payment will be released to you upon project completion and client approval.
+                                </p>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+
+                {/* Not Funded Warning - Freelancer View */}
+                {isFreelancer && contract && !contract.escrowFunded && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mb-6"
+                    >
+                        <div className="p-4 bg-gradient-to-r from-orange-50 to-yellow-50 dark:from-orange-900/20 dark:to-yellow-900/10 border-2 border-orange-200 dark:border-orange-800 rounded-lg flex items-center gap-3">
+                            <div className="w-10 h-10 bg-orange-500 dark:bg-orange-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-sm font-semibold text-orange-800 dark:text-orange-300">! Not Funded - Waiting for Client Payment</h3>
+                                <p className="text-xs text-orange-700 dark:text-orange-400 font-light mt-0.5">
+                                    The client has not yet funded this project. Payment will be held in escrow once the client makes the payment.
+                                </p>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
 
                 {/* Error Banner */}
                 {error && (
@@ -487,68 +630,88 @@ export default function ProjectWorkspace() {
                 )}
 
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                    {/* MUI Timeline - Progress Tracker */}
+                    {/* Custom Timeline - Progress Tracker */}
                     <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 dark:border-gray-800 p-6"
                     >
-                        <h2 className="text-lg font-light text-gray-800 dark:text-gray-200 mb-4">Project Progress</h2>
+                        <h2 className="text-lg font-light text-gray-800 dark:text-gray-200 mb-6">Project Progress</h2>
 
-                        <Timeline position="right" sx={{ padding: 0, margin: 0 }}>
+                        <div className="space-y-0">
                             {WORK_PHASES.map((phase, index) => {
                                 const phaseEntry = project.phaseHistory?.find(h => h.phase === phase.key);
-                                const isCompleted = phaseEntry !== undefined;
+                                // Planning is always completed by default since it's the starting phase
+                                const isCompleted = phase.key === 'planning' || phaseEntry !== undefined;
                                 const isCurrent = phase.key === project.workStatus;
                                 const isLast = index === WORK_PHASES.length - 1;
 
                                 return (
-                                    <TimelineItem key={phase.key}>
-                                        <TimelineOppositeContent
-                                            sx={{
-                                                flex: 0.3,
-                                                paddingLeft: 0,
-                                                paddingRight: '12px',
-                                                fontSize: '0.75rem',
-                                                color: isCompleted ? '#10B981' : '#9CA3AF'
-                                            }}
-                                        >
-                                            {/* {phaseEntry ? formatDateTime(phaseEntry.completedAt) : ''} */}
-                                        </TimelineOppositeContent>
-                                        <TimelineSeparator>
-                                            <TimelineDot
-                                                sx={{
-                                                    bgcolor: isCompleted ? '#10B981' : '#E5E7EB',
-                                                    borderColor: isCompleted ? '#10B981' : '#D1D5DB',
-                                                    width: isCurrent ? 14 : 12,
-                                                    height: isCurrent ? 14 : 12
+                                    <motion.div
+                                        key={phase.key}
+                                        className="flex items-start"
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{
+                                            delay: index * 0.1,
+                                            duration: 0.3,
+                                            ease: "easeOut"
+                                        }}
+                                    >
+                                        {/* Left side - Date/Time */}
+                                        <div className="w-20 text-right pr-4 pt-0.5">
+                                            <span className={`text-xs font-light ${isCompleted ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
+                                                {phaseEntry ? new Date(phaseEntry.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}
+                                            </span>
+                                        </div>
+
+                                        {/* Center - Dot and Line */}
+                                        <div className="flex flex-col items-center">
+                                            <motion.div
+                                                className={`w-3 h-3 rounded-full border-2 ${isCompleted
+                                                    ? 'bg-green-500 border-green-500'
+                                                    : isCurrent
+                                                        ? 'bg-white dark:bg-gray-900 border-green-500'
+                                                        : 'bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600'
+                                                    }`}
+                                                initial={{ scale: 0 }}
+                                                animate={{ scale: 1 }}
+                                                transition={{
+                                                    delay: index * 0.1 + 0.15,
+                                                    type: "spring",
+                                                    stiffness: 300,
+                                                    damping: 15
                                                 }}
                                             />
                                             {!isLast && (
-                                                <TimelineConnector
-                                                    sx={{
-                                                        bgcolor: isCompleted ? '#10B981' : '#E5E7EB',
-                                                        width: '2px'
+                                                <motion.div
+                                                    className={`w-0.5 ${isCompleted ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-700'}`}
+                                                    initial={{ height: 0 }}
+                                                    animate={{ height: 40 }}
+                                                    transition={{
+                                                        delay: index * 0.1 + 0.2,
+                                                        duration: 0.3,
+                                                        ease: "easeOut"
                                                     }}
                                                 />
                                             )}
-                                        </TimelineSeparator>
-                                        <TimelineContent
-                                            sx={{
-                                                paddingLeft: '12px',
-                                                paddingRight: 0,
-                                                fontSize: '0.875rem',
-                                                fontWeight: isCurrent ? 600 : 400,
-                                                color: isCurrent ? '#10B981' : isCompleted ? '#374151' : '#9CA3AF'
-                                            }}
-                                        >
-                                            {phase.label}
-                                            {isCurrent && <span style={{ fontSize: '0.75rem', color: '#10B981', marginLeft: '8px' }}>● Current</span>}
-                                        </TimelineContent>
-                                    </TimelineItem>
+                                        </div>
+
+                                        {/* Right side - Label */}
+                                        <div className="pl-4 pb-10">
+                                            <span className={`text-sm font-light ${isCurrent
+                                                ? 'text-green-600 dark:text-green-400 font-medium'
+                                                : isCompleted
+                                                    ? 'text-gray-700 dark:text-gray-300'
+                                                    : 'text-gray-400 dark:text-gray-500'
+                                                }`}>
+                                                {phase.label}
+                                            </span>
+                                        </div>
+                                    </motion.div>
                                 );
                             })}
-                        </Timeline>
+                        </div>
                     </motion.div>
 
                     {/* Main Content */}
@@ -587,11 +750,13 @@ export default function ProjectWorkspace() {
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-green-200 dark:border-green-800">
                                     <div>
                                         <p className="text-xs text-green-700 dark:text-green-400 font-light mb-1">Transaction ID</p>
-                                        <p className="text-sm font-mono text-green-900 dark:text-green-300">{paymentDetails.razorpayPaymentId || 'Processing...'}</p>
+                                        <p className="text-sm font-mono text-green-900 dark:text-green-300 break-all">
+                                            {paymentDetails.razorpayPaymentId || paymentDetails.razorpayOrderId || 'N/A'}
+                                        </p>
                                     </div>
                                     <div>
                                         <p className="text-xs text-green-700 dark:text-green-400 font-light mb-1">Payment Date</p>
-                                        <p className="text-sm text-green-900 dark:text-green-300">{formatDate(paymentDetails.capturedAt || paymentDetails.createdAt)}</p>
+                                        <p className="text-sm text-green-900 dark:text-green-300">{formatDate(paymentDetails.releasedAt || paymentDetails.capturedAt || paymentDetails.createdAt)}</p>
                                     </div>
                                     <div>
                                         <p className="text-xs text-green-700 dark:text-green-400 font-light mb-1">Payment Method</p>
@@ -631,61 +796,87 @@ export default function ProjectWorkspace() {
                                     </button>
                                 )}
                             </div>
+                            {/* Deliverables */}
+                            {project.deliverables && project.deliverables.length > 0 && (
+                                <div className="bg-white dark:bg-gray-900 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-800">
+                                    <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Deliverables</h2>
+                                    <div className="space-y-3">
+                                        {project.deliverables.map((deliverable) => {
+                                            const isFinal = deliverable.deliverableType === 'final';
+                                            const paymentReleased = paymentDetails && paymentDetails.escrowStatus === 'released';
+                                            const isLocked = isFinal && !paymentReleased && isClient;
 
-                            {project.deliverables && project.deliverables.length > 0 ? (
-                                <div className="space-y-3">
-                                    {project.deliverables.map((deliverable) => (
-                                        <div
-                                            key={deliverable._id}
-                                            className="p-4 border border-gray-100 dark:border-gray-800 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 dark:hover:bg-gray-800 transition"
-                                        >
-                                            <div className="flex items-start justify-between">
-                                                <div className="flex items-start gap-3 flex-1">
-                                                    <HiOutlineDocumentText className="text-gray-400 flex-shrink-0 mt-1" size={20} />
+                                            return (
+                                                <div
+                                                    key={deliverable._id}
+                                                    className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+                                                >
                                                     <div className="flex-1">
-                                                        <h3 className="text-sm font-medium text-gray-800 dark:text-gray-200">{deliverable.title}</h3>
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <h3 className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                                                                {deliverable.title}
+                                                            </h3>
+                                                            {isFinal && (
+                                                                <span className="px-2 py-0.5 text-xs font-light bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 rounded-full border border-purple-200 dark:border-purple-800">
+                                                                    Final
+                                                                </span>
+                                                            )}
+                                                            {!isFinal && (
+                                                                <span className="px-2 py-0.5 text-xs font-light bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full border border-blue-200 dark:border-blue-800">
+                                                                    Demo
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                         {deliverable.description && (
-                                                            <p className="text-sm text-gray-600 dark:text-gray-400 font-light mt-1">{deliverable.description}</p>
+                                                            <p className="text-xs text-gray-500 dark:text-gray-400 font-light">
+                                                                {deliverable.description}
+                                                            </p>
                                                         )}
-                                                        <p className="text-xs text-gray-500 dark:text-gray-400 font-light mt-2">
-                                                            Uploaded: {formatDate(deliverable.uploadedAt)}
-                                                        </p>
+                                                        {isLocked && (
+                                                            <p className="text-xs text-orange-600 dark:text-orange-400 font-light mt-1 flex items-center gap-1">
+                                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                                                </svg>
+                                                                Locked until payment is released from escrow
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        {isFreelancer && project.status !== 'completed' && project.status !== 'closed' && (
+                                                            <button
+                                                                onClick={() => handleDeleteDeliverable(deliverable._id)}
+                                                                className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition"
+                                                                title="Delete deliverable"
+                                                            >
+                                                                <HiOutlineTrash size={18} />
+                                                            </button>
+                                                        )}
+                                                        {isLocked ? (
+                                                            <div
+                                                                className="p-2 text-gray-400 dark:text-gray-600 bg-gray-100 dark:bg-gray-800 rounded-lg cursor-not-allowed"
+                                                                title="This final deliverable will unlock when you release payment from escrow"
+                                                            >
+                                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                                                </svg>
+                                                            </div>
+                                                        ) : (
+                                                            <a
+                                                                href={deliverable.fileUrl}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="p-2 text-green-600 dark:text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition"
+                                                                title={isFinal ? "Download final deliverable" : "View demo/preview"}
+                                                            >
+                                                                <HiOutlineDownload size={18} />
+                                                            </a>
+                                                        )}
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-2">
-                                                    {deliverable.fileUrl && (
-                                                        <a
-                                                            href={deliverable.fileUrl}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="p-2 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded transition"
-                                                            title="Download"
-                                                        >
-                                                            <HiOutlineDownload size={18} />
-                                                        </a>
-                                                    )}
-                                                    {isFreelancer && (
-                                                        <button
-                                                            onClick={() => handleDeleteDeliverable(deliverable._id)}
-                                                            disabled={project.status === 'closed'}
-                                                            className={`p-2 rounded transition ${project.status === 'closed'
-                                                                ? 'text-gray-400 dark:text-gray-600 cursor-not-allowed'
-                                                                : 'text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30'
-                                                                }`}
-                                                            title={project.status === 'closed' ? 'Project is closed' : 'Delete deliverable'}
-                                                        >
-                                                            <HiOutlineTrash size={18} />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
+                                            );
+                                        })}
+                                    </div>
                                 </div>
-                            ) : (
-                                <p className="text-sm text-gray-500 dark:text-gray-400 font-light text-center py-8">
-                                    No deliverables yet. {isFreelancer && 'Upload files for client review.'}
-                                </p>
                             )}
 
                             {/* Payment Required Notice for Clients */}
@@ -717,17 +908,17 @@ export default function ProjectWorkspace() {
                                             <HiOutlineArrowLeft size={20} />
                                             Request Review
                                         </button>
-                                        {/* Accept & Close Button */}
+                                        {/* Accept & Release Payment Button */}
                                         <button
                                             onClick={() => setShowAcceptModal(true)}
                                             className="bg-gradient-to-r from-blue-600 to-blue-700 text-white font-light py-3 px-4 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-sm flex items-center justify-center gap-2"
                                         >
                                             <HiOutlineCheck size={20} />
-                                            Accept & Pay
+                                            Accept & Release Payment
                                         </button>
                                     </div>
                                     <p className="text-xs text-gray-500 dark:text-gray-400 font-light mt-3 text-center">
-                                        Request changes or accept the deliverables to finalize the project
+                                        Request changes or accept the deliverables to release payment from escrow
                                     </p>
                                 </div>
                             )}
@@ -854,6 +1045,30 @@ export default function ProjectWorkspace() {
                                 </div>
                             </div>
                         </motion.div>
+
+                        {/* Contact Support Button */}
+                        <div className='w-full flex flex-col items-center justify-center gap-2 px-4 py-3 text-sm text-gray-600 dark:text-gray-400'>
+                            <button
+                                onClick={() => showToast('Under maintenance. We will be back shortly!', 'warning')}
+                                className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm text-gray-600 dark:text-gray-400 hover:text-yellow-600 dark:hover:text-yellow-600 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:border-yellow-300 dark:hover:border-yellow-700 rounded-lg transition-all font-light"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+                                </svg>
+                                Contact Support
+                            </button>
+                            <button
+                                onClick={() => showToast('Under maintenance. We will be back shortly!', 'warning')}
+                                className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm text-gray-600 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-500 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:border-red-300 dark:hover:border-red-700 rounded-lg transition-all font-light"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                Raise Dispute
+                            </button>
+
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -897,6 +1112,21 @@ export default function ProjectWorkspace() {
                                     placeholder="https://example.com/file.pdf"
                                     required
                                 />
+                            </div>
+                            <div>
+                                <label className="block text-sm text-gray-700 dark:text-gray-300 font-light mb-1">Deliverable Type</label>
+                                <select
+                                    value={deliverableForm.deliverableType}
+                                    onChange={(e) => setDeliverableForm({ ...deliverableForm, deliverableType: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent font-light"
+                                    required
+                                >
+                                    <option value="demo">Demo/Preview - Client can view before payment</option>
+                                    <option value="final">Final - Client can download only after payment</option>
+                                </select>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 font-light mt-1">
+                                    💡 Upload a demo first to let client review your work. Final deliverables unlock after payment release.
+                                </p>
                             </div>
                             <div className="flex gap-3 pt-4">
                                 <button
@@ -1003,9 +1233,12 @@ export default function ProjectWorkspace() {
                         animate={{ opacity: 1, scale: 1 }}
                         className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6"
                     >
-                        <h3 className="text-lg font-light text-gray-800 dark:text-gray-200 mb-3">Accept & Pay for Project</h3>
+                        <h3 className="text-lg font-light text-gray-800 dark:text-gray-200 mb-3">Accept & Release Payment</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 font-light mb-4">
+                            By accepting this work, you agree to release {paymentDetails ? `₹${paymentDetails.amount.toLocaleString()}` : 'the payment'} from escrow to the freelancer.
+                        </p>
                         <p className="text-sm text-gray-600 dark:text-gray-400 font-light mb-6">
-                            You'll be redirected to make a secure payment. After successful payment, the project will be closed and marked as completed.
+                            This action will close the project and the funds will be transferred to the freelancer's account. This cannot be undone.
                         </p>
                         <div className="flex gap-3">
                             <button
@@ -1023,13 +1256,10 @@ export default function ProjectWorkspace() {
                                 {acceptingProject ? (
                                     <>
                                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                        Accepting...
+                                        Releasing...
                                     </>
                                 ) : (
-                                    <>
-                                        <HiOutlineCheck size={18} />
-                                        Yes, Accept & Close
-                                    </>
+                                    'Confirm & Release'
                                 )}
                             </button>
                         </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import AnimatedCounter from '@/components/ui/animatedCounter';
 import { motion } from 'motion/react';
 import axios from 'axios';
 import {
@@ -93,15 +94,15 @@ export default function UserProfile() {
 
     return (
         <div className="min-h-screen bg-white dark:bg-gray-950">
-            {/* Back Button */}
-            <button
-                onClick={() => navigate(-1)}
-                className="absolute mt-4 ml-25 mb-4 flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-500 transition-colors font-light group"
-            >
-                <HiArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
-                <span>Back</span>
-            </button>
             <div className="max-w-5xl mx-auto px-8 py-10">
+                {/* Back Button */}
+                <button
+                    onClick={() => navigate(-1)}
+                    className="mb-6 flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-500 transition-colors font-light group"
+                >
+                    <HiArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
+                    <span>Back</span>
+                </button>
 
                 {/* Header Section */}
                 <motion.div
@@ -344,7 +345,9 @@ export default function UserProfile() {
                                         <span className="text-sm text-gray-600 dark:text-gray-400 font-light">Total Earnings</span>
                                         <div className="flex items-center gap-1 text-gray-700 dark:text-gray-300">
                                             <HiOutlineCurrencyRupee size={16} />
-                                            <span className="text-sm font-light">{user.totalEarnings.toLocaleString()}</span>
+                                            <span className="text-sm font-light">
+                                                <AnimatedCounter value={user.totalEarnings} duration={1800} />
+                                            </span>
                                         </div>
                                     </div>
                                 )}

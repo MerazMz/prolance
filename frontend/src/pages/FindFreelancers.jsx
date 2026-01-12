@@ -9,6 +9,7 @@ import {
 import { FiMapPin, FiStar, FiBriefcase, FiUser } from 'react-icons/fi';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import SEOHelmet from '../components/SEOHelmet';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
@@ -121,6 +122,12 @@ export default function FindFreelancers() {
 
     return (
         <div className="min-h-screen bg-white dark:bg-black transition-colors duration-200">
+            <SEOHelmet
+                title="Find Freelancers - Hire Expert Talent | Prolance"
+                description="Find and hire top freelance talent on Prolance. Browse skilled professionals in programming, design, writing, marketing, and more. Get your project done right."
+                keywords="hire freelancers, find talent, freelance experts, remote workers, hire developers, hire designers, freelance marketplace"
+                canonicalUrl="https://prolance.meraz.me/freelancers"
+            />
             <div className="max-w-6xl mx-auto px-8 py-10">
                 {/* Header */}
                 <motion.div

@@ -2,6 +2,7 @@ const ApplicationModel = require('../Models/Application');
 const ConversationModel = require('../Models/Conversation');
 const ProjectModel = require('../Models/Project');
 const UserModel = require('../Models/User');
+const { scoreApplication } = require('./AIController');
 
 // Submit application for a project
 const submitApplication = async (req, res) => {
@@ -79,6 +80,31 @@ const submitApplication = async (req, res) => {
         // Increment project proposal count
         project.proposalCount += 1;
         await project.save();
+
+        // Trigger AI scoring asynchronously (don't block the response)
+        scoreApplication(
+            project.title,
+            project.description,
+            project.skillsRequired,
+            coverLetter
+        ).then(async (result) => {
+            if (result.success) {
+                try {
+                    await ApplicationModel.findByIdAndUpdate(application._id, {
+                        aiScore: result.aiScore,
+                        aiAnalysis: result.aiAnalysis,
+                        scoredAt: new Date()
+                    });
+                    console.log(`AI scored application ${application._id}: ${result.aiScore}`);
+                } catch (updateErr) {
+                    console.error('Error updating application with AI score:', updateErr);
+                }
+            } else {
+                console.error('AI scoring failed for application:', application._id, result.error);
+            }
+        }).catch(err => {
+            console.error('AI scoring error:', err);
+        });
 
         // Populate application details
         await application.populate('projectId', 'title category budget');

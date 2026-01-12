@@ -76,19 +76,12 @@ export default function ConversationsList({ conversations, selectedConversation,
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-baseline justify-between gap-2 mb-1">
                                     <h3 className={`text-sm truncate ${hasUnread ? 'font-semibold text-gray-900 dark:text-gray-100' : 'font-medium text-gray-700 dark:text-gray-300'}`}>
-                                        {otherParticipant?.name}
+                                        {otherParticipant?.name?.split(' ')[0]}{conversation.projectId?.title ? ` - ${conversation.projectId.title}` : ''}
                                     </h3>
                                     <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">
                                         {formatTime(conversation.lastMessageAt)}
                                     </span>
                                 </div>
-
-                                {/* Project Title */}
-                                {conversation.projectId?.title && (
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate mb-1">
-                                        {conversation.projectId.title}
-                                    </p>
-                                )}
 
                                 {/* Last Message */}
                                 <div className="flex items-center justify-between gap-2">

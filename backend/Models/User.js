@@ -119,15 +119,15 @@ const UserSchema = new Schema({
             default: true
         }
     },
-    // Payment settings
-    withdrawalMethods: {
-        type: [{
-            type: String,
-            method: String,
-            details: String
-        }],
-        default: []
-    },
+    // // Payment settings
+    // withdrawalMethods: {
+    //     type: [{
+    //         type: String,
+    //         method: String,
+    //         details: String
+    //     }],
+    //     default: []
+    // },
     paymentMethods: {
         type: [{
             type: String,
@@ -190,19 +190,19 @@ const UserSchema = new Schema({
         type: Number,
         default: 0
     },
-    resetOTP: {
-        type: String,
-        default: ''
-    },
-    resetOTPExpires: {
-        type: Date,
-        default: null
-    },
+    // resetOTP: {
+    //     type: String,
+    //     default: ''
+    // },
+    // resetOTPExpires: {
+    //     type: Date,
+    //     default: null
+    // },
     // In-app notifications
     notifications: [{
         type: {
             type: String,
-            enum: ['project_completed', 'project_accepted', 'review_requested', 'application_received', 'application_accepted', 'contract_proposed', 'contract_accepted', 'contract_rejected', 'message_received', 'payment_received'],
+            enum: ['project_completed', 'project_accepted', 'review_requested', 'application_received', 'application_accepted', 'contract_proposed', 'contract_accepted', 'contract_rejected', 'message_received', 'payment_received', 'escrow_funded', 'escrow_released', 'escrow_payment_held', 'project_closed'],
             required: true
         },
         title: {

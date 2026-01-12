@@ -2,6 +2,7 @@ import { motion } from 'motion/react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import AnimatedCounter from '../components/ui/animatedCounter';
 import axios from 'axios';
 import {
     HiOutlineBriefcase,
@@ -132,7 +133,9 @@ export default function Dashboard() {
                             </div>
                             <div>
                                 <h3 className="text-xs text-gray-500 dark:text-gray-400 font-light">Active Projects</h3>
-                                <p className="text-2xl font-light text-gray-700 dark:text-gray-200">{stats.activeProjects}</p>
+                                <p className="text-2xl font-light text-gray-700 dark:text-gray-200">
+                                    <AnimatedCounter value={stats.activeProjects} duration={1200} />
+                                </p>
                             </div>
                         </div>
                         <p className="text-xs text-gray-400 dark:text-gray-500 font-light">
@@ -152,7 +155,9 @@ export default function Dashboard() {
                             </div>
                             <div>
                                 <h3 className="text-xs text-gray-500 dark:text-gray-400 font-light">Completed</h3>
-                                <p className="text-2xl font-light text-gray-700 dark:text-gray-200">{stats.completedProjects}</p>
+                                <p className="text-2xl font-light text-gray-700 dark:text-gray-200">
+                                    <AnimatedCounter value={stats.completedProjects} duration={1400} />
+                                </p>
                             </div>
                         </div>
                         <p className="text-xs text-gray-400 dark:text-gray-500 font-light">Projects finished</p>
@@ -173,10 +178,11 @@ export default function Dashboard() {
                                     {user?.role === 'freelancer' || user?.role === 'both' ? 'Total Earnings' : 'Total Spent'}
                                 </h3>
                                 <p className="text-2xl font-light text-gray-700 dark:text-gray-200">
-                                    ₹{(user?.role === 'freelancer' || user?.role === 'both'
-                                        ? stats.totalEarnings
-                                        : stats.totalSpent
-                                    ).toLocaleString('en-IN')}
+                                    <AnimatedCounter
+                                        value={user?.role === 'freelancer' || user?.role === 'both' ? stats.totalEarnings : stats.totalSpent}
+                                        prefix="₹"
+                                        duration={1800}
+                                    />
                                 </p>
                             </div>
                         </div>
@@ -197,7 +203,9 @@ export default function Dashboard() {
                             </div>
                             <div>
                                 <h3 className="text-xs text-gray-500 dark:text-gray-400 font-light">Profile Views</h3>
-                                <p className="text-2xl font-light text-gray-700 dark:text-gray-200">{stats.profileViews}</p>
+                                <p className="text-2xl font-light text-gray-700 dark:text-gray-200">
+                                    <AnimatedCounter value={stats.profileViews} duration={1600} />
+                                </p>
                             </div>
                         </div>
                         <p className="text-xs text-gray-400 dark:text-gray-500 font-light">Build your profile</p>

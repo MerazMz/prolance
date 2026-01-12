@@ -128,6 +128,25 @@ const proposeContract = async (req, res) => {
                 message: systemMessage,
                 conversationId
             });
+
+            // Update conversation list with new lastMessage for both participants
+            io.to(`user:${contract.freelancerId._id}`).emit('conversation-updated', {
+                conversationId,
+                lastMessage: {
+                    content: systemMessageContent,
+                    senderId: null,
+                    createdAt: systemMessage.createdAt
+                }
+            });
+
+            io.to(`user:${contract.clientId._id}`).emit('conversation-updated', {
+                conversationId,
+                lastMessage: {
+                    content: systemMessageContent,
+                    senderId: null,
+                    createdAt: systemMessage.createdAt
+                }
+            });
         }
 
         res.status(201).json({
@@ -223,6 +242,32 @@ const updateContractStatus = async (req, res) => {
             });
         }
 
+        // If accepting and payment is required, DON'T change status yet
+        // Status will be changed after successful payment
+        if (status === 'accepted' && contract.paymentRequired) {
+            // Keep status as pending, just return payment required flag
+            contract.respondedAt = new Date();
+            if (clientNotes) {
+                contract.clientNotes = clientNotes;
+            }
+            await contract.save();
+
+            // Return flag to frontend indicating payment is required
+            // Status will be updated to 'accepted' after payment verification
+            return res.status(200).json({
+                message: 'Payment required to accept contract',
+                success: true,
+                requiresPayment: true,
+                contract,
+                paymentDetails: {
+                    amount: contract.contractDetails.finalAmount,
+                    contractId: contract._id,
+                    projectId: contract.projectId._id
+                }
+            });
+        }
+
+        // For rejection or acceptance without payment requirement
         contract.status = status;
         contract.respondedAt = new Date();
         if (clientNotes) {
@@ -231,15 +276,42 @@ const updateContractStatus = async (req, res) => {
 
         await contract.save();
 
-        // If accepted, update project status
+        // If accepted (without payment requirement), update project status
         if (status === 'accepted') {
             contract.projectId.status = 'in-progress';
             contract.projectId.acceptedProposalId = contract.applicationId;
             contract.projectId.assignedFreelancerId = contract.freelancerId._id;
             await contract.projectId.save();
+
+            // Create notification for freelancer
+            const UserModel = require('../Models/User');
+
+            const freelancerNotification = {
+                type: 'contract_accepted',
+                title: 'Contract Accepted! 🎉',
+                message: `Great news! ${contract.clientId.name} has accepted your proposal for "${contract.projectId.title}". You can now start working on the project.`,
+                projectId: contract.projectId._id,
+                read: false,
+                createdAt: new Date()
+            };
+
+            await UserModel.findByIdAndUpdate(
+                contract.freelancerId._id,
+                { $push: { notifications: freelancerNotification } }
+            );
+
+            // Emit Socket.io event to freelancer immediately
+            const io = req.app.get('io');
+            if (io) {
+                io.to(`user:${contract.freelancerId._id}`).emit('new-notification', freelancerNotification);
+                io.to(`project:${contract.projectId._id}`).emit('contract-accepted', {
+                    contractId: contract._id,
+                    status: 'accepted'
+                });
+            }
         }
 
-        // Create notification for freelancer
+        // For rejected contracts or accepted without payment
         const UserModel = require('../Models/User');
         const MessageModel = require('../Models/Message');
 
@@ -302,6 +374,25 @@ const updateContractStatus = async (req, res) => {
             io.to(`conversation:${contract.conversationId}`).emit('new-message', {
                 message: systemMessage,
                 conversationId: contract.conversationId
+            });
+
+            // Update conversation list with new lastMessage for both participants
+            io.to(`user:${contract.freelancerId._id}`).emit('conversation-updated', {
+                conversationId: contract.conversationId,
+                lastMessage: {
+                    content: systemMessageContent,
+                    senderId: null,
+                    createdAt: systemMessage.createdAt
+                }
+            });
+
+            io.to(`user:${contract.clientId._id}`).emit('conversation-updated', {
+                conversationId: contract.conversationId,
+                lastMessage: {
+                    content: systemMessageContent,
+                    senderId: null,
+                    createdAt: systemMessage.createdAt
+                }
             });
         }
 

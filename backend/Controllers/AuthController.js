@@ -111,6 +111,16 @@ const login = async (req, res) => {
                 success: false
             });
         }
+
+        // Check if user is banned
+        if (user.isBanned) {
+            return res.status(403).json({
+                message: 'Your account has been banned. Please contact support.',
+                success: false,
+                banned: true
+            });
+        }
+
         const jwtToken = jwt.sign(
             { email: user.email, _id: user._id, isAdmin: user.isAdmin || false },
             process.env.JWT_SECRET,
@@ -152,6 +162,15 @@ const firebaseAuth = async (req, res) => {
         let user = await UserModel.findOne({ email });
 
         if (user) {
+            // Check if user is banned
+            if (user.isBanned) {
+                return res.status(403).json({
+                    message: 'Your account has been banned. Please contact support.',
+                    success: false,
+                    banned: true
+                });
+            }
+
             // User exists - link Firebase account
             // Update firebaseUid if not already set
             if (!user.firebaseUid) {
