@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import Particles from '../components/ui/background';
 import loginIllustration from '../assets/login_illustration_1764590330755.png';
 import SEOHelmet from '../components/SEOHelmet';
+import { Turnstile } from '@marsidev/react-turnstile';
 
 export default function Login() {
     const [email, setEmail] = useState('');
@@ -12,7 +14,10 @@ export default function Login() {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [turnstileToken, setTurnstileToken] = useState(null);
+    const turnstileRef = useRef(null);
     const { login, loginWithGoogle, loginWithGithub } = useAuth();
+    const { theme } = useTheme();
     const navigate = useNavigate();
 
     // Check for session expired message
@@ -36,17 +41,28 @@ export default function Login() {
             return;
         }
 
+        // Turnstile validation
+        if (!turnstileToken) {
+            setError('Please complete the CAPTCHA verification.');
+            setIsLoading(false);
+            return;
+        }
+
         console.log('=== LOGIN ATTEMPT ===');
         console.log('Email:', email);
         console.log('Password:', password.substring(0, 3) + '***');
 
-        const result = await login(email, password);
+        const result = await login(email, password, turnstileToken);
 
         console.log('=== LOGIN RESULT ===');
         console.log('Success:', result.success);
         console.log('Full result:', result);
         console.log('result.data:', result.data);
         console.log('result.data.isAdmin:', result.data?.isAdmin);
+
+        // Reset turnstile after each attempt
+        turnstileRef.current?.reset();
+        setTurnstileToken(null);
 
         if (result.success) {
             // Check isAdmin from the response data
@@ -238,9 +254,24 @@ export default function Login() {
                             </div>
                         </div>
 
+                        {/* Cloudflare Turnstile */}
+                        <div className="flex justify-center">
+                            <Turnstile
+                                ref={turnstileRef}
+                                siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+                                onSuccess={(token) => setTurnstileToken(token)}
+                                onExpire={() => setTurnstileToken(null)}
+                                onError={() => {
+                                    setTurnstileToken(null);
+                                    setError('CAPTCHA verification failed. Please try again.');
+                                }}
+                                options={{ theme }}
+                            />
+                        </div>
+
                         <button
                             type="submit"
-                            disabled={isLoading}
+                            disabled={isLoading || !turnstileToken}
                             className="w-full bg-green-600 text-white font-light py-2.5 text-sm rounded-lg hover:bg-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isLoading ? 'Logging in...' : 'Login'}

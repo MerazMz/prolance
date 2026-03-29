@@ -40,9 +40,9 @@ export const userManager = {
 // Auth API functions
 export const authService = {
     // Login
-    login: async (email, password) => {
+    login: async (email, password, turnstileToken) => {
         try {
-            const response = await api.post('/auth/login', { email, password });
+            const response = await api.post('/auth/login', { email, password, turnstileToken });
             const { jwtToken, name, email: userEmail, role, userId, username, isAdmin } = response.data;
 
             // Save token and user data

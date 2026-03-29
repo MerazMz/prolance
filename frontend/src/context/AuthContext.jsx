@@ -92,9 +92,9 @@ export const AuthProvider = ({ children }) => {
         setLogoutCallback(logout);
     }, []);
 
-    const login = async (email, password) => {
+    const login = async (email, password, turnstileToken) => {
         try {
-            const response = await authService.login(email, password);
+            const response = await authService.login(email, password, turnstileToken);
             const currentUser = authService.getCurrentUser();
 
             setUser(currentUser);

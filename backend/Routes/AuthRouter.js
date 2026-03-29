@@ -3,8 +3,9 @@ const { signupValidation, loginValidation } = require('../Middlewares/AuthValida
 const { signup, login, firebaseAuth, updateRole } = require('../Controllers/AuthController');
 const { forgotPassword, verifyOTP, resetPassword } = require('../Controllers/PasswordResetController');
 const ensureAuthenticated = require('../Middlewares/Auth');
+const verifyTurnstile = require('../Middlewares/verifyTurnstile');
 
-router.post('/login', loginValidation, login);
+router.post('/login', loginValidation, verifyTurnstile, login);
 
 router.post('/signup', signupValidation, signup);
 

@@ -689,12 +689,12 @@ const releaseEscrowPayment = async (req, res) => {
             });
         }
 
-        // Ensure payment is captured (not just authorized)
-        if (payment.status !== 'captured') {
+        // Ensure payment is captured or authorized
+        if (payment.status !== 'captured' && payment.status !== 'authorized') {
             return res.status(400).json({
-                message: 'Cannot release escrow - payment not captured',
+                message: 'Cannot release escrow - payment not captured or authorized',
                 success: false,
-                error: `Payment status is ${payment.status}. Only captured payments can be released.`
+                error: `Payment status is ${payment.status}. Only captured or authorized payments can be released.`
             });
         }
 
